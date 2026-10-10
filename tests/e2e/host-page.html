@@ -10,8 +10,11 @@
   <iframe id="pane" title="Network assessment" sandbox="allow-scripts allow-same-origin allow-forms allow-downloads" allow="clipboard-write" width="1000" height="900"></iframe>
   <script>
     (function () {
-      var params = new URLSearchParams(window.location.search);
-      var origin = params.get('addon') || 'http://127.0.0.1:8097';
+      // The pane origin comes from the harness's own ?addon= parameter (tests/e2e/lab.spec.ts). Only a loopback
+      // origin is accepted, so the parameter can never point the frame, or the message filter, anywhere else.
+      var LOOPBACK = /^http:\/\/(127\.0\.0\.1|localhost):\d{2,5}$/;
+      var requested = new URLSearchParams(window.location.search).get('addon') || '';
+      var origin = LOOPBACK.test(requested) ? requested : 'http://127.0.0.1:8097';
       var frame = document.getElementById('pane');
       window.__messages = [];
       window.addEventListener('message', function (event) {
