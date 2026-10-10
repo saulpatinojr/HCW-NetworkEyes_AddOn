@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Host page (e2e harness)</title>
+</head>
+<body>
+  <h1>Harness: frames the pane with the site's production sandbox and records hcw-addon messages</h1>
+  <ul id="messages"></ul>
+  <iframe id="pane" title="Network assessment" sandbox="allow-scripts allow-same-origin allow-forms allow-downloads" allow="clipboard-write" width="1000" height="900"></iframe>
+  <script>
+    (function () {
+      var params = new URLSearchParams(window.location.search);
+      var origin = params.get('addon') || 'http://127.0.0.1:8097';
+      var frame = document.getElementById('pane');
+      window.__messages = [];
+      window.addEventListener('message', function (event) {
+        if (event.origin !== origin) return;
+        if (event.source !== frame.contentWindow) return;
+        var d = event.data;
+        if (!d || d.type !== 'hcw-addon' || d.id !== 'network-assessment') return;
+        if (['loading', 'ready', 'working', 'unavailable'].indexOf(d.state) < 0) return;
+        window.__messages.push(d.state);
+        var li = document.createElement('li'); li.textContent = d.state; document.getElementById('messages').appendChild(li);
+      });
+      frame.src = origin + '/?theme=dark';
+    })();
+  </script>
+</body>
+</html>

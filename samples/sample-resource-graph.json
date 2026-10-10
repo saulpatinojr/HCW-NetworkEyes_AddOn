@@ -1,0 +1,1948 @@
+{
+  "count": 48,
+  "data": [
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-hub",
+      "name": "hcw-sample-vnet-hub",
+      "type": "microsoft.network/virtualnetworks",
+      "location": "eastus2",
+      "resourceGroup": "hcw-sample-rg-hub",
+      "subscriptionId": "00000000-0000-0000-0000-000000000001",
+      "tags": {
+        "environment": "sample",
+        "owner": "hcw-sample-team"
+      },
+      "zones": null,
+      "sku": null,
+      "kind": null,
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "10.0.0.0/16"
+          ]
+        },
+        "dhcpOptions": {
+          "dnsServers": [
+            "10.0.4.4",
+            "10.0.4.5"
+          ]
+        },
+        "enableDdosProtection": true,
+        "ddosProtectionPlan": {
+          "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/ddosprotectionplans/hcw-sample-ddos"
+        },
+        "encryption": {
+          "enabled": false
+        },
+        "subnets": [
+          {
+            "name": "GatewaySubnet",
+            "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-hub/subnets/GatewaySubnet",
+            "properties": {
+              "addressPrefix": "10.0.0.0/27",
+              "privateEndpointNetworkPolicies": "Enabled",
+              "defaultOutboundAccess": true,
+              "serviceEndpoints": []
+            }
+          },
+          {
+            "name": "AzureFirewallSubnet",
+            "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-hub/subnets/AzureFirewallSubnet",
+            "properties": {
+              "addressPrefix": "10.0.1.0/26",
+              "privateEndpointNetworkPolicies": "Enabled",
+              "defaultOutboundAccess": true,
+              "serviceEndpoints": []
+            }
+          },
+          {
+            "name": "AzureBastionSubnet",
+            "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-hub/subnets/AzureBastionSubnet",
+            "properties": {
+              "addressPrefix": "10.0.2.0/26",
+              "privateEndpointNetworkPolicies": "Enabled",
+              "defaultOutboundAccess": true,
+              "serviceEndpoints": [],
+              "networkSecurityGroup": {
+                "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/networksecuritygroups/hcw-sample-nsg-hub"
+              }
+            }
+          },
+          {
+            "name": "snet-shared",
+            "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-hub/subnets/snet-shared",
+            "properties": {
+              "addressPrefix": "10.0.3.0/24",
+              "privateEndpointNetworkPolicies": "Disabled",
+              "defaultOutboundAccess": true,
+              "serviceEndpoints": [],
+              "networkSecurityGroup": {
+                "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/networksecuritygroups/hcw-sample-nsg-hub"
+              },
+              "routeTable": {
+                "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/routetables/hcw-sample-rt-hub"
+              },
+              "ipConfigurations": [
+                {
+                  "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-hub/../nic-0"
+                },
+                {
+                  "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-hub/../nic-1"
+                },
+                {
+                  "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-hub/../nic-2"
+                },
+                {
+                  "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-hub/../nic-3"
+                },
+                {
+                  "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-hub/../nic-4"
+                },
+                {
+                  "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-hub/../nic-5"
+                }
+              ]
+            }
+          },
+          {
+            "name": "snet-dns",
+            "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-hub/subnets/snet-dns",
+            "properties": {
+              "addressPrefix": "10.0.4.0/27",
+              "privateEndpointNetworkPolicies": "Enabled",
+              "defaultOutboundAccess": true,
+              "serviceEndpoints": [],
+              "networkSecurityGroup": {
+                "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/networksecuritygroups/hcw-sample-nsg-hub"
+              },
+              "routeTable": {
+                "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/routetables/hcw-sample-rt-hub"
+              },
+              "ipConfigurations": [
+                {
+                  "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-hub/../nic-0"
+                },
+                {
+                  "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-hub/../nic-1"
+                },
+                {
+                  "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-hub/../nic-2"
+                },
+                {
+                  "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-hub/../nic-3"
+                },
+                {
+                  "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-hub/../nic-4"
+                },
+                {
+                  "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-hub/../nic-5"
+                },
+                {
+                  "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-hub/../nic-6"
+                },
+                {
+                  "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-hub/../nic-7"
+                },
+                {
+                  "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-hub/../nic-8"
+                },
+                {
+                  "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-hub/../nic-9"
+                },
+                {
+                  "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-hub/../nic-10"
+                },
+                {
+                  "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-hub/../nic-11"
+                },
+                {
+                  "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-hub/../nic-12"
+                },
+                {
+                  "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-hub/../nic-13"
+                },
+                {
+                  "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-hub/../nic-14"
+                },
+                {
+                  "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-hub/../nic-15"
+                },
+                {
+                  "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-hub/../nic-16"
+                },
+                {
+                  "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-hub/../nic-17"
+                },
+                {
+                  "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-hub/../nic-18"
+                },
+                {
+                  "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-hub/../nic-19"
+                },
+                {
+                  "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-hub/../nic-20"
+                },
+                {
+                  "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-hub/../nic-21"
+                },
+                {
+                  "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-hub/../nic-22"
+                },
+                {
+                  "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-hub/../nic-23"
+                }
+              ]
+            }
+          },
+          {
+            "name": "snet-agw",
+            "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-hub/subnets/snet-agw",
+            "properties": {
+              "addressPrefix": "10.0.5.0/24",
+              "privateEndpointNetworkPolicies": "Enabled",
+              "defaultOutboundAccess": true,
+              "serviceEndpoints": [],
+              "networkSecurityGroup": {
+                "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/networksecuritygroups/hcw-sample-nsg-hub"
+              }
+            }
+          }
+        ],
+        "virtualNetworkPeerings": [
+          {
+            "name": "hub-to-spoke1",
+            "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-hub/virtualNetworkPeerings/hub-to-spoke1",
+            "properties": {
+              "remoteVirtualNetwork": {
+                "id": "/subscriptions/00000000-0000-0000-0000-000000000002/resourceGroups/hcw-sample-rg-spoke/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-spoke1"
+              },
+              "peeringState": "Connected",
+              "allowForwardedTraffic": true,
+              "allowGatewayTransit": true,
+              "useRemoteGateways": false,
+              "doNotVerifyRemoteGateways": false,
+              "peerCompleteVnets": true
+            }
+          },
+          {
+            "name": "hub-to-spoke2",
+            "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-hub/virtualNetworkPeerings/hub-to-spoke2",
+            "properties": {
+              "remoteVirtualNetwork": {
+                "id": "/subscriptions/00000000-0000-0000-0000-000000000002/resourceGroups/hcw-sample-rg-spoke/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-spoke2"
+              },
+              "peeringState": "Connected",
+              "allowForwardedTraffic": true,
+              "allowGatewayTransit": true,
+              "useRemoteGateways": false,
+              "doNotVerifyRemoteGateways": false,
+              "peerCompleteVnets": true
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/networksecuritygroups/hcw-sample-nsg-hub",
+      "name": "hcw-sample-nsg-hub",
+      "type": "microsoft.network/networksecuritygroups",
+      "location": "eastus2",
+      "resourceGroup": "hcw-sample-rg-hub",
+      "subscriptionId": "00000000-0000-0000-0000-000000000001",
+      "tags": {
+        "environment": "sample",
+        "owner": "hcw-sample-team"
+      },
+      "zones": null,
+      "sku": null,
+      "kind": null,
+      "properties": {
+        "securityRules": [
+          {
+            "name": "allow-rdp-from-internet",
+            "properties": {
+              "priority": 100,
+              "direction": "Inbound",
+              "access": "Allow",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "3389",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "10.0.3.0/24"
+            }
+          },
+          {
+            "name": "allow-any-any",
+            "properties": {
+              "priority": 200,
+              "direction": "Inbound",
+              "access": "Allow",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*"
+            }
+          },
+          {
+            "name": "allow-https-vnet",
+            "properties": {
+              "priority": 300,
+              "direction": "Inbound",
+              "access": "Allow",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "443",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "*"
+            }
+          }
+        ],
+        "defaultSecurityRules": [
+          {
+            "name": "DenyAllInBound",
+            "properties": {
+              "priority": 65500,
+              "direction": "Inbound",
+              "access": "Deny",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*"
+            }
+          }
+        ],
+        "subnets": [
+          {
+            "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-hub/subnets/AzureBastionSubnet"
+          },
+          {
+            "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-hub/subnets/snet-shared"
+          },
+          {
+            "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-hub/subnets/snet-dns"
+          },
+          {
+            "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-hub/subnets/snet-agw"
+          }
+        ],
+        "flowLogs": [
+          {
+            "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/NetworkWatcherRG/providers/microsoft.network/networkwatchers/NetworkWatcher_eastus2/flowLogs/hcw-sample-flowlog-nsg-hub"
+          }
+        ]
+      }
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/routetables/hcw-sample-rt-hub",
+      "name": "hcw-sample-rt-hub",
+      "type": "microsoft.network/routetables",
+      "location": "eastus2",
+      "resourceGroup": "hcw-sample-rg-hub",
+      "subscriptionId": "00000000-0000-0000-0000-000000000001",
+      "tags": {
+        "environment": "sample",
+        "owner": "hcw-sample-team"
+      },
+      "zones": null,
+      "sku": null,
+      "kind": null,
+      "properties": {
+        "disableBgpRoutePropagation": false,
+        "routes": [
+          {
+            "name": "default-to-firewall",
+            "properties": {
+              "addressPrefix": "0.0.0.0/0",
+              "nextHopType": "VirtualAppliance",
+              "nextHopIpAddress": "10.0.1.4",
+              "hasBgpOverride": false
+            }
+          }
+        ],
+        "subnets": [
+          {
+            "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-hub/subnets/snet-shared"
+          },
+          {
+            "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-hub/subnets/snet-dns"
+          }
+        ]
+      }
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/routetables/hcw-sample-rt-nobgp",
+      "name": "hcw-sample-rt-nobgp",
+      "type": "microsoft.network/routetables",
+      "location": "eastus2",
+      "resourceGroup": "hcw-sample-rg-hub",
+      "subscriptionId": "00000000-0000-0000-0000-000000000001",
+      "tags": {
+        "environment": "sample",
+        "owner": "hcw-sample-team"
+      },
+      "zones": null,
+      "sku": null,
+      "kind": null,
+      "properties": {
+        "disableBgpRoutePropagation": true,
+        "routes": [],
+        "subnets": []
+      }
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/azurefirewalls/hcw-sample-fw-hub",
+      "name": "hcw-sample-fw-hub",
+      "type": "microsoft.network/azurefirewalls",
+      "location": "eastus2",
+      "resourceGroup": "hcw-sample-rg-hub",
+      "subscriptionId": "00000000-0000-0000-0000-000000000001",
+      "tags": {
+        "environment": "sample",
+        "owner": "hcw-sample-team"
+      },
+      "zones": [],
+      "sku": null,
+      "kind": null,
+      "properties": {
+        "sku": {
+          "name": "AZFW_VNet",
+          "tier": "Standard"
+        },
+        "threatIntelMode": "Alert",
+        "firewallPolicy": {
+          "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/firewallpolicies/hcw-sample-fwpolicy"
+        },
+        "ipConfigurations": [
+          {
+            "name": "fw-ipconfig",
+            "properties": {
+              "subnet": {
+                "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-hub/subnets/AzureFirewallSubnet"
+              },
+              "publicIPAddress": {
+                "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/publicipaddresses/hcw-sample-pip-fw"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/firewallpolicies/hcw-sample-fwpolicy",
+      "name": "hcw-sample-fwpolicy",
+      "type": "microsoft.network/firewallpolicies",
+      "location": "eastus2",
+      "resourceGroup": "hcw-sample-rg-hub",
+      "subscriptionId": "00000000-0000-0000-0000-000000000001",
+      "tags": {
+        "environment": "sample",
+        "owner": "hcw-sample-team"
+      },
+      "zones": null,
+      "sku": null,
+      "kind": null,
+      "properties": {
+        "sku": {
+          "tier": "Standard"
+        },
+        "threatIntelMode": "Alert",
+        "dnsSettings": {
+          "enableProxy": false
+        }
+      }
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/publicipaddresses/hcw-sample-pip-fw",
+      "name": "hcw-sample-pip-fw",
+      "type": "microsoft.network/publicipaddresses",
+      "location": "eastus2",
+      "resourceGroup": "hcw-sample-rg-hub",
+      "subscriptionId": "00000000-0000-0000-0000-000000000001",
+      "tags": {
+        "environment": "sample",
+        "owner": "hcw-sample-team"
+      },
+      "zones": [
+        "1",
+        "2",
+        "3"
+      ],
+      "sku": {
+        "name": "Standard",
+        "tier": "Regional"
+      },
+      "kind": null,
+      "properties": {
+        "publicIPAllocationMethod": "Static",
+        "publicIPAddressVersion": "IPv4",
+        "ipAddress": "203.0.113.10",
+        "ipConfiguration": {
+          "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/azurefirewalls/hcw-sample-fw-hub/azureFirewallIpConfigurations/fw-ipconfig"
+        },
+        "ddosSettings": {
+          "protectionMode": "VirtualNetworkInherited"
+        }
+      }
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/virtualnetworkgateways/hcw-sample-vpngw-hub",
+      "name": "hcw-sample-vpngw-hub",
+      "type": "microsoft.network/virtualnetworkgateways",
+      "location": "eastus2",
+      "resourceGroup": "hcw-sample-rg-hub",
+      "subscriptionId": "00000000-0000-0000-0000-000000000001",
+      "tags": {
+        "environment": "sample",
+        "owner": "hcw-sample-team"
+      },
+      "zones": [],
+      "sku": null,
+      "kind": null,
+      "properties": {
+        "gatewayType": "Vpn",
+        "vpnType": "RouteBased",
+        "sku": {
+          "name": "Basic",
+          "tier": "Basic"
+        },
+        "activeActive": false,
+        "enableBgp": false,
+        "vpnGatewayGeneration": "Generation1",
+        "ipConfigurations": [
+          {
+            "name": "default",
+            "properties": {
+              "subnet": {
+                "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-hub/subnets/GatewaySubnet"
+              },
+              "publicIPAddress": {
+                "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/publicipaddresses/hcw-sample-pip-vpngw"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/publicipaddresses/hcw-sample-pip-vpngw",
+      "name": "hcw-sample-pip-vpngw",
+      "type": "microsoft.network/publicipaddresses",
+      "location": "eastus2",
+      "resourceGroup": "hcw-sample-rg-hub",
+      "subscriptionId": "00000000-0000-0000-0000-000000000001",
+      "tags": {
+        "environment": "sample",
+        "owner": "hcw-sample-team"
+      },
+      "zones": null,
+      "sku": {
+        "name": "Basic",
+        "tier": "Regional"
+      },
+      "kind": null,
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "publicIPAddressVersion": "IPv4",
+        "ipAddress": "203.0.113.11",
+        "ipConfiguration": {
+          "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/virtualnetworkgateways/hcw-sample-vpngw-hub/ipConfigurations/default"
+        }
+      }
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/virtualnetworkgateways/hcw-sample-ergw-hub",
+      "name": "hcw-sample-ergw-hub",
+      "type": "microsoft.network/virtualnetworkgateways",
+      "location": "eastus2",
+      "resourceGroup": "hcw-sample-rg-hub",
+      "subscriptionId": "00000000-0000-0000-0000-000000000001",
+      "tags": {
+        "environment": "sample",
+        "owner": "hcw-sample-team"
+      },
+      "zones": [],
+      "sku": null,
+      "kind": null,
+      "properties": {
+        "gatewayType": "ExpressRoute",
+        "sku": {
+          "name": "Standard",
+          "tier": "Standard"
+        },
+        "activeActive": false,
+        "enableBgp": true,
+        "bgpSettings": {
+          "asn": 65515
+        },
+        "ipConfigurations": [
+          {
+            "name": "default",
+            "properties": {
+              "subnet": {
+                "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-hub/subnets/GatewaySubnet"
+              },
+              "publicIPAddress": {
+                "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/publicipaddresses/hcw-sample-pip-ergw"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/publicipaddresses/hcw-sample-pip-ergw",
+      "name": "hcw-sample-pip-ergw",
+      "type": "microsoft.network/publicipaddresses",
+      "location": "eastus2",
+      "resourceGroup": "hcw-sample-rg-hub",
+      "subscriptionId": "00000000-0000-0000-0000-000000000001",
+      "tags": {
+        "environment": "sample",
+        "owner": "hcw-sample-team"
+      },
+      "zones": [
+        "1",
+        "2",
+        "3"
+      ],
+      "sku": {
+        "name": "Standard",
+        "tier": "Regional"
+      },
+      "kind": null,
+      "properties": {
+        "publicIPAllocationMethod": "Static",
+        "publicIPAddressVersion": "IPv4",
+        "ipAddress": "203.0.113.12",
+        "ipConfiguration": {
+          "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/virtualnetworkgateways/hcw-sample-ergw-hub/ipConfigurations/default"
+        }
+      }
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/localnetworkgateways/hcw-sample-lng-onprem",
+      "name": "hcw-sample-lng-onprem",
+      "type": "microsoft.network/localnetworkgateways",
+      "location": "eastus2",
+      "resourceGroup": "hcw-sample-rg-hub",
+      "subscriptionId": "00000000-0000-0000-0000-000000000001",
+      "tags": {
+        "environment": "sample",
+        "owner": "hcw-sample-team"
+      },
+      "zones": null,
+      "sku": null,
+      "kind": null,
+      "properties": {
+        "gatewayIpAddress": "198.51.100.5",
+        "localNetworkAddressSpace": {
+          "addressPrefixes": [
+            "192.168.0.0/16"
+          ]
+        }
+      }
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/connections/hcw-sample-conn-onprem",
+      "name": "hcw-sample-conn-onprem",
+      "type": "microsoft.network/connections",
+      "location": "eastus2",
+      "resourceGroup": "hcw-sample-rg-hub",
+      "subscriptionId": "00000000-0000-0000-0000-000000000001",
+      "tags": {
+        "environment": "sample",
+        "owner": "hcw-sample-team"
+      },
+      "zones": null,
+      "sku": null,
+      "kind": null,
+      "properties": {
+        "connectionType": "IPsec",
+        "connectionStatus": "NotConnected",
+        "virtualNetworkGateway1": {
+          "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/virtualnetworkgateways/hcw-sample-vpngw-hub"
+        },
+        "localNetworkGateway2": {
+          "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/localnetworkgateways/hcw-sample-lng-onprem"
+        },
+        "routingWeight": 10,
+        "enableBgp": false,
+        "usePolicyBasedTrafficSelectors": false,
+        "sharedKey": "REDACTED-BY-RESOURCE-GRAPH"
+      }
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/connections/hcw-sample-conn-circuit",
+      "name": "hcw-sample-conn-circuit",
+      "type": "microsoft.network/connections",
+      "location": "eastus2",
+      "resourceGroup": "hcw-sample-rg-hub",
+      "subscriptionId": "00000000-0000-0000-0000-000000000001",
+      "tags": {
+        "environment": "sample",
+        "owner": "hcw-sample-team"
+      },
+      "zones": null,
+      "sku": null,
+      "kind": null,
+      "properties": {
+        "connectionType": "ExpressRoute",
+        "connectionStatus": "Connected",
+        "virtualNetworkGateway1": {
+          "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/virtualnetworkgateways/hcw-sample-ergw-hub"
+        },
+        "peer": {
+          "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/expressroutecircuits/hcw-sample-er-circuit"
+        },
+        "routingWeight": 0,
+        "enableBgp": true
+      }
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/expressroutecircuits/hcw-sample-er-circuit",
+      "name": "hcw-sample-er-circuit",
+      "type": "microsoft.network/expressroutecircuits",
+      "location": "eastus2",
+      "resourceGroup": "hcw-sample-rg-hub",
+      "subscriptionId": "00000000-0000-0000-0000-000000000001",
+      "tags": {
+        "environment": "sample",
+        "owner": "hcw-sample-team"
+      },
+      "zones": null,
+      "sku": {
+        "name": "Standard_MeteredData",
+        "tier": "Standard",
+        "family": "MeteredData"
+      },
+      "kind": null,
+      "properties": {
+        "serviceProviderProperties": {
+          "serviceProviderName": "Sample Carrier",
+          "peeringLocation": "Washington DC",
+          "bandwidthInMbps": 200
+        },
+        "circuitProvisioningState": "Enabled",
+        "globalReachEnabled": false,
+        "peerings": [
+          {
+            "name": "AzurePrivatePeering",
+            "properties": {
+              "peeringType": "AzurePrivatePeering"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/bastionhosts/hcw-sample-bastion",
+      "name": "hcw-sample-bastion",
+      "type": "microsoft.network/bastionhosts",
+      "location": "eastus2",
+      "resourceGroup": "hcw-sample-rg-hub",
+      "subscriptionId": "00000000-0000-0000-0000-000000000001",
+      "tags": {
+        "environment": "sample",
+        "owner": "hcw-sample-team"
+      },
+      "zones": null,
+      "sku": {
+        "name": "Standard"
+      },
+      "kind": null,
+      "properties": {
+        "scaleUnits": 2,
+        "enableTunneling": true,
+        "enableShareableLink": false,
+        "enableIpConnect": false,
+        "enableFileCopy": true,
+        "enableKerberos": false,
+        "ipConfigurations": [
+          {
+            "name": "bastion-ipconfig",
+            "properties": {
+              "subnet": {
+                "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-hub/subnets/AzureBastionSubnet"
+              },
+              "publicIPAddress": {
+                "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/publicipaddresses/hcw-sample-pip-bastion"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/publicipaddresses/hcw-sample-pip-bastion",
+      "name": "hcw-sample-pip-bastion",
+      "type": "microsoft.network/publicipaddresses",
+      "location": "eastus2",
+      "resourceGroup": "hcw-sample-rg-hub",
+      "subscriptionId": "00000000-0000-0000-0000-000000000001",
+      "tags": {
+        "environment": "sample",
+        "owner": "hcw-sample-team"
+      },
+      "zones": [
+        "1",
+        "2",
+        "3"
+      ],
+      "sku": {
+        "name": "Standard",
+        "tier": "Regional"
+      },
+      "kind": null,
+      "properties": {
+        "publicIPAllocationMethod": "Static",
+        "publicIPAddressVersion": "IPv4",
+        "ipAddress": "203.0.113.13",
+        "ipConfiguration": {
+          "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/bastionhosts/hcw-sample-bastion/bastionHostIpConfigurations/bastion-ipconfig"
+        }
+      }
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/applicationgateways/hcw-sample-agw-public",
+      "name": "hcw-sample-agw-public",
+      "type": "microsoft.network/applicationgateways",
+      "location": "eastus2",
+      "resourceGroup": "hcw-sample-rg-hub",
+      "subscriptionId": "00000000-0000-0000-0000-000000000001",
+      "tags": {
+        "environment": "sample",
+        "owner": "hcw-sample-team"
+      },
+      "zones": [],
+      "sku": null,
+      "kind": null,
+      "properties": {
+        "sku": {
+          "name": "WAF_v2",
+          "tier": "WAF_v2"
+        },
+        "gatewayIPConfigurations": [
+          {
+            "name": "agw-ipconfig",
+            "properties": {
+              "subnet": {
+                "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-hub/subnets/snet-agw"
+              }
+            }
+          }
+        ],
+        "frontendIPConfigurations": [
+          {
+            "name": "public",
+            "properties": {
+              "publicIPAddress": {
+                "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/publicipaddresses/hcw-sample-pip-agw"
+              }
+            }
+          }
+        ],
+        "firewallPolicy": {
+          "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/applicationgatewaywebapplicationfirewallpolicies/hcw-sample-wafpolicy"
+        },
+        "sslPolicy": {
+          "policyName": "AppGwSslPolicy20220101",
+          "policyType": "Predefined"
+        },
+        "autoscaleConfiguration": {
+          "minCapacity": 0,
+          "maxCapacity": 4
+        }
+      }
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/applicationgatewaywebapplicationfirewallpolicies/hcw-sample-wafpolicy",
+      "name": "hcw-sample-wafpolicy",
+      "type": "microsoft.network/applicationgatewaywebapplicationfirewallpolicies",
+      "location": "eastus2",
+      "resourceGroup": "hcw-sample-rg-hub",
+      "subscriptionId": "00000000-0000-0000-0000-000000000001",
+      "tags": {
+        "environment": "sample",
+        "owner": "hcw-sample-team"
+      },
+      "zones": null,
+      "sku": null,
+      "kind": null,
+      "properties": {
+        "policySettings": {
+          "state": "Enabled",
+          "mode": "Detection",
+          "requestBodyCheck": true
+        },
+        "managedRules": {
+          "managedRuleSets": [
+            {
+              "ruleSetType": "OWASP",
+              "ruleSetVersion": "3.2"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/publicipaddresses/hcw-sample-pip-agw",
+      "name": "hcw-sample-pip-agw",
+      "type": "microsoft.network/publicipaddresses",
+      "location": "eastus2",
+      "resourceGroup": "hcw-sample-rg-hub",
+      "subscriptionId": "00000000-0000-0000-0000-000000000001",
+      "tags": {
+        "environment": "sample",
+        "owner": "hcw-sample-team"
+      },
+      "zones": [
+        "1",
+        "2",
+        "3"
+      ],
+      "sku": {
+        "name": "Standard",
+        "tier": "Regional"
+      },
+      "kind": null,
+      "properties": {
+        "publicIPAllocationMethod": "Static",
+        "publicIPAddressVersion": "IPv4",
+        "ipAddress": "203.0.113.14",
+        "dnsSettings": {
+          "domainNameLabel": "hcw-sample-agw",
+          "fqdn": "hcw-sample-agw.eastus2.cloudapp.azure.com"
+        },
+        "ipConfiguration": {
+          "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/applicationgateways/hcw-sample-agw-public/frontendIPConfigurations/public"
+        }
+      }
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/applicationgateways/hcw-sample-agw-internal",
+      "name": "hcw-sample-agw-internal",
+      "type": "microsoft.network/applicationgateways",
+      "location": "eastus2",
+      "resourceGroup": "hcw-sample-rg-hub",
+      "subscriptionId": "00000000-0000-0000-0000-000000000001",
+      "tags": {
+        "environment": "sample",
+        "owner": "hcw-sample-team"
+      },
+      "zones": [],
+      "sku": null,
+      "kind": null,
+      "properties": {
+        "sku": {
+          "name": "Standard_v2",
+          "tier": "Standard_v2",
+          "capacity": 2
+        },
+        "gatewayIPConfigurations": [
+          {
+            "name": "agw-ipconfig",
+            "properties": {
+              "subnet": {
+                "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-hub/subnets/snet-agw"
+              }
+            }
+          }
+        ],
+        "frontendIPConfigurations": [
+          {
+            "name": "private",
+            "properties": {
+              "privateIPAddress": "10.0.5.10",
+              "subnet": {
+                "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-hub/subnets/snet-agw"
+              }
+            }
+          }
+        ],
+        "webApplicationFirewallConfiguration": {
+          "enabled": false
+        }
+      }
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/loadbalancers/hcw-sample-lb-internal",
+      "name": "hcw-sample-lb-internal",
+      "type": "microsoft.network/loadbalancers",
+      "location": "eastus2",
+      "resourceGroup": "hcw-sample-rg-hub",
+      "subscriptionId": "00000000-0000-0000-0000-000000000001",
+      "tags": {
+        "environment": "sample",
+        "owner": "hcw-sample-team"
+      },
+      "zones": null,
+      "sku": {
+        "name": "Standard",
+        "tier": "Regional"
+      },
+      "kind": null,
+      "properties": {
+        "frontendIPConfigurations": [
+          {
+            "name": "internal",
+            "zones": [],
+            "properties": {
+              "privateIPAddress": "10.0.3.100",
+              "privateIPAllocationMethod": "Static",
+              "subnet": {
+                "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-hub/subnets/snet-shared"
+              }
+            }
+          }
+        ],
+        "loadBalancingRules": [
+          {
+            "name": "https",
+            "properties": {
+              "protocol": "Tcp",
+              "frontendPort": 443,
+              "backendPort": 443,
+              "idleTimeoutInMinutes": 4,
+              "loadDistribution": "Default"
+            }
+          }
+        ],
+        "probes": [
+          {
+            "name": "https-probe",
+            "properties": {
+              "protocol": "Https",
+              "port": 443,
+              "requestPath": "/healthz",
+              "intervalInSeconds": 15,
+              "numberOfProbes": 2
+            }
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/loadbalancers/hcw-sample-lb-internal/backendAddressPools/pool"
+          }
+        ],
+        "inboundNatRules": []
+      }
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/NetworkWatcherRG/providers/microsoft.network/networkwatchers/NetworkWatcher_eastus2",
+      "name": "NetworkWatcher_eastus2",
+      "type": "microsoft.network/networkwatchers",
+      "location": "eastus2",
+      "resourceGroup": "NetworkWatcherRG",
+      "subscriptionId": "00000000-0000-0000-0000-000000000001",
+      "tags": {
+        "environment": "sample",
+        "owner": "hcw-sample-team"
+      },
+      "zones": null,
+      "sku": null,
+      "kind": null,
+      "properties": {
+        "provisioningState": "Succeeded"
+      }
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/NetworkWatcherRG/providers/microsoft.network/networkwatchers/NetworkWatcher_eastus2/flowLogs/hcw-sample-flowlog-nsg-hub",
+      "name": "hcw-sample-flowlog-nsg-hub",
+      "type": "microsoft.network/networkwatchers/flowlogs",
+      "location": "eastus2",
+      "resourceGroup": "NetworkWatcherRG",
+      "subscriptionId": "00000000-0000-0000-0000-000000000001",
+      "tags": {
+        "environment": "sample",
+        "owner": "hcw-sample-team"
+      },
+      "zones": null,
+      "sku": null,
+      "kind": null,
+      "properties": {
+        "targetResourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/networksecuritygroups/hcw-sample-nsg-hub",
+        "enabled": true,
+        "retentionPolicy": {
+          "days": 7,
+          "enabled": true
+        },
+        "flowAnalyticsConfiguration": {
+          "networkWatcherFlowAnalyticsConfiguration": {
+            "enabled": false
+          }
+        },
+        "format": {
+          "type": "JSON",
+          "version": 2
+        }
+      }
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/privatednszones/privatelink.blob.core.windows.net",
+      "name": "privatelink.blob.core.windows.net",
+      "type": "microsoft.network/privatednszones",
+      "location": "global",
+      "resourceGroup": "hcw-sample-rg-hub",
+      "subscriptionId": "00000000-0000-0000-0000-000000000001",
+      "tags": {
+        "environment": "sample",
+        "owner": "hcw-sample-team"
+      },
+      "zones": null,
+      "sku": null,
+      "kind": null,
+      "properties": {
+        "numberOfRecordSets": 2,
+        "numberOfVirtualNetworkLinks": 1
+      }
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/privatednszones/privatelink.blob.core.windows.net/virtualNetworkLinks/hcw-sample-link-hub",
+      "name": "hcw-sample-link-hub",
+      "type": "microsoft.network/privatednszones/virtualnetworklinks",
+      "location": "global",
+      "resourceGroup": "hcw-sample-rg-hub",
+      "subscriptionId": "00000000-0000-0000-0000-000000000001",
+      "tags": {
+        "environment": "sample",
+        "owner": "hcw-sample-team"
+      },
+      "zones": null,
+      "sku": null,
+      "kind": null,
+      "properties": {
+        "virtualNetwork": {
+          "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-hub"
+        },
+        "registrationEnabled": false,
+        "virtualNetworkLinkState": "Completed"
+      }
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/privateendpoints/hcw-sample-pe-storage",
+      "name": "hcw-sample-pe-storage",
+      "type": "microsoft.network/privateendpoints",
+      "location": "eastus2",
+      "resourceGroup": "hcw-sample-rg-hub",
+      "subscriptionId": "00000000-0000-0000-0000-000000000001",
+      "tags": {
+        "environment": "sample",
+        "owner": "hcw-sample-team"
+      },
+      "zones": null,
+      "sku": null,
+      "kind": null,
+      "properties": {
+        "subnet": {
+          "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-hub/subnets/snet-shared"
+        },
+        "privateLinkServiceConnections": [
+          {
+            "name": "storage",
+            "properties": {
+              "privateLinkServiceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/Microsoft.Storage/storageAccounts/hcwsamplestorage",
+              "groupIds": [
+                "blob"
+              ],
+              "privateLinkServiceConnectionState": {
+                "status": "Pending",
+                "description": "Awaiting approval"
+              }
+            }
+          }
+        ],
+        "manualPrivateLinkServiceConnections": [],
+        "customDnsConfigs": [
+          {
+            "fqdn": "hcwsamplestorage.blob.core.windows.net",
+            "ipAddresses": [
+              "10.0.3.20"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/privateendpoints/hcw-sample-pe-storage/privateDnsZoneGroups/default",
+      "name": "default",
+      "type": "microsoft.network/privateendpoints/privatednszonegroups",
+      "location": "eastus2",
+      "resourceGroup": "hcw-sample-rg-hub",
+      "subscriptionId": "00000000-0000-0000-0000-000000000001",
+      "tags": {
+        "environment": "sample",
+        "owner": "hcw-sample-team"
+      },
+      "zones": null,
+      "sku": null,
+      "kind": null,
+      "properties": {
+        "privateDnsZoneConfigs": [
+          {
+            "name": "privatelink-blob-core-windows-net",
+            "properties": {
+              "privateDnsZoneId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/privatednszones/privatelink.blob.core.windows.net"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/frontdoorwebapplicationfirewallpolicies/hcwsamplefdwaf",
+      "name": "hcwsamplefdwaf",
+      "type": "microsoft.network/frontdoorwebapplicationfirewallpolicies",
+      "location": "global",
+      "resourceGroup": "hcw-sample-rg-hub",
+      "subscriptionId": "00000000-0000-0000-0000-000000000001",
+      "tags": {
+        "environment": "sample",
+        "owner": "hcw-sample-team"
+      },
+      "zones": null,
+      "sku": {
+        "name": "Standard_AzureFrontDoor"
+      },
+      "kind": null,
+      "properties": {
+        "policySettings": {
+          "mode": "Detection",
+          "enabledState": "Enabled"
+        },
+        "customRules": {
+          "rules": [
+            {
+              "name": "block-bad-bots",
+              "priority": 10
+            }
+          ]
+        },
+        "managedRules": {
+          "managedRuleSets": [
+            {
+              "ruleSetType": "Microsoft_DefaultRuleSet",
+              "ruleSetVersion": "2.1"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/natgateways/hcw-sample-nat-hub",
+      "name": "hcw-sample-nat-hub",
+      "type": "microsoft.network/natgateways",
+      "location": "eastus2",
+      "resourceGroup": "hcw-sample-rg-hub",
+      "subscriptionId": "00000000-0000-0000-0000-000000000001",
+      "tags": {
+        "environment": "sample",
+        "owner": "hcw-sample-team"
+      },
+      "zones": [
+        "1"
+      ],
+      "sku": {
+        "name": "Standard"
+      },
+      "kind": null,
+      "properties": {
+        "idleTimeoutInMinutes": 4,
+        "publicIpAddresses": [
+          {
+            "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/publicipaddresses/hcw-sample-pip-nat"
+          }
+        ],
+        "publicIpPrefixes": [],
+        "subnets": []
+      }
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/publicipaddresses/hcw-sample-pip-nat",
+      "name": "hcw-sample-pip-nat",
+      "type": "microsoft.network/publicipaddresses",
+      "location": "eastus2",
+      "resourceGroup": "hcw-sample-rg-hub",
+      "subscriptionId": "00000000-0000-0000-0000-000000000001",
+      "tags": {
+        "environment": "sample",
+        "owner": "hcw-sample-team"
+      },
+      "zones": [
+        "1"
+      ],
+      "sku": {
+        "name": "Standard",
+        "tier": "Regional"
+      },
+      "kind": null,
+      "properties": {
+        "publicIPAllocationMethod": "Static",
+        "publicIPAddressVersion": "IPv4",
+        "ipAddress": "203.0.113.15",
+        "natGateway": {
+          "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/natgateways/hcw-sample-nat-hub"
+        }
+      }
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/publicipaddresses/hcw-sample-pip-orphan",
+      "name": "hcw-sample-pip-orphan",
+      "type": "microsoft.network/publicipaddresses",
+      "location": "eastus2",
+      "resourceGroup": "hcw-sample-rg-hub",
+      "subscriptionId": "00000000-0000-0000-0000-000000000001",
+      "tags": {
+        "environment": "sample",
+        "owner": "hcw-sample-team"
+      },
+      "zones": null,
+      "sku": {
+        "name": "Basic",
+        "tier": "Regional"
+      },
+      "kind": null,
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "publicIPAddressVersion": "IPv4"
+      }
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/networkinterfaces/hcw-sample-nic-shared-1",
+      "name": "hcw-sample-nic-shared-1",
+      "type": "microsoft.network/networkinterfaces",
+      "location": "eastus2",
+      "resourceGroup": "hcw-sample-rg-hub",
+      "subscriptionId": "00000000-0000-0000-0000-000000000001",
+      "tags": {
+        "environment": "sample",
+        "owner": "hcw-sample-team"
+      },
+      "zones": null,
+      "sku": null,
+      "kind": null,
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAddress": "10.0.3.11",
+              "subnet": {
+                "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-hub/subnets/snet-shared"
+              }
+            }
+          }
+        ],
+        "enableIPForwarding": false
+      }
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/networkinterfaces/hcw-sample-nic-shared-2",
+      "name": "hcw-sample-nic-shared-2",
+      "type": "microsoft.network/networkinterfaces",
+      "location": "eastus2",
+      "resourceGroup": "hcw-sample-rg-hub",
+      "subscriptionId": "00000000-0000-0000-0000-000000000001",
+      "tags": {
+        "environment": "sample",
+        "owner": "hcw-sample-team"
+      },
+      "zones": null,
+      "sku": null,
+      "kind": null,
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAddress": "10.0.3.12",
+              "subnet": {
+                "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-hub/subnets/snet-shared"
+              }
+            }
+          }
+        ],
+        "enableIPForwarding": false
+      }
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000002/resourceGroups/hcw-sample-rg-spoke/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-spoke1",
+      "name": "hcw-sample-vnet-spoke1",
+      "type": "microsoft.network/virtualnetworks",
+      "location": "eastus2",
+      "resourceGroup": "hcw-sample-rg-spoke",
+      "subscriptionId": "00000000-0000-0000-0000-000000000002",
+      "tags": {
+        "environment": "sample",
+        "owner": "hcw-sample-team"
+      },
+      "zones": null,
+      "sku": null,
+      "kind": null,
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "10.1.0.0/16"
+          ]
+        },
+        "enableDdosProtection": false,
+        "subnets": [
+          {
+            "name": "snet-app",
+            "id": "/subscriptions/00000000-0000-0000-0000-000000000002/resourceGroups/hcw-sample-rg-spoke/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-spoke1/subnets/snet-app",
+            "properties": {
+              "addressPrefix": "10.1.1.0/24",
+              "privateEndpointNetworkPolicies": "Enabled",
+              "defaultOutboundAccess": true,
+              "serviceEndpoints": [],
+              "ipConfigurations": [
+                {
+                  "id": "/subscriptions/00000000-0000-0000-0000-000000000002/resourceGroups/hcw-sample-rg-spoke/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-spoke1/../nic-0"
+                },
+                {
+                  "id": "/subscriptions/00000000-0000-0000-0000-000000000002/resourceGroups/hcw-sample-rg-spoke/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-spoke1/../nic-1"
+                },
+                {
+                  "id": "/subscriptions/00000000-0000-0000-0000-000000000002/resourceGroups/hcw-sample-rg-spoke/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-spoke1/../nic-2"
+                }
+              ]
+            }
+          },
+          {
+            "name": "snet-data",
+            "id": "/subscriptions/00000000-0000-0000-0000-000000000002/resourceGroups/hcw-sample-rg-spoke/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-spoke1/subnets/snet-data",
+            "properties": {
+              "addressPrefix": "10.1.2.0/24",
+              "privateEndpointNetworkPolicies": "Enabled",
+              "defaultOutboundAccess": true,
+              "serviceEndpoints": [],
+              "networkSecurityGroup": {
+                "id": "/subscriptions/00000000-0000-0000-0000-000000000002/resourceGroups/hcw-sample-rg-spoke/providers/microsoft.network/networksecuritygroups/hcw-sample-nsg-app"
+              },
+              "routeTable": {
+                "id": "/subscriptions/00000000-0000-0000-0000-000000000002/resourceGroups/hcw-sample-rg-spoke/providers/microsoft.network/routetables/hcw-sample-rt-spoke-internet"
+              },
+              "ipConfigurations": [
+                {
+                  "id": "/subscriptions/00000000-0000-0000-0000-000000000002/resourceGroups/hcw-sample-rg-spoke/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-spoke1/../nic-0"
+                },
+                {
+                  "id": "/subscriptions/00000000-0000-0000-0000-000000000002/resourceGroups/hcw-sample-rg-spoke/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-spoke1/../nic-1"
+                }
+              ]
+            }
+          }
+        ],
+        "virtualNetworkPeerings": [
+          {
+            "name": "spoke1-to-hub",
+            "id": "/subscriptions/00000000-0000-0000-0000-000000000002/resourceGroups/hcw-sample-rg-spoke/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-spoke1/virtualNetworkPeerings/spoke1-to-hub",
+            "properties": {
+              "remoteVirtualNetwork": {
+                "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-hub"
+              },
+              "peeringState": "Connected",
+              "allowForwardedTraffic": true,
+              "allowGatewayTransit": false,
+              "useRemoteGateways": true,
+              "doNotVerifyRemoteGateways": false,
+              "peerCompleteVnets": true
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000002/resourceGroups/hcw-sample-rg-spoke/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-spoke2",
+      "name": "hcw-sample-vnet-spoke2",
+      "type": "microsoft.network/virtualnetworks",
+      "location": "eastus2",
+      "resourceGroup": "hcw-sample-rg-spoke",
+      "subscriptionId": "00000000-0000-0000-0000-000000000002",
+      "tags": {
+        "environment": "sample",
+        "owner": "hcw-sample-team"
+      },
+      "zones": null,
+      "sku": null,
+      "kind": null,
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "10.2.0.0/16"
+          ]
+        },
+        "enableDdosProtection": false,
+        "subnets": [
+          {
+            "name": "snet-web",
+            "id": "/subscriptions/00000000-0000-0000-0000-000000000002/resourceGroups/hcw-sample-rg-spoke/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-spoke2/subnets/snet-web",
+            "properties": {
+              "addressPrefix": "10.2.1.0/24",
+              "privateEndpointNetworkPolicies": "Enabled",
+              "defaultOutboundAccess": true,
+              "serviceEndpoints": [],
+              "networkSecurityGroup": {
+                "id": "/subscriptions/00000000-0000-0000-0000-000000000002/resourceGroups/hcw-sample-rg-spoke/providers/microsoft.network/networksecuritygroups/hcw-sample-nsg-app"
+              },
+              "ipConfigurations": [
+                {
+                  "id": "/subscriptions/00000000-0000-0000-0000-000000000002/resourceGroups/hcw-sample-rg-spoke/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-spoke2/../nic-0"
+                },
+                {
+                  "id": "/subscriptions/00000000-0000-0000-0000-000000000002/resourceGroups/hcw-sample-rg-spoke/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-spoke2/../nic-1"
+                },
+                {
+                  "id": "/subscriptions/00000000-0000-0000-0000-000000000002/resourceGroups/hcw-sample-rg-spoke/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-spoke2/../nic-2"
+                },
+                {
+                  "id": "/subscriptions/00000000-0000-0000-0000-000000000002/resourceGroups/hcw-sample-rg-spoke/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-spoke2/../nic-3"
+                }
+              ]
+            }
+          }
+        ],
+        "virtualNetworkPeerings": [
+          {
+            "name": "spoke2-to-hub",
+            "id": "/subscriptions/00000000-0000-0000-0000-000000000002/resourceGroups/hcw-sample-rg-spoke/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-spoke2/virtualNetworkPeerings/spoke2-to-hub",
+            "properties": {
+              "remoteVirtualNetwork": {
+                "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/hcw-sample-rg-hub/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-hub"
+              },
+              "peeringState": "Connected",
+              "allowForwardedTraffic": true,
+              "allowGatewayTransit": false,
+              "useRemoteGateways": true,
+              "doNotVerifyRemoteGateways": false,
+              "peerCompleteVnets": true
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000002/resourceGroups/hcw-sample-rg-spoke/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-legacy",
+      "name": "hcw-sample-vnet-legacy",
+      "type": "microsoft.network/virtualnetworks",
+      "location": "eastus2",
+      "resourceGroup": "hcw-sample-rg-spoke",
+      "subscriptionId": "00000000-0000-0000-0000-000000000002",
+      "tags": {
+        "environment": "sample",
+        "owner": "hcw-sample-team"
+      },
+      "zones": null,
+      "sku": null,
+      "kind": null,
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "10.9.0.0/24"
+          ]
+        },
+        "enableDdosProtection": false,
+        "subnets": [
+          {
+            "name": "snet-legacy",
+            "id": "/subscriptions/00000000-0000-0000-0000-000000000002/resourceGroups/hcw-sample-rg-spoke/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-legacy/subnets/snet-legacy",
+            "properties": {
+              "addressPrefix": "10.9.0.0/26",
+              "privateEndpointNetworkPolicies": "Enabled",
+              "defaultOutboundAccess": true,
+              "serviceEndpoints": [],
+              "networkSecurityGroup": {
+                "id": "/subscriptions/00000000-0000-0000-0000-000000000002/resourceGroups/hcw-sample-rg-spoke/providers/microsoft.network/networksecuritygroups/hcw-sample-nsg-app"
+              }
+            }
+          }
+        ],
+        "virtualNetworkPeerings": [
+          {
+            "name": "legacy-to-spoke1",
+            "id": "/subscriptions/00000000-0000-0000-0000-000000000002/resourceGroups/hcw-sample-rg-spoke/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-legacy/virtualNetworkPeerings/legacy-to-spoke1",
+            "properties": {
+              "remoteVirtualNetwork": {
+                "id": "/subscriptions/00000000-0000-0000-0000-000000000002/resourceGroups/hcw-sample-rg-spoke/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-spoke1"
+              },
+              "peeringState": "Connected",
+              "allowForwardedTraffic": false,
+              "allowGatewayTransit": true,
+              "useRemoteGateways": false,
+              "doNotVerifyRemoteGateways": false,
+              "peerCompleteVnets": true
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000002/resourceGroups/hcw-sample-rg-spoke/providers/microsoft.network/networksecuritygroups/hcw-sample-nsg-app",
+      "name": "hcw-sample-nsg-app",
+      "type": "microsoft.network/networksecuritygroups",
+      "location": "eastus2",
+      "resourceGroup": "hcw-sample-rg-spoke",
+      "subscriptionId": "00000000-0000-0000-0000-000000000002",
+      "tags": {
+        "environment": "sample",
+        "owner": "hcw-sample-team"
+      },
+      "zones": null,
+      "sku": null,
+      "kind": null,
+      "properties": {
+        "securityRules": [
+          {
+            "name": "allow-https-from-vnet",
+            "properties": {
+              "priority": 100,
+              "direction": "Inbound",
+              "access": "Allow",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "443",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "*"
+            }
+          },
+          {
+            "name": "deny-ssh-from-internet",
+            "properties": {
+              "priority": 110,
+              "direction": "Inbound",
+              "access": "Deny",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*"
+            }
+          }
+        ],
+        "defaultSecurityRules": [],
+        "subnets": [
+          {
+            "id": "/subscriptions/00000000-0000-0000-0000-000000000002/resourceGroups/hcw-sample-rg-spoke/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-spoke1/subnets/snet-data"
+          },
+          {
+            "id": "/subscriptions/00000000-0000-0000-0000-000000000002/resourceGroups/hcw-sample-rg-spoke/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-spoke2/subnets/snet-web"
+          },
+          {
+            "id": "/subscriptions/00000000-0000-0000-0000-000000000002/resourceGroups/hcw-sample-rg-spoke/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-legacy/subnets/snet-legacy"
+          }
+        ]
+      }
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000002/resourceGroups/hcw-sample-rg-spoke/providers/microsoft.network/routetables/hcw-sample-rt-spoke-internet",
+      "name": "hcw-sample-rt-spoke-internet",
+      "type": "microsoft.network/routetables",
+      "location": "eastus2",
+      "resourceGroup": "hcw-sample-rg-spoke",
+      "subscriptionId": "00000000-0000-0000-0000-000000000002",
+      "tags": {
+        "environment": "sample",
+        "owner": "hcw-sample-team"
+      },
+      "zones": null,
+      "sku": null,
+      "kind": null,
+      "properties": {
+        "disableBgpRoutePropagation": false,
+        "routes": [
+          {
+            "name": "default-to-internet",
+            "properties": {
+              "addressPrefix": "0.0.0.0/0",
+              "nextHopType": "Internet",
+              "hasBgpOverride": false
+            }
+          }
+        ],
+        "subnets": [
+          {
+            "id": "/subscriptions/00000000-0000-0000-0000-000000000002/resourceGroups/hcw-sample-rg-spoke/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-spoke1/subnets/snet-data"
+          }
+        ]
+      }
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000002/resourceGroups/hcw-sample-rg-spoke/providers/microsoft.network/loadbalancers/hcw-sample-lb-basic",
+      "name": "hcw-sample-lb-basic",
+      "type": "microsoft.network/loadbalancers",
+      "location": "eastus2",
+      "resourceGroup": "hcw-sample-rg-spoke",
+      "subscriptionId": "00000000-0000-0000-0000-000000000002",
+      "tags": {
+        "environment": "sample",
+        "owner": "hcw-sample-team"
+      },
+      "zones": null,
+      "sku": {
+        "name": "Basic"
+      },
+      "kind": null,
+      "properties": {
+        "frontendIPConfigurations": [
+          {
+            "name": "public",
+            "properties": {
+              "publicIPAddress": {
+                "id": "/subscriptions/00000000-0000-0000-0000-000000000002/resourceGroups/hcw-sample-rg-spoke/providers/microsoft.network/publicipaddresses/hcw-sample-pip-lb"
+              }
+            }
+          }
+        ],
+        "loadBalancingRules": [
+          {
+            "name": "http",
+            "properties": {
+              "protocol": "Tcp",
+              "frontendPort": 80,
+              "backendPort": 8080
+            }
+          }
+        ],
+        "probes": [
+          {
+            "name": "http-probe",
+            "properties": {
+              "protocol": "Http",
+              "port": 8080,
+              "requestPath": "/"
+            }
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "id": "/subscriptions/00000000-0000-0000-0000-000000000002/resourceGroups/hcw-sample-rg-spoke/providers/microsoft.network/loadbalancers/hcw-sample-lb-basic/backendAddressPools/pool"
+          }
+        ]
+      }
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000002/resourceGroups/hcw-sample-rg-spoke/providers/microsoft.network/publicipaddresses/hcw-sample-pip-lb",
+      "name": "hcw-sample-pip-lb",
+      "type": "microsoft.network/publicipaddresses",
+      "location": "eastus2",
+      "resourceGroup": "hcw-sample-rg-spoke",
+      "subscriptionId": "00000000-0000-0000-0000-000000000002",
+      "tags": {
+        "environment": "sample",
+        "owner": "hcw-sample-team"
+      },
+      "zones": null,
+      "sku": {
+        "name": "Basic",
+        "tier": "Regional"
+      },
+      "kind": null,
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "publicIPAddressVersion": "IPv4",
+        "ipAddress": "203.0.113.20",
+        "ipConfiguration": {
+          "id": "/subscriptions/00000000-0000-0000-0000-000000000002/resourceGroups/hcw-sample-rg-spoke/providers/microsoft.network/loadbalancers/hcw-sample-lb-basic/frontendIPConfigurations/public"
+        }
+      }
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000002/resourceGroups/hcw-sample-rg-spoke/providers/microsoft.network/privateendpoints/hcw-sample-pe-sql",
+      "name": "hcw-sample-pe-sql",
+      "type": "microsoft.network/privateendpoints",
+      "location": "eastus2",
+      "resourceGroup": "hcw-sample-rg-spoke",
+      "subscriptionId": "00000000-0000-0000-0000-000000000002",
+      "tags": {
+        "environment": "sample",
+        "owner": "hcw-sample-team"
+      },
+      "zones": null,
+      "sku": null,
+      "kind": null,
+      "properties": {
+        "subnet": {
+          "id": "/subscriptions/00000000-0000-0000-0000-000000000002/resourceGroups/hcw-sample-rg-spoke/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-spoke1/subnets/snet-data"
+        },
+        "privateLinkServiceConnections": [
+          {
+            "name": "sql",
+            "properties": {
+              "privateLinkServiceId": "/subscriptions/00000000-0000-0000-0000-000000000002/resourceGroups/hcw-sample-rg-spoke/providers/Microsoft.Sql/servers/hcw-sample-sql",
+              "groupIds": [
+                "sqlServer"
+              ],
+              "privateLinkServiceConnectionState": {
+                "status": "Approved",
+                "description": "Auto-approved"
+              }
+            }
+          }
+        ],
+        "customDnsConfigs": [
+          {
+            "fqdn": "hcw-sample-sql.database.windows.net",
+            "ipAddresses": [
+              "10.1.2.8"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000002/resourceGroups/hcw-sample-rg-spoke/providers/microsoft.network/privateendpoints/hcw-sample-pe-sql/privateDnsZoneGroups/default",
+      "name": "default",
+      "type": "microsoft.network/privateendpoints/privatednszonegroups",
+      "location": "eastus2",
+      "resourceGroup": "hcw-sample-rg-spoke",
+      "subscriptionId": "00000000-0000-0000-0000-000000000002",
+      "tags": {
+        "environment": "sample",
+        "owner": "hcw-sample-team"
+      },
+      "zones": null,
+      "sku": null,
+      "kind": null,
+      "properties": {
+        "privateDnsZoneConfigs": [
+          {
+            "name": "privatelink-database-windows-net",
+            "properties": {
+              "privateDnsZoneId": "/subscriptions/00000000-0000-0000-0000-000000000002/resourceGroups/hcw-sample-rg-spoke/providers/microsoft.network/privatednszones/privatelink.database.windows.net"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000002/resourceGroups/hcw-sample-rg-spoke/providers/microsoft.network/privatednszones/privatelink.database.windows.net",
+      "name": "privatelink.database.windows.net",
+      "type": "microsoft.network/privatednszones",
+      "location": "global",
+      "resourceGroup": "hcw-sample-rg-spoke",
+      "subscriptionId": "00000000-0000-0000-0000-000000000002",
+      "tags": {
+        "environment": "sample",
+        "owner": "hcw-sample-team"
+      },
+      "zones": null,
+      "sku": null,
+      "kind": null,
+      "properties": {
+        "numberOfRecordSets": 2,
+        "numberOfVirtualNetworkLinks": 1
+      }
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000002/resourceGroups/hcw-sample-rg-spoke/providers/microsoft.network/privatednszones/privatelink.database.windows.net/virtualNetworkLinks/hcw-sample-link-spoke1",
+      "name": "hcw-sample-link-spoke1",
+      "type": "microsoft.network/privatednszones/virtualnetworklinks",
+      "location": "global",
+      "resourceGroup": "hcw-sample-rg-spoke",
+      "subscriptionId": "00000000-0000-0000-0000-000000000002",
+      "tags": {
+        "environment": "sample",
+        "owner": "hcw-sample-team"
+      },
+      "zones": null,
+      "sku": null,
+      "kind": null,
+      "properties": {
+        "virtualNetwork": {
+          "id": "/subscriptions/00000000-0000-0000-0000-000000000002/resourceGroups/hcw-sample-rg-spoke/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-spoke1"
+        },
+        "registrationEnabled": false,
+        "virtualNetworkLinkState": "Completed"
+      }
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000002/resourceGroups/hcw-sample-rg-spoke/providers/microsoft.network/networkinterfaces/hcw-sample-nic-app-1",
+      "name": "hcw-sample-nic-app-1",
+      "type": "microsoft.network/networkinterfaces",
+      "location": "eastus2",
+      "resourceGroup": "hcw-sample-rg-spoke",
+      "subscriptionId": "00000000-0000-0000-0000-000000000002",
+      "tags": {
+        "environment": "sample",
+        "owner": "hcw-sample-team"
+      },
+      "zones": null,
+      "sku": null,
+      "kind": null,
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAddress": "10.1.1.11",
+              "subnet": {
+                "id": "/subscriptions/00000000-0000-0000-0000-000000000002/resourceGroups/hcw-sample-rg-spoke/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-spoke1/subnets/snet-app"
+              }
+            }
+          }
+        ],
+        "enableIPForwarding": false
+      }
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000002/resourceGroups/hcw-sample-rg-spoke/providers/microsoft.network/networkinterfaces/hcw-sample-nic-app-2",
+      "name": "hcw-sample-nic-app-2",
+      "type": "microsoft.network/networkinterfaces",
+      "location": "eastus2",
+      "resourceGroup": "hcw-sample-rg-spoke",
+      "subscriptionId": "00000000-0000-0000-0000-000000000002",
+      "tags": {
+        "environment": "sample",
+        "owner": "hcw-sample-team"
+      },
+      "zones": null,
+      "sku": null,
+      "kind": null,
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAddress": "10.1.1.12",
+              "subnet": {
+                "id": "/subscriptions/00000000-0000-0000-0000-000000000002/resourceGroups/hcw-sample-rg-spoke/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-spoke1/subnets/snet-app"
+              }
+            }
+          }
+        ],
+        "enableIPForwarding": false
+      }
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000002/resourceGroups/hcw-sample-rg-spoke/providers/microsoft.network/networkinterfaces/hcw-sample-nic-app-3",
+      "name": "hcw-sample-nic-app-3",
+      "type": "microsoft.network/networkinterfaces",
+      "location": "eastus2",
+      "resourceGroup": "hcw-sample-rg-spoke",
+      "subscriptionId": "00000000-0000-0000-0000-000000000002",
+      "tags": {
+        "environment": "sample",
+        "owner": "hcw-sample-team"
+      },
+      "zones": null,
+      "sku": null,
+      "kind": null,
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAddress": "10.1.1.13",
+              "subnet": {
+                "id": "/subscriptions/00000000-0000-0000-0000-000000000002/resourceGroups/hcw-sample-rg-spoke/providers/microsoft.network/virtualnetworks/hcw-sample-vnet-spoke1/subnets/snet-app"
+              }
+            }
+          }
+        ],
+        "enableIPForwarding": false
+      }
+    }
+  ],
+  "skip_token": null,
+  "total_records": 48
+}
