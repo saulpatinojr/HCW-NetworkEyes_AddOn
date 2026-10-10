@@ -1,4 +1,4 @@
-# Ported from saulpatinojr/Work-Cloud_Network_Core tests/unit/test_finops_signals.py at 5d3b914 (the AZ-COST-001/004
+# Ported from saulpatinojr/HCW-NetworkEyes_App tests/unit/test_finops_signals.py at 5d3b914 (the AZ-COST-001/004
 # cases); changes: lab model builders and evaluate(); the price assertions are gone (no price table in the lab) and the
 # metric cases (002/003) become unknowns.
 from network_assessment.model.topology import AzureNatGateway, AzurePublicIP

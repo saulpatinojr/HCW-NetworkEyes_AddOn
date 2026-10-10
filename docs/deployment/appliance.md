@@ -1,6 +1,6 @@
 # Deployment: the Azure appliance (upstream, not here)
 
-The appliance edition is the Core's: `saulpatinojr/Work-Cloud_Network_Core`, specified by the `REFACTOR_APP.md`
+The appliance edition is the App's: `saulpatinojr/HCW-NetworkEyes_App` (the former Core, merged back on 2026-10-10), specified by the `REFACTOR_APP.md`
 written into the archived `HCW-NetworkEyes_App` (change set G and sections 12 and 15). It runs as **one Consumption
 Azure Container App** per client scope with a user-assigned managed identity holding `Reader` on the allowlisted
 scopes (plus the optional reader roles and the custom `CNA Network BGP Reader` role for the live-only rules), refreshes

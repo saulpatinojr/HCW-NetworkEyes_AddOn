@@ -1,4 +1,4 @@
-# Ported from saulpatinojr/Work-Cloud_Network_Core tests/unit/test_topology_classifier.py at 5d3b914; changes: lab model
+# Ported from saulpatinojr/HCW-NetworkEyes_App tests/unit/test_topology_classifier.py at 5d3b914; changes: lab model
 # builders, no discovery_blocked case (an export has no blocked subscriptions).
 from network_assessment.classify import classify_topology
 from network_assessment.model.topology import AzureVHub, AzureVWan

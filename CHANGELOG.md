@@ -4,9 +4,12 @@ All notable changes to this repository are recorded here. The format follows Kee
 
 ## [Unreleased] — 0.1.0
 
+### Changed
+- **Upstream is `saulpatinojr/HCW-NetworkEyes_App`** (owner decision 2026-10-10: the Core lineage was merged back into the App, which now holds the engine package and its `engine-v*` releases). `core-update.yml` watches that repository and pins the engine as the GitHub Release wheel asset by URL, so `uv lock` records its sha256 and the image's `pip install --require-hashes` keeps verifying it (a git+https pin cannot be hash-checked); no PyPI step is needed for adoption. Provenance headers, `PROVENANCE.md`, the governance files and the docs name the App; ADR-0001 and ADR-0004 carry an amendment note.
+
 ### Added
 - Code scanning: the e2e host page accepts only a loopback `?addon=` origin for the frame and the message filter, and the unit test asserts the exact `script-src` and `frame-src` source lists instead of a substring (closes the three CodeQL alerts raised on #5; test and harness code only, no runtime change).
-- Interim ported engine (ADR-0001, `PROVENANCE.md`) from `saulpatinojr/Work-Cloud_Network_Core` at `5d3b914`: the
+- Interim ported engine (ADR-0001, `PROVENANCE.md`) from `saulpatinojr/HCW-NetworkEyes_App` at `5d3b914`: the
   observed-state enforcer (verbatim), the trimmed findings model (`ObservedState.state`, `remediation`, `learn_url`,
   `rule_version`), the lab topology model `lab-1.0.0` (26 Azure classes plus `AzureFirewallPolicy`,
   `AppGatewayWafPolicy`, `FlowLog`), the topology classifier, the traffic-direction taxonomy and the framework

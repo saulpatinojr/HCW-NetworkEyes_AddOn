@@ -36,7 +36,7 @@ def doc() -> str:
         f"{len(rules) - len(live)} evaluated over an export, {len(live)} registered as live-only (reported in "
         "`unknowns[]`, never dropped).",
         "",
-        "Provenance: the rules are ported from `saulpatinojr/Work-Cloud_Network_Core` at `5d3b914` (Engine A "
+        "Provenance: the rules are ported from `saulpatinojr/HCW-NetworkEyes_App` at `5d3b914` (Engine A "
         "`cna/ai_engine/analysis_engine.py`, Engine B `apps/cna-api/main.py`, `bcdr_signals.py`, "
         "`finops_signals.py`); `PROVENANCE.md` lists every change. Titles, facts and remediation are hedge-free "
         "(the observed-state enforcer gates them).",

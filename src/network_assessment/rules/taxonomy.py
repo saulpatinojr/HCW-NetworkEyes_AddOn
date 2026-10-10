@@ -1,4 +1,4 @@
-# Ported from saulpatinojr/Work-Cloud_Network_Core cna/core/finding_taxonomy.py at 5d3b914; changes: AWS rule ids and
+# Ported from saulpatinojr/HCW-NetworkEyes_App cna/core/finding_taxonomy.py at 5d3b914; changes: AWS rule ids and
 # resource hints removed; AZ-NET-020..033 and AZ-BCDR-006/007 (the typed Engine B rules) added to the tables; the
 # functions are otherwise verbatim.
 """Finding taxonomy — deterministic traffic-direction classification.

@@ -1,4 +1,4 @@
-# Ported from saulpatinojr/Work-Cloud_Network_Core cna/ai_engine/observed_state_enforcer.py at 5d3b914; changes: this
+# Ported from saulpatinojr/HCW-NetworkEyes_App cna/ai_engine/observed_state_enforcer.py at 5d3b914; changes: this
 # header, and `assert_text_is_hedge_free()` appended for the registry test; the class and the pattern list are verbatim.
 """Observed-state enforcer — Phase D (DD-002).
 

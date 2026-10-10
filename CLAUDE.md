@@ -5,8 +5,9 @@ This is `saulpatinojr/HCW-NetworkEyes_AddOn`, the **lab edition** of the Network
 a Python 3.14 FastAPI application that evaluates an uploaded Azure Resource Graph export of `microsoft.network/*` rows
 against typed network rules, a vanilla pane the website frames, fictional samples, docs, a hardened Dockerfile and
 SHA-pinned workflows. The engine under `src/network_assessment/{model,rules,classify}` is an **interim port** of the
-Core (`saulpatinojr/Work-Cloud_Network_Core` at `5d3b914`, ADR-0001, `PROVENANCE.md`); it is deleted, not handed
-upstream, once the Core publishes `cna-azure-network-engine` (its `REFACTOR_APP.md` change set C).
+App's engine (`saulpatinojr/HCW-NetworkEyes_App` at `5d3b914`, ADR-0001, `PROVENANCE.md`); it is deleted, not handed
+upstream, once the App publishes `cna-azure-network-engine` (its `REFACTOR_APP.md` change sets C and J: the wheel is a
+GitHub Release asset of every `engine-v*` tag, pinned here by URL and sha256 through `core-update.yml`).
 
 - Run `uv sync`, then `uv run ruff check . && uv run ruff format --check .`, `uv run python scripts/rules-doc.py --check`
   and `uv run pytest -q --cov=src` before claiming anything works; `make e2e` for anything touching the pane or the API.

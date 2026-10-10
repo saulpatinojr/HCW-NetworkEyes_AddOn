@@ -2,11 +2,12 @@
 
 Owner decision 2026-10-09: the lab edition ports the Core's Azure network engine with provenance under MIT
 (`[REVIEW REQUIRED]` relicensing, see `NOTICE`), as an **interim** measure (ADR-0001) until
-`saulpatinojr/Work-Cloud_Network_Core` publishes the `cna-azure-network-engine` wheel (its `REFACTOR_APP.md` change
-sets A, B, C and E produce the same symbols under `cna_azure_network_engine`). Every ported file starts with
-`# Ported from saulpatinojr/Work-Cloud_Network_Core <path> at 5d3b914; changes: …`, and
+`saulpatinojr/HCW-NetworkEyes_App` (the App; it was the Core until the owner's 2026-10-10 decision merged that lineage
+back) publishes the `cna-azure-network-engine` wheel (its `REFACTOR_APP.md` change sets A, B, C and E produce the same
+symbols under `cna_azure_network_engine`; change set J attaches the wheel to the GitHub Release of each `engine-v*` tag). Every ported file starts with
+`# Ported from saulpatinojr/HCW-NetworkEyes_App <path> at 5d3b914; changes: …`, and
 `tests/end_to_end/test_repository_manifest.py` asserts the header and this table agree. Source paths and line numbers
-are those of commit `5d3b914` in the archived `HCW-NetworkEyes_App` repository, unchanged in the Core.
+are those of commit `5d3b914` in `HCW-NetworkEyes_App` (the split point of 2026-09-18; the same commit in its history today).
 
 **Ported code changes only through entries in this table** (CLAUDE.md invariant): a change to a ported file updates its
 header line and the "what changed" column, with the reason.

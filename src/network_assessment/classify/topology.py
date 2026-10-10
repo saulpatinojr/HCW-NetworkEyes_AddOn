@@ -1,4 +1,4 @@
-# Ported from saulpatinojr/Work-Cloud_Network_Core cna/modules/network/analysis/topology_classifier.py at 5d3b914;
+# Ported from saulpatinojr/HCW-NetworkEyes_App cna/modules/network/analysis/topology_classifier.py at 5d3b914;
 # changes: import path, the `discovery_blocked` skip removed (an export has no blocked subscriptions), camelCase aliases
 # on output; the classification logic is verbatim.
 """Topology classifier — derive the tenant network pattern from an export.

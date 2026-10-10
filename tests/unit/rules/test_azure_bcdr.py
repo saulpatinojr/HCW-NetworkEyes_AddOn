@@ -1,4 +1,4 @@
-# Ported from saulpatinojr/Work-Cloud_Network_Core tests/unit/test_bcdr_signals.py at 5d3b914; changes: lab model
+# Ported from saulpatinojr/HCW-NetworkEyes_App tests/unit/test_bcdr_signals.py at 5d3b914; changes: lab model
 # builders and the registry's evaluate() replace generate_bcdr_findings; the discovery_blocked case is gone; cases for
 # the new AZ-BCDR-006/007 added.
 from network_assessment.model.topology import AzureLBFrontendIP, AzureLoadBalancer

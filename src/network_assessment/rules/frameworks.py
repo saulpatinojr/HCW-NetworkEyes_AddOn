@@ -1,4 +1,4 @@
-# Ported from saulpatinojr/Work-Cloud_Network_Core cna/ai_engine/analysis_engine.py (the FrameworkMapping literals of
+# Ported from saulpatinojr/HCW-NetworkEyes_App cna/ai_engine/analysis_engine.py (the FrameworkMapping literals of
 # the Azure rules, lines 639-1660), cna/modules/network/analysis/bcdr_signals.py (_BCDR_FRAMEWORK) and
 # finops_signals.py (_FINOPS_FRAMEWORK) at 5d3b914; changes: the literals are deduplicated into named constants and
 # keyed by rule id as data; the Engine B rules (AZ-NET-020..033, AZ-BCDR-006/007), which carried no mappings, are

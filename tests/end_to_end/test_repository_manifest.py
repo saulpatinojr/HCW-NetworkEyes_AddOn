@@ -46,6 +46,6 @@ def test_provenance_headers_match_the_table():
     for rel in ported:
         lines = (ROOT / rel).read_text(encoding="utf-8").splitlines()
         header = " ".join(line[1:].strip() for line in lines[:4] if line.startswith("#"))
-        assert lines[0].startswith("# Ported from saulpatinojr/Work-Cloud_Network_Core "), rel
+        assert lines[0].startswith("# Ported from saulpatinojr/HCW-NetworkEyes_App "), rel
         assert "at 5d3b914; changes:" in header, rel
         assert f"`{rel}`" in prov, rel
