@@ -1,0 +1,18 @@
+version: 2
+updates:
+  - package-ecosystem: pip
+    directory: /
+    schedule: { interval: weekly }
+    groups:
+      # Pre-emptive: no Azure SDK may ever enter this edition; a grouped PR makes an attempt visible at a glance.
+      azure-sdk: { patterns: ["azure-*", "msal*", "msrest*"] }
+      dev: { dependency-type: development }
+  - package-ecosystem: github-actions
+    directory: /
+    schedule: { interval: weekly }
+  - package-ecosystem: docker
+    directory: /infrastructure/docker
+    schedule: { interval: weekly }
+  - package-ecosystem: npm
+    directory: /tests/e2e
+    schedule: { interval: weekly }
