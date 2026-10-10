@@ -8,6 +8,7 @@ from fastapi.testclient import TestClient
 from network_assessment import __version__
 from network_assessment.app import api_routes, create_app
 from network_assessment.config import TURNSTILE_ACTION
+from network_assessment.security.headers import VERIFICATION_ORIGIN
 
 from ..conftest import SAMPLE_CSV, SAMPLE_PORTAL_CSV, make_settings
 
@@ -314,7 +315,10 @@ def test_turnstile_enforced_with_mocked_siteverify(sample_rows):
     with TestClient(app) as c:
         health = c.get("/api/health").json()
         assert health["turnstile"] == {"required": True, "siteKey": "1x00000000000000000000AA"}
-        assert "https://challenges.cloudflare.com" in c.get("/").headers["content-security-policy"]
+        directives = [d.split() for d in c.get("/").headers["content-security-policy"].split(";") if d.strip()]
+        csp = {d[0]: d[1:] for d in directives}
+        assert csp["script-src"] == ["'self'", VERIFICATION_ORIGIN]
+        assert csp["frame-src"] == [VERIFICATION_ORIGIN]
         r = c.post("/api/assessments", json=sample_rows[:1])
         assert r.status_code == 403 and r.json()["error"]["details"] == {"codes": ["missing-input-response"]}
         r = c.post("/api/assessments", json=sample_rows[:1], headers={"x-turnstile-token": "bad"})
