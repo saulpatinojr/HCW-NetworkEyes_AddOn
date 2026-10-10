@@ -1,4 +1,4 @@
-# Ported from saulpatinojr/Work-Cloud_Network_Core cna/modules/network/analysis/finops_signals.py at 5d3b914; changes:
+# Ported from saulpatinojr/HCW-NetworkEyes_App cna/modules/network/analysis/finops_signals.py at 5d3b914; changes:
 # (source functions: AZ-COST-001 `_check_orphaned_pips` and AZ-COST-004 `_check_idle_nat_gateways`) the price table
 # (azure_network_prices.py)
 # and `est_monthly_cost_usd` are gone (the lab makes no price claims); the `_finding` builder is replaced by the

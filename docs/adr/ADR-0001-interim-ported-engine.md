@@ -1,6 +1,12 @@
 # ADR-0001: The lab edition ports the Core's engine with provenance, as an interim measure until the wheel exists
 
-Status: accepted, 2026-10-10. Scope: `HCW-NetworkEyes_AddOn`; depends on `saulpatinojr/Work-Cloud_Network_Core`
+
+> **Amended 2026-10-10.** The owner merged the Core lineage back into `saulpatinojr/HCW-NetworkEyes_App` the same day, so
+> that repository is the App and the upstream of this edition; `Work-Cloud_Network_Core` is no longer written to. Read
+> "the Core" below as the App. The engine wheel is a GitHub Release asset of each `engine-v*` tag there, pinned here by
+> URL and sha256 (`core-update.yml`), so no PyPI step stands between a release and its adoption.
+
+Status: accepted, 2026-10-10. Scope: `HCW-NetworkEyes_AddOn`; depends on `saulpatinojr/HCW-NetworkEyes_App`
 (`REFACTOR_APP.md` change sets A, B, C, E and J, written into the archived `HCW-NetworkEyes_App`).
 
 ## Context

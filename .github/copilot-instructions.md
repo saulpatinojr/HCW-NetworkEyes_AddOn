@@ -9,7 +9,7 @@ with evidence and a counter-proposal. Never treat a stale-head check as current 
 
 `saulpatinojr/HCW-NetworkEyes_AddOn` is the **lab edition** of the Network Assessment: a Python 3.14 FastAPI
 application (`src/network_assessment`) that evaluates an uploaded Azure Resource Graph export of `microsoft.network/*`
-rows against typed network rules ported, with provenance, from `saulpatinojr/Work-Cloud_Network_Core` at `5d3b914`
+rows against typed network rules ported, with provenance, from `saulpatinojr/HCW-NetworkEyes_App` at `5d3b914`
 (`PROVENANCE.md`, ADR-0001), plus a vanilla pane (`web/`), fictional samples, docs, a hardened Dockerfile and
 SHA-pinned workflows.
 

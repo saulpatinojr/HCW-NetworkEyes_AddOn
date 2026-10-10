@@ -6,7 +6,7 @@ All notable changes to this repository are recorded here. The format follows Kee
 
 ### Added
 - Code scanning: the e2e host page accepts only a loopback `?addon=` origin for the frame and the message filter, and the unit test asserts the exact `script-src` and `frame-src` source lists instead of a substring (closes the three CodeQL alerts raised on #5; test and harness code only, no runtime change).
-- Interim ported engine (ADR-0001, `PROVENANCE.md`) from `saulpatinojr/Work-Cloud_Network_Core` at `5d3b914`: the
+- Interim ported engine (ADR-0001, `PROVENANCE.md`) from `saulpatinojr/HCW-NetworkEyes_App` at `5d3b914`: the
   observed-state enforcer (verbatim), the trimmed findings model (`ObservedState.state`, `remediation`, `learn_url`,
   `rule_version`), the lab topology model `lab-1.0.0` (26 Azure classes plus `AzureFirewallPolicy`,
   `AppGatewayWafPolicy`, `FlowLog`), the topology classifier, the traffic-direction taxonomy and the framework

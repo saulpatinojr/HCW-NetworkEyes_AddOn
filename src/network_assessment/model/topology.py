@@ -1,4 +1,4 @@
-# Ported from saulpatinojr/Work-Cloud_Network_Core cna/core/topology_schema.py at 5d3b914; changes: (source lines
+# Ported from saulpatinojr/HCW-NetworkEyes_App cna/core/topology_schema.py at 5d3b914; changes: (source lines
 # 315-1006, the Azure classes) AWS, metrics, observability, BGP, Defender, NVA, NIC, workload and management-group
 # classes dropped;
 # fields an export cannot populate removed (subnet_type, dns_resolves_to_private_ip, egress/ingress bytes, dpd timeout,

@@ -1,4 +1,4 @@
-# Ported from saulpatinojr/Work-Cloud_Network_Core cna/modules/network/analysis/bcdr_signals.py at 5d3b914; changes:
+# Ported from saulpatinojr/HCW-NetworkEyes_App cna/modules/network/analysis/bcdr_signals.py at 5d3b914; changes:
 # (source also covers AZ-BCDR-001..005; AZ-BCDR-006/007 come from apps/cna-api/main.py `_check_app_gateways` /
 # `_check_load_balancers` zone checks at the same commit) the
 # `_finding` builder and `_FindingParams` are replaced by the registry's `Emit`; the `discovery_blocked` skip is gone;

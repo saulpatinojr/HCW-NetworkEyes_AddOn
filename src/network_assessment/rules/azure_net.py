@@ -1,4 +1,4 @@
-# Ported from saulpatinojr/Work-Cloud_Network_Core cna/ai_engine/analysis_engine.py (Engine A, `_check_azure_*`,
+# Ported from saulpatinojr/HCW-NetworkEyes_App cna/ai_engine/analysis_engine.py (Engine A, `_check_azure_*`,
 # lines 639-1660) and apps/cna-api/main.py (Engine B, `_check_*`, lines 195-1127) at 5d3b914; changes: the
 # AnalysisEngine
 # class, EngagementStore, escalation and AWS methods are gone; each check is a typed `@rule` evaluator yielding `Emit`

@@ -1,6 +1,12 @@
 # ADR-0004: Upstream/downstream for this AddOn: the Core publishes, this edition consumes and never forks
 
-Status: accepted, 2026-10-10. Scope: `HCW-NetworkEyes_AddOn` (downstream) and `saulpatinojr/Work-Cloud_Network_Core`
+
+> **Amended 2026-10-10.** The owner merged the Core lineage back into `saulpatinojr/HCW-NetworkEyes_App` the same day, so
+> that repository is the App and the upstream of this edition; `Work-Cloud_Network_Core` is no longer written to. Read
+> "the Core" below as the App. The engine wheel is a GitHub Release asset of each `engine-v*` tag there, pinned here by
+> URL and sha256 (`core-update.yml`), so no PyPI step stands between a release and its adoption.
+
+Status: accepted, 2026-10-10. Scope: `HCW-NetworkEyes_AddOn` (downstream) and `saulpatinojr/HCW-NetworkEyes_App`
 (upstream). Applies the program's ADR-0028 model (recorded in `HCW-AzMigrateOrchestrator_App`, copied into the
 sibling Python AddOn) to this pair.
 
@@ -17,7 +23,7 @@ repository's `REFACTOR_APP.md` addressed to Core paths.
 
 | Repository | Holds | Publishes |
 |---|---|---|
-| `saulpatinojr/Work-Cloud_Network_Core` (**upstream**) | The engine (`packages/cna-azure-network-engine`: model, rules with a registry and `RULES_VERSION`, classifier, findings, Markdown/JSON report, Resource Graph normalizer; `[azure]` extra for discovery), the monorepo `cna` package, the appliance edition on Container Apps. Canonical ADR log. | `cna-azure-network-engine` (wheel, tag `engine-v*`), appliance image `docker.io/hybridcloudworks/cna` |
+| `saulpatinojr/HCW-NetworkEyes_App` (**upstream**) | The engine (`packages/cna-azure-network-engine`: model, rules with a registry and `RULES_VERSION`, classifier, findings, Markdown/JSON report, Resource Graph normalizer; `[azure]` extra for discovery), the monorepo `cna` package, the appliance edition on Container Apps. Canonical ADR log. | `cna-azure-network-engine` (wheel, tag `engine-v*`), appliance image `docker.io/hybridcloudworks/cna` |
 | `saulpatinojr/HCW-NetworkEyes_AddOn` (**downstream**) | Ingestion of uploaded exports, the in-memory store, the FastAPI lab API (`NA_*`), the pane, samples, docs, the lab image. Interim: the ported engine (ADR-0001). | Lab image `docker.io/hybridcloudworks/hcw-addon-network-assessment` |
 
 1. **Direction.** Engine, rule, model and classifier work happens upstream. This edition changes ported code only through

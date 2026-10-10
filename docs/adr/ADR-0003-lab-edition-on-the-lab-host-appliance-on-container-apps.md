@@ -1,6 +1,6 @@
 # ADR-0003: The lab edition runs on the lab host; the appliance on Azure Container Apps
 
-Status: accepted, 2026-10-10. Scope: this repository (lab); `saulpatinojr/Work-Cloud_Network_Core` (appliance, by its
+Status: accepted, 2026-10-10. Scope: this repository (lab); `saulpatinojr/HCW-NetworkEyes_App` (appliance, by its
 `REFACTOR_APP.md` change set G and section 12).
 
 ## Context

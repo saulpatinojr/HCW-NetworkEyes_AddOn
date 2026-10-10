@@ -1,4 +1,4 @@
-# Ported from saulpatinojr/Work-Cloud_Network_Core cna/core/findings_schema.py at 5d3b914; changes: MCP and review
+# Ported from saulpatinojr/HCW-NetworkEyes_App cna/core/findings_schema.py at 5d3b914; changes: MCP and review
 # fields
 # dropped (recommendations[].source, recommendation_source, human_reviewed, human_notes, est_monthly_cost_usd,
 # data_confidence, status, FindingRecommendation, FindingStatus); ObservedState gained `state`; Finding gained

@@ -1,7 +1,7 @@
 # Architecture decision records
 
 This edition's own decisions, numbered from 0001, and the shared skeleton decision copied from the sibling Python
-AddOn. The canonical log for the pair is the Core's (`saulpatinojr/Work-Cloud_Network_Core`); copies here carry a
+AddOn. The canonical log for the pair is the Core's (`saulpatinojr/HCW-NetworkEyes_App`); copies here carry a
 header saying where they came from.
 
 | ADR | Title |

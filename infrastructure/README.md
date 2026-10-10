@@ -8,13 +8,13 @@
 
 There is no Terraform here and there must not be (AddOn Integration Standard, section 3): the lab host belongs to the
 website repository (`lab-host/ansible`, role `addons`), and the Azure appliance belongs to the Core
-(`saulpatinojr/Work-Cloud_Network_Core`, its `REFACTOR_APP.md` change set G).
+(`saulpatinojr/HCW-NetworkEyes_App`, its `REFACTOR_APP.md` change set G).
 
 The lab application (with the ported engine under `network_assessment/{model,rules,classify}`, ADR-0001) is copied
 into `/usr/local/lib/python3.14/site-packages` as a source tree rather than built as a wheel, so no build backend
 enters the image. `requirements.lock.txt` is `uv export --format requirements-txt --no-dev --no-emit-project
 --no-emit-workspace --no-header` (hashes on by default) and is the only input `pip install --require-hashes --no-deps`
-reads. Once the Core publishes `cna-azure-network-engine`, the wheel joins that lock and the ported tree is deleted.
+reads. Once the App (`HCW-NetworkEyes_App`) publishes `cna-azure-network-engine`, the wheel (a GitHub Release asset, pinned by URL and sha256) joins that lock and the ported tree is deleted.
 
 Image build, Trivy and the `import azure` image check run in CI (`publish-images.yml`); the authoring container had no
 Docker daemon (see `VALIDATION.md`).

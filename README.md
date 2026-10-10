@@ -28,7 +28,7 @@ production.
 
 ```mermaid
 flowchart LR
-  Core["Work-Cloud_Network_Core<br/>upstream: the engine, the appliance edition on Azure"]
+  Core["HCW-NetworkEyes_App<br/>upstream: the engine, the appliance edition on Azure"]
   Wheel["cna-azure-network-engine<br/>wheel (future, REFACTOR_APP.md change set C)"]
   subgraph AddOn["HCW-NetworkEyes_AddOn (this repository)"]
     Port["src/network_assessment/{model,rules,classify}<br/>interim ported engine (PROVENANCE.md)"]
@@ -46,8 +46,8 @@ flowchart LR
   Host -- "frame + status proxy" --> Site
 ```
 
-The engine is ported **here** from the Core at `5d3b914` so the lab can ship now
-([`docs/adr/ADR-0001-interim-ported-engine.md`](docs/adr/ADR-0001-interim-ported-engine.md)). When the Core publishes
+The engine is ported **here** from the App (`HCW-NetworkEyes_App`) at `5d3b914` so the lab can ship now
+([`docs/adr/ADR-0001-interim-ported-engine.md`](docs/adr/ADR-0001-interim-ported-engine.md)). When the App publishes
 `cna-azure-network-engine`, `.github/workflows/core-update.yml` pins the wheel, this repository deletes the ported
 copy, and later releases arrive as compatible / needs-adaptation pull requests. Nothing here can reach Azure:
 `tests/security/test_edition_boundary.py` fails the build if anything could, and `publish-images.yml` proves

@@ -1,7 +1,7 @@
 # Documentation index
 
 This repository documents the lab edition of the Network Assessment. The canonical ADR log for the pair lives upstream
-in `saulpatinojr/Work-Cloud_Network_Core` (its `REFACTOR_APP.md` and decision log); this edition's own ADRs and the
+in `saulpatinojr/HCW-NetworkEyes_App` (its `REFACTOR_APP.md` and decision log); this edition's own ADRs and the
 copies it depends on are under `adr/`.
 
 | Document | Purpose |

@@ -1,11 +1,14 @@
 # Actions are pinned to full commit SHAs (version in the trailing comment); Dependabot (github-actions ecosystem) proposes updates.
-# Upstream -> downstream flow (ADR-0001, ADR-0004; ADR-0028 by analogy). INERT until the Core
-# (saulpatinojr/Work-Cloud_Network_Core, REFACTOR_APP.md change sets C and J) publishes the engine wheel
-# cna-azure-network-engine. This repository then pins it in pyproject.toml as
-#   "cna-azure-network-engine==<version>"   # ENGINE_REF
-# deletes its ported copy under src/network_assessment/{model,rules,classify} (and the PROVENANCE.md rows for them),
-# and this workflow compares the pinned ENGINE_REF with the Core's latest `engine-v*` release on every run. Until the
-# ENGINE_REF line exists, the comparison below finds nothing and exits cleanly.
+# Upstream -> downstream flow (ADR-0001, ADR-0004; ADR-0028 by analogy). The App (saulpatinojr/HCW-NetworkEyes_App,
+# REFACTOR_APP.md change sets C and J) builds the engine wheel cna-azure-network-engine on every `engine-v*` tag and
+# attaches it to the GitHub Release (320-release-engine.yml); PyPI publishing there is optional and not needed here.
+# This repository then pins the release asset by URL in pyproject.toml, on one line, as
+#   "cna-azure-network-engine @ https://github.com/saulpatinojr/HCW-NetworkEyes_App/releases/download/engine-v<version>/cna_azure_network_engine-<version>-py3-none-any.whl",  # ENGINE_REF <version>
+# `uv lock` records the wheel's sha256 and `uv export` writes it to requirements.lock.txt, so the image's
+# `pip install --require-hashes` keeps verifying every third-party file (a git+https pin cannot be hash-checked and would
+# break that build). Adopting the wheel deletes the ported copy under src/network_assessment/{model,rules,classify} and
+# the PROVENANCE.md rows for it. This workflow compares the pinned ENGINE_REF with the App's latest `engine-v*` release on
+# every run. Until the ENGINE_REF line exists, the comparison below finds nothing and exits cleanly.
 # Pull requests opened with GITHUB_TOKEN do not trigger other workflows, so the compatibility check runs here.
 name: core-update
 on:
@@ -13,13 +16,13 @@ on:
   workflow_dispatch:
     inputs:
       ref:
-        description: "Core engine release tag to adopt (engine-v*; default: latest engine release)"
+        description: "App engine release tag to adopt (engine-v*; default: latest engine release)"
         required: false
 permissions:
   contents: write
   pull-requests: write
 env:
-  UPSTREAM: saulpatinojr/Work-Cloud_Network_Core
+  UPSTREAM: saulpatinojr/HCW-NetworkEyes_App
   PACKAGE: cna-azure-network-engine
 jobs:
   check-and-bump:
@@ -27,11 +30,11 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - id: refs
-        name: Compare the pinned ENGINE_REF with the Core's latest engine release
+        name: Compare the pinned ENGINE_REF with the App's latest engine release
         env: { GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}", REQUESTED: "${{ inputs.ref }}" }
         run: |
           set -euo pipefail
-          current="$(grep -oE "\"${PACKAGE}==[0-9][0-9A-Za-z.+-]*\"[[:space:]]*#[[:space:]]*ENGINE_REF" pyproject.toml | head -1 | sed -E "s/.*==([^\"]*)\".*/\1/" || true)"
+          current="$(grep -oE "#[[:space:]]*ENGINE_REF[[:space:]]+[0-9][0-9A-Za-z.+-]*" pyproject.toml | head -1 | awk '{print $NF}' || true)"
           if [ -z "$current" ]; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
             echo "::notice::no ENGINE_REF in pyproject.toml: the engine is still the ported copy under src/network_assessment (ADR-0001); nothing to adopt yet"
@@ -40,7 +43,7 @@ jobs:
           if [ -n "$REQUESTED" ]; then latest_tag="$REQUESTED"; else
             latest_tag="$(gh api "repos/${UPSTREAM}/releases?per_page=50" --jq '[.[] | select(.draft == false and .prerelease == false and (.tag_name | startswith("engine-v")))][0].tag_name' 2>/dev/null || true)"
           fi
-          if [ -z "$latest_tag" ] || [ "$latest_tag" = "null" ]; then echo "changed=false" >> "$GITHUB_OUTPUT"; echo "::notice::the Core has no engine-v* release yet"; exit 0; fi
+          if [ -z "$latest_tag" ] || [ "$latest_tag" = "null" ]; then echo "changed=false" >> "$GITHUB_OUTPUT"; echo "::notice::the App has no engine-v* release yet"; exit 0; fi
           latest="${latest_tag#engine-v}"
           echo "latest=$latest" >> "$GITHUB_OUTPUT"; echo "current=$current" >> "$GITHUB_OUTPUT"
           if [ "$latest" = "$current" ]; then echo "changed=false" >> "$GITHUB_OUTPUT"; echo "already at $current"; else echo "changed=true" >> "$GITHUB_OUTPUT"; echo "$current -> $latest"; fi
@@ -54,7 +57,9 @@ jobs:
         env: { LATEST: "${{ steps.refs.outputs.latest }}", CURRENT: "${{ steps.refs.outputs.current }}" }
         run: |
           set -euo pipefail
-          sed -i -E "s/\"${PACKAGE}==${CURRENT}\"([[:space:]]*#[[:space:]]*ENGINE_REF)/\"${PACKAGE}==${LATEST}\"\1/" pyproject.toml
+          # One line carries the release tag, the wheel file name and the ENGINE_REF marker; all three move together.
+          sed -i -E "s|releases/download/engine-v${CURRENT}/cna_azure_network_engine-${CURRENT}-py3-none-any\.whl(\",?[[:space:]]*#[[:space:]]*ENGINE_REF[[:space:]]+)${CURRENT}|releases/download/engine-v${LATEST}/cna_azure_network_engine-${LATEST}-py3-none-any.whl\1${LATEST}|" pyproject.toml
+          grep -q "ENGINE_REF ${LATEST}" pyproject.toml
           uv lock --upgrade-package "${PACKAGE}"
           uv export --format requirements-txt --no-dev --no-emit-project --no-emit-workspace --no-header -o requirements.lock.txt
           git --no-pager diff --stat
@@ -82,7 +87,7 @@ jobs:
             uv.lock
             requirements.lock.txt
           body: |
-            The Core `saulpatinojr/Work-Cloud_Network_Core` released engine **${{ steps.refs.outputs.latest }}** (this edition pinned `${{ steps.refs.outputs.current }}`).
+            The App `saulpatinojr/HCW-NetworkEyes_App` released engine **${{ steps.refs.outputs.latest }}** (this edition pinned `${{ steps.refs.outputs.current }}`).
 
             Compatibility check in this workflow run (lint, unit, contract, security, rule catalog drift, Playwright e2e): **${{ steps.compat.outcome }}**.
             Logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}

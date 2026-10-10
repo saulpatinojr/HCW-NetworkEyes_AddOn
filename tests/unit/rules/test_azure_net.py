@@ -1,4 +1,4 @@
-# Ported from saulpatinojr/Work-Cloud_Network_Core tests/unit/test_analysis_engine.py (TestAzureNetFindingRules,
+# Ported from saulpatinojr/HCW-NetworkEyes_App tests/unit/test_analysis_engine.py (TestAzureNetFindingRules,
 # TestAzurePeeringGatewayTransit) at 5d3b914; changes: lab model builders and the registry's evaluate() replace the
 # AnalysisEngine/EngagementStore fixtures; cases for the reimplemented AZ-NET-011, the extended 003/006/007/012/014 and
 # the Engine B rules AZ-NET-020..033 added.
