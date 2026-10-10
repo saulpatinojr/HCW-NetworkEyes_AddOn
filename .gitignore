@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+.pytest_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+dist/
+build/
+*.egg-info/
+
+# Secrets, state and runtime data (never committed)
+.env
+.env.*
+!.env.example
+*.pem
+*.pfx
+*.publishsettings
+.azure/
+*.tfstate
+*.tfstate.*
+*.tfvars
+.terraform/
+data/
+assessment-output/
+
+# Packaging and tooling output
+*.zip
+*.log
+.local/
+node_modules/
+test-results/
+playwright-report/
+.DS_Store

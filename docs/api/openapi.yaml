@@ -1,0 +1,313 @@
+openapi: 3.1.0
+info:
+  title: Hybrid Cloud Works Network Assessment API (lab edition)
+  version: 0.1.0
+  description: |
+    Upload-only assessment API over an Azure Resource Graph export of microsoft.network/* rows. Never connects to Azure,
+    never accepts credentials, holds everything in memory, expires assessments after NA_TTL_MINUTES (120 by default).
+    Every response carries `X-Addon-Id: network-assessment`, `X-Addon-Version`, `X-Content-Type-Options: nosniff`,
+    `Referrer-Policy: no-referrer`, `Permissions-Policy`, `Cross-Origin-Opener-Policy: same-origin`,
+    `Content-Security-Policy` (frame-ancestors from env) and `Cache-Control`.
+    Errors are `{ error: { code, message, details? } }`. Any other `/api/*` path answers `404 not_found`; a known path
+    with another method answers `405 method_not_allowed`; an unexpected failure answers `500 internal_error`.
+    `tests/contract/test_openapi_routes.py` keeps this file and the implementation aligned two-way (paths and methods).
+servers:
+  - url: /
+paths:
+  /api/health:
+    get:
+      summary: Liveness and edition facts (flat standard envelope; answered without any upstream dependency)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Health" }
+  /api/config:
+    get:
+      summary: Public pane settings (verification site key and action, limits, site origins)
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/Config" } } } }
+  /api/rules:
+    get:
+      summary: The rule registry (ids, versions, severities, evidence, remediation, learn links; never evaluator code)
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/RulesResponse" } } } }
+  /api/sample.json:
+    get:
+      summary: Fictional sample export (az graph query envelope, 48 rows, subscriptions 00000000-0000-0000-0000-000000000001 and …0002)
+      responses:
+        "200": { description: application/json attachment }
+  /api/sample.csv:
+    get:
+      summary: The same sample as a Resource Graph Explorer CSV
+      responses:
+        "200": { description: text/csv attachment }
+  /api/assessments:
+    post:
+      summary: Create an assessment from a Resource Graph export
+      description: |
+        Order of checks: rate limit (429), media type (415), human verification (503 when not configured and not
+        explicitly allowed; 403 when the token is missing or refused), body size (413, reading stops at the limit),
+        JSON (400 invalid_json), request shape (400 invalid_request), export shape (400 invalid_export: not an array or
+        envelope, no TYPE column, no usable rows), rows (422 too_many_rows), normalisation (422 ingestion_failed: no
+        microsoft.network/* rows), concurrency (503 overloaded after 2 s). Header `x-turnstile-token` carries the
+        verification token; siteverify must echo `action = network-assessment-upload` and, when NA_PUBLIC_HOST is set,
+        `hostname = NA_PUBLIC_HOST`. The portal "All resources" CSV is accepted with the warning "no properties column".
+      parameters:
+        - { name: x-turnstile-token, in: header, required: false, schema: { type: string, maxLength: 2048 } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: "#/components/schemas/CreateAssessmentRequest"
+                - type: array
+                  description: Bare array of Resource Graph rows
+                  items: { type: object }
+                - $ref: "#/components/schemas/GraphQueryEnvelope"
+          text/csv:
+            schema: { type: string, description: Resource Graph Explorer CSV or the portal "All resources" CSV }
+      responses:
+        "201": { description: Created, content: { application/json: { schema: { $ref: "#/components/schemas/CreateAssessmentResponse" } } } }
+        "400": { description: "invalid_json | invalid_request (details.fields) | invalid_export (details.reason)" }
+        "403": { description: "turnstile_failed (details.codes)" }
+        "413": { description: too_large }
+        "415": { description: unsupported_media_type }
+        "422": { description: "ingestion_failed (details.reason, details.warnings: row numbers and column names only) | too_many_rows (details.rows, details.maxRows)" }
+        "429": { description: "rate_limited (Retry-After)" }
+        "503": { description: "overloaded (Retry-After) | turnstile_not_configured" }
+  /api/assessments/{id}:
+    parameters:
+      - { $ref: "#/components/parameters/Id" }
+      - { $ref: "#/components/parameters/OwnerToken" }
+    get:
+      summary: The full assessment document, the bundle file list and the expiry
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { type: object, properties: { assessment: { $ref: "#/components/schemas/Assessment" }, files: { type: array, items: { type: string } }, expiresAt: { type: string, format: date-time } } } } } }
+        "404": { description: Not found, expired, or owner token missing or wrong (indistinguishable by design) }
+    delete:
+      summary: Delete the assessment and every derived file immediately
+      responses:
+        "200": { description: "{ deleted: true }" }
+        "404": { description: not_found }
+  /api/assessments/{id}/report.md:
+    parameters:
+      - { $ref: "#/components/parameters/Id" }
+      - { $ref: "#/components/parameters/OwnerToken" }
+    get:
+      summary: The Markdown report (attachment)
+      responses:
+        "200": { description: "text/markdown" }
+        "404": { description: not_found }
+  /api/assessments/{id}/report.json:
+    parameters:
+      - { $ref: "#/components/parameters/Id" }
+      - { $ref: "#/components/parameters/OwnerToken" }
+    get:
+      summary: The assessment document with rules and model versions and the expiry (the "JSON" output)
+      responses:
+        "200": { description: application/json }
+        "404": { description: not_found }
+  /api/assessments/{id}/bundle.zip:
+    parameters:
+      - { $ref: "#/components/parameters/Id" }
+      - { $ref: "#/components/parameters/OwnerToken" }
+    get:
+      summary: README.md, report.md, findings.json, topology.json, summary.json, rules.json and NOT-FOR-PRODUCTION.md zipped with STORE (attachment)
+      responses:
+        "200": { description: application/zip }
+        "404": { description: not_found }
+  /api/assessments/{id}/files/{path}:
+    parameters:
+      - { $ref: "#/components/parameters/Id" }
+      - { name: path, in: path, required: true, schema: { type: string, enum: [README.md, report.md, findings.json, topology.json, summary.json, rules.json, NOT-FOR-PRODUCTION.md] } }
+      - { $ref: "#/components/parameters/OwnerToken" }
+    get:
+      summary: One bundle file by exact name
+      responses:
+        "200": { description: File content with a type-appropriate content-type }
+        "404": { description: not_found }
+components:
+  parameters:
+    Id: { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+    OwnerToken: { name: x-owner-token, in: header, required: true, schema: { type: string } }
+  schemas:
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code: { type: string, pattern: "^[a-z_]+$" }
+            message: { type: string }
+            details: { type: object }
+    Health:
+      type: object
+      required: [ok, id, version, edition, capabilities, asOf, siteOrigins, turnstile, azureConnectivity, rules, model, limits]
+      properties:
+        ok: { type: boolean }
+        id: { const: network-assessment }
+        version: { type: string, pattern: "^\\d+\\.\\d+\\.\\d+" }
+        edition: { const: lab }
+        capabilities: { type: array, items: { type: string, maxLength: 40 }, maxItems: 20, description: "resource-graph-export, report-markdown, report-json, bundle-zip, sample" }
+        asOf: { type: string, format: date-time }
+        siteOrigins: { type: array, items: { type: string, format: uri } }
+        turnstile: { type: object, properties: { required: { type: boolean }, siteKey: { type: [string, "null"] } } }
+        azureConnectivity: { const: disabled-by-design }
+        rules: { type: object, properties: { version: { type: string }, count: { type: integer }, liveOnly: { type: integer } } }
+        model: { type: object, properties: { version: { type: string } } }
+        limits: { type: object, properties: { maxUploadBytes: { type: integer }, maxRows: { type: integer }, ttlMinutes: { type: integer } } }
+    Config:
+      type: object
+      properties:
+        turnstileSiteKey: { type: [string, "null"] }
+        turnstileRequired: { type: boolean }
+        turnstileAction: { const: network-assessment-upload }
+        limits: { type: object, properties: { maxUploadBytes: { type: integer }, maxRows: { type: integer } } }
+        ttlMinutes: { type: integer }
+        siteOrigins: { type: array, items: { type: string } }
+    Rule:
+      type: object
+      properties:
+        id: { type: string, pattern: "^AZ-(NET|BCDR|COST)-\\d{3}$" }
+        title: { type: string }
+        severity: { enum: [critical, high, medium, low, informational] }
+        category: { type: string }
+        version: { type: integer }
+        appliesTo: { enum: [export, live-only] }
+        evidence: { type: string, description: The export fields the rule reads, or the live read it needs }
+        needsProperties: { type: boolean }
+        description: { type: string }
+        remediation: { type: string }
+        learnUrl: { type: string, format: uri, description: "[VERIFY] until the owner confirms it" }
+        frameworks: { type: array, items: { $ref: "#/components/schemas/FrameworkMapping" }, description: "[VERIFY] compliance references" }
+    RulesResponse:
+      type: object
+      properties:
+        version: { type: string }
+        modelVersion: { type: string }
+        count: { type: integer }
+        liveOnly: { type: integer }
+        verify: { type: boolean, description: "true while learn links and framework references are marked [VERIFY]" }
+        rules: { type: array, items: { $ref: "#/components/schemas/Rule" } }
+    FrameworkMapping:
+      type: object
+      properties:
+        framework: { type: string }
+        version: { type: [string, "null"] }
+        pillar: { type: [string, "null"] }
+        control: { type: [string, "null"] }
+        controlId: { type: [string, "null"] }
+        controlName: { type: [string, "null"] }
+        alignment: { type: [string, "null"] }
+    GraphQueryEnvelope:
+      type: object
+      required: [data]
+      properties:
+        count: { type: integer }
+        data: { type: array, items: { type: object } }
+        skip_token: { type: [string, "null"], description: "non-null yields the warning: export is paged; only the first page was uploaded" }
+        total_records: { type: integer }
+    CreateAssessmentRequest:
+      type: object
+      required: [format, content]
+      additionalProperties: false
+      properties:
+        format: { enum: [arg-json, arg-csv] }
+        content: { type: string, maxLength: 5242880 }
+        fileName: { type: string, pattern: "^[\\w .()-]{1,120}\\.(json|csv)$" }
+    ObservedState:
+      type: object
+      properties:
+        state: { enum: [observed, unknown, not-applicable] }
+        fact: { type: string, description: Hedge-free, enforced }
+        evidenceRef: { type: string, description: "export:<subscription>.<collection>[id=…].<field>" }
+    Finding:
+      type: object
+      properties:
+        id: { type: string, description: "ruleId:resourceId (the dedup key)" }
+        ruleId: { type: string }
+        ruleVersion: { type: integer }
+        severity: { enum: [critical, high, medium, low, informational] }
+        platform: { const: azure }
+        region: { type: [string, "null"] }
+        category: { type: string }
+        title: { type: string }
+        description: { type: [string, "null"] }
+        resourceId: { type: string }
+        resourceType: { type: string }
+        subscriptionId: { type: [string, "null"] }
+        observedState: { $ref: "#/components/schemas/ObservedState" }
+        affectedResources: { type: array, items: { type: string } }
+        frameworkMappings: { type: array, items: { $ref: "#/components/schemas/FrameworkMapping" } }
+        remediation: { type: string }
+        learnUrl: { type: string }
+        trafficDirection: { enum: [east_west, north_south, management, ""] }
+        createdAt: { type: string, format: date-time }
+        version: { type: string, description: findings model version }
+    Unknown:
+      type: object
+      properties:
+        ruleId: { type: string }
+        reason: { type: string }
+    Topology:
+      type: object
+      properties:
+        pattern: { enum: [vwan, hub_spoke, mesh, isolated] }
+        hubVnetIds: { type: array, items: { type: string } }
+        spokeVnetIds: { type: array, items: { type: string } }
+        rationale: { type: string }
+    Summary:
+      type: object
+      properties:
+        resourceCount: { type: integer, description: microsoft.network/* rows }
+        rowCount: { type: integer, description: rows in the export }
+        subscriptions: { type: array, items: { type: string } }
+        byType: { type: object, additionalProperties: { type: integer } }
+        topology: { $ref: "#/components/schemas/Topology" }
+        findingsCount: { type: integer }
+        findingsBySeverity: { type: object, additionalProperties: { type: integer } }
+        unknownRules: { type: integer }
+        rulesEvaluated: { type: integer }
+        warnings: { type: array, items: { type: string } }
+        rulesVersion: { type: string }
+        modelVersion: { type: string }
+        generatedAt: { type: string, format: date-time }
+    Resource:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        type: { type: string }
+        location: { type: [string, "null"] }
+        subscriptionId: { type: [string, "null"] }
+        resourceGroup: { type: [string, "null"] }
+        findingIds: { type: array, items: { type: string } }
+        facts: { type: object, description: The fields the rules read on this resource }
+    Assessment:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        createdAt: { type: string, format: date-time }
+        sourceFormat: { enum: [arg-json, arg-csv] }
+        fileName: { type: [string, "null"] }
+        rulesVersion: { type: string }
+        modelVersion: { type: string }
+        summary: { $ref: "#/components/schemas/Summary" }
+        findings: { type: array, items: { $ref: "#/components/schemas/Finding" } }
+        resources: { type: array, items: { $ref: "#/components/schemas/Resource" } }
+        unknowns: { type: array, items: { $ref: "#/components/schemas/Unknown" } }
+        warnings: { type: array, items: { type: string } }
+    CreateAssessmentResponse:
+      type: object
+      required: [assessmentId, ownerToken, expiresAt, summary, ingestionWarnings]
+      properties:
+        assessmentId: { type: string, format: uuid }
+        ownerToken: { type: string, description: Shown once; required for every later call; stored hashed }
+        expiresAt: { type: string, format: date-time }
+        summary: { $ref: "#/components/schemas/Summary" }
+        ingestionWarnings: { type: array, items: { type: string } }

@@ -1,0 +1,44 @@
+NAME,TYPE,RESOURCE GROUP,LOCATION,SUBSCRIPTION,SUBSCRIPTION ID,TAGS
+hcw-sample-vnet-hub,Virtual network,hcw-sample-rg-hub,eastus2,hcw-sample-hub,00000000-0000-0000-0000-000000000001,environment: sample; owner: hcw-sample-team
+hcw-sample-nsg-hub,Network security group,hcw-sample-rg-hub,eastus2,hcw-sample-hub,00000000-0000-0000-0000-000000000001,environment: sample; owner: hcw-sample-team
+hcw-sample-rt-hub,Route table,hcw-sample-rg-hub,eastus2,hcw-sample-hub,00000000-0000-0000-0000-000000000001,environment: sample; owner: hcw-sample-team
+hcw-sample-rt-nobgp,Route table,hcw-sample-rg-hub,eastus2,hcw-sample-hub,00000000-0000-0000-0000-000000000001,environment: sample; owner: hcw-sample-team
+hcw-sample-fw-hub,Firewall,hcw-sample-rg-hub,eastus2,hcw-sample-hub,00000000-0000-0000-0000-000000000001,environment: sample; owner: hcw-sample-team
+hcw-sample-fwpolicy,Firewall Policy,hcw-sample-rg-hub,eastus2,hcw-sample-hub,00000000-0000-0000-0000-000000000001,environment: sample; owner: hcw-sample-team
+hcw-sample-pip-fw,Public IP address,hcw-sample-rg-hub,eastus2,hcw-sample-hub,00000000-0000-0000-0000-000000000001,environment: sample; owner: hcw-sample-team
+hcw-sample-vpngw-hub,Virtual network gateway,hcw-sample-rg-hub,eastus2,hcw-sample-hub,00000000-0000-0000-0000-000000000001,environment: sample; owner: hcw-sample-team
+hcw-sample-pip-vpngw,Public IP address,hcw-sample-rg-hub,eastus2,hcw-sample-hub,00000000-0000-0000-0000-000000000001,environment: sample; owner: hcw-sample-team
+hcw-sample-ergw-hub,Virtual network gateway,hcw-sample-rg-hub,eastus2,hcw-sample-hub,00000000-0000-0000-0000-000000000001,environment: sample; owner: hcw-sample-team
+hcw-sample-pip-ergw,Public IP address,hcw-sample-rg-hub,eastus2,hcw-sample-hub,00000000-0000-0000-0000-000000000001,environment: sample; owner: hcw-sample-team
+hcw-sample-lng-onprem,Local network gateway,hcw-sample-rg-hub,eastus2,hcw-sample-hub,00000000-0000-0000-0000-000000000001,environment: sample; owner: hcw-sample-team
+hcw-sample-conn-onprem,Connection,hcw-sample-rg-hub,eastus2,hcw-sample-hub,00000000-0000-0000-0000-000000000001,environment: sample; owner: hcw-sample-team
+hcw-sample-conn-circuit,Connection,hcw-sample-rg-hub,eastus2,hcw-sample-hub,00000000-0000-0000-0000-000000000001,environment: sample; owner: hcw-sample-team
+hcw-sample-er-circuit,ExpressRoute circuit,hcw-sample-rg-hub,eastus2,hcw-sample-hub,00000000-0000-0000-0000-000000000001,environment: sample; owner: hcw-sample-team
+hcw-sample-bastion,Bastion,hcw-sample-rg-hub,eastus2,hcw-sample-hub,00000000-0000-0000-0000-000000000001,environment: sample; owner: hcw-sample-team
+hcw-sample-pip-bastion,Public IP address,hcw-sample-rg-hub,eastus2,hcw-sample-hub,00000000-0000-0000-0000-000000000001,environment: sample; owner: hcw-sample-team
+hcw-sample-agw-public,Application gateway,hcw-sample-rg-hub,eastus2,hcw-sample-hub,00000000-0000-0000-0000-000000000001,environment: sample; owner: hcw-sample-team
+hcw-sample-wafpolicy,Web Application Firewall policies (WAF),hcw-sample-rg-hub,eastus2,hcw-sample-hub,00000000-0000-0000-0000-000000000001,environment: sample; owner: hcw-sample-team
+hcw-sample-pip-agw,Public IP address,hcw-sample-rg-hub,eastus2,hcw-sample-hub,00000000-0000-0000-0000-000000000001,environment: sample; owner: hcw-sample-team
+hcw-sample-agw-internal,Application gateway,hcw-sample-rg-hub,eastus2,hcw-sample-hub,00000000-0000-0000-0000-000000000001,environment: sample; owner: hcw-sample-team
+hcw-sample-lb-internal,Load balancer,hcw-sample-rg-hub,eastus2,hcw-sample-hub,00000000-0000-0000-0000-000000000001,environment: sample; owner: hcw-sample-team
+NetworkWatcher_eastus2,Network watcher,NetworkWatcherRG,eastus2,hcw-sample-hub,00000000-0000-0000-0000-000000000001,environment: sample; owner: hcw-sample-team
+privatelink.blob.core.windows.net,Private DNS zone,hcw-sample-rg-hub,global,hcw-sample-hub,00000000-0000-0000-0000-000000000001,environment: sample; owner: hcw-sample-team
+hcw-sample-pe-storage,Private endpoint,hcw-sample-rg-hub,eastus2,hcw-sample-hub,00000000-0000-0000-0000-000000000001,environment: sample; owner: hcw-sample-team
+hcwsamplefdwaf,Front Door WAF policy,hcw-sample-rg-hub,global,hcw-sample-hub,00000000-0000-0000-0000-000000000001,environment: sample; owner: hcw-sample-team
+hcw-sample-nat-hub,NAT gateway,hcw-sample-rg-hub,eastus2,hcw-sample-hub,00000000-0000-0000-0000-000000000001,environment: sample; owner: hcw-sample-team
+hcw-sample-pip-nat,Public IP address,hcw-sample-rg-hub,eastus2,hcw-sample-hub,00000000-0000-0000-0000-000000000001,environment: sample; owner: hcw-sample-team
+hcw-sample-pip-orphan,Public IP address,hcw-sample-rg-hub,eastus2,hcw-sample-hub,00000000-0000-0000-0000-000000000001,environment: sample; owner: hcw-sample-team
+hcw-sample-nic-shared-1,Network interface,hcw-sample-rg-hub,eastus2,hcw-sample-hub,00000000-0000-0000-0000-000000000001,environment: sample; owner: hcw-sample-team
+hcw-sample-nic-shared-2,Network interface,hcw-sample-rg-hub,eastus2,hcw-sample-hub,00000000-0000-0000-0000-000000000001,environment: sample; owner: hcw-sample-team
+hcw-sample-vnet-spoke1,Virtual network,hcw-sample-rg-spoke,eastus2,hcw-sample-spoke,00000000-0000-0000-0000-000000000002,environment: sample; owner: hcw-sample-team
+hcw-sample-vnet-spoke2,Virtual network,hcw-sample-rg-spoke,eastus2,hcw-sample-spoke,00000000-0000-0000-0000-000000000002,environment: sample; owner: hcw-sample-team
+hcw-sample-vnet-legacy,Virtual network,hcw-sample-rg-spoke,eastus2,hcw-sample-spoke,00000000-0000-0000-0000-000000000002,environment: sample; owner: hcw-sample-team
+hcw-sample-nsg-app,Network security group,hcw-sample-rg-spoke,eastus2,hcw-sample-spoke,00000000-0000-0000-0000-000000000002,environment: sample; owner: hcw-sample-team
+hcw-sample-rt-spoke-internet,Route table,hcw-sample-rg-spoke,eastus2,hcw-sample-spoke,00000000-0000-0000-0000-000000000002,environment: sample; owner: hcw-sample-team
+hcw-sample-lb-basic,Load balancer,hcw-sample-rg-spoke,eastus2,hcw-sample-spoke,00000000-0000-0000-0000-000000000002,environment: sample; owner: hcw-sample-team
+hcw-sample-pip-lb,Public IP address,hcw-sample-rg-spoke,eastus2,hcw-sample-spoke,00000000-0000-0000-0000-000000000002,environment: sample; owner: hcw-sample-team
+hcw-sample-pe-sql,Private endpoint,hcw-sample-rg-spoke,eastus2,hcw-sample-spoke,00000000-0000-0000-0000-000000000002,environment: sample; owner: hcw-sample-team
+privatelink.database.windows.net,Private DNS zone,hcw-sample-rg-spoke,global,hcw-sample-spoke,00000000-0000-0000-0000-000000000002,environment: sample; owner: hcw-sample-team
+hcw-sample-nic-app-1,Network interface,hcw-sample-rg-spoke,eastus2,hcw-sample-spoke,00000000-0000-0000-0000-000000000002,environment: sample; owner: hcw-sample-team
+hcw-sample-nic-app-2,Network interface,hcw-sample-rg-spoke,eastus2,hcw-sample-spoke,00000000-0000-0000-0000-000000000002,environment: sample; owner: hcw-sample-team
+hcw-sample-nic-app-3,Network interface,hcw-sample-rg-spoke,eastus2,hcw-sample-spoke,00000000-0000-0000-0000-000000000002,environment: sample; owner: hcw-sample-team

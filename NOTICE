@@ -1,0 +1,21 @@
+Hybrid Cloud Works Network Assessment (lab edition)
+Copyright (c) 2026 Hybrid Cloud Works. Licensed under MIT (see LICENSE).
+
+[REVIEW REQUIRED] Relicensing of ported code. The modules listed in PROVENANCE.md (the observed-state enforcer, the
+findings and topology models, the topology classifier, the finding taxonomy, the AZ-NET/AZ-BCDR/AZ-COST rule logic and
+their framework mappings) are ported from saulpatinojr/Work-Cloud_Network_Core at commit 5d3b914 (the former
+HCW-NetworkEyes_App). That repository declares no license in its pyproject.toml and labels its image
+`org.opencontainers.image.licenses="Proprietary"` at that commit. The program's owner decision (2026-10-09) is to port
+with provenance under MIT; the owner confirms the relicensing, the copyright holder and the brand (Hybrid Cloud Works)
+before publication. Until then the ported files keep their `# Ported from …` header lines and this notice.
+
+[VERIFY] [REVIEW REQUIRED] Compliance references. The framework mappings in src/network_assessment/rules/frameworks.py
+(Azure Well-Architected Framework, Azure Security Benchmark, CIS Microsoft Azure Foundations Benchmark, NIST CSF,
+PCI-DSS 4.0, ISO 27001:2022, HIPAA §164.312, FedRAMP Moderate, CISA ZTMM v2, FinOps Framework) are compliance claims
+carried over from the Core and await legal/compliance review before public exposure. Every reference link to
+learn.microsoft.com is marked [VERIFY] until the owner confirms it. Microsoft, Azure and Entra are trademarks of
+Microsoft Corporation; this project is not affiliated with or endorsed by Microsoft or by any framework author.
+
+The pane's theme tokens (web/theme.css) are copied from the hybridcloudworks.com website repository
+(HCW-HybridCloudWorks, frontend/src/index.css) on 2026-10-10. Generated reports are illustrative and are not for
+production.

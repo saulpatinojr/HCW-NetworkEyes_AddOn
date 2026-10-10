@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>Network assessment (lab edition)</title>
+  <link rel="stylesheet" href="/theme.css">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<main>
+  <header class="bar">
+    <div>
+      <h1>Network assessment</h1>
+      <span class="badge">Lab edition · no cloud connectivity by design</span>
+      <span class="badge">Not production</span>
+    </div>
+    <div>
+      <span class="badge status" id="status" aria-live="polite">Checking…</span>
+    </div>
+  </header>
+
+  <p class="notice" id="notice">
+    This tool reads one export of your Azure network resources. It never asks for credentials and never connects to your cloud.
+    Everything is held in memory, is returned only to this browser session, and expires after two hours or when you delete it.
+  </p>
+
+  <section class="step" id="step-upload" aria-labelledby="h-upload">
+    <h2 id="h-upload">1. Upload a Resource Graph export</h2>
+    <p class="small">Accepted: the JSON from <code>az graph query</code> over <code>microsoft.network/*</code> (array or envelope) or the Resource Graph Explorer CSV. A portal "All resources" CSV is accepted too, with the rules that read properties reported as unknown. Up to 5 MB and 5,000 rows. The export commands are in the user guide; Reader on the subscriptions is enough.</p>
+    <label class="dropzone" id="dropzone" tabindex="0" for="file">
+      Drop a .json or .csv file here, or choose a file
+      <input type="file" id="file" accept=".json,.csv,application/json,text/csv">
+    </label>
+    <div class="row">
+      <button type="button" class="secondary" id="use-sample">Use the sample export</button>
+      <a class="button secondary" href="/api/sample.json" download>Download sample JSON</a>
+      <a class="button secondary" href="/api/sample.csv" download>Download sample CSV</a>
+    </div>
+    <div id="preview-wrap" hidden>
+      <p class="small" id="preview-summary"></p>
+      <div class="scroll"><table id="preview"><thead></thead><tbody></tbody></table></div>
+      <ul class="warnings" id="preview-warnings"></ul>
+    </div>
+    <div class="row">
+      <div id="verification" aria-label="Human verification"></div>
+      <button type="button" id="run" disabled>Run assessment</button>
+      <span class="small" id="run-note"></span>
+    </div>
+  </section>
+
+  <section class="step" id="step-summary" hidden aria-labelledby="h-summary">
+    <h2 id="h-summary">2. Summary</h2>
+    <p class="small" id="summary-line"></p>
+    <div class="tiles" id="tiles"></div>
+    <div class="topology" id="topology"></div>
+    <ul class="warnings" id="ingestion-warnings"></ul>
+  </section>
+
+  <section class="step" id="step-findings" hidden aria-labelledby="h-findings">
+    <h2 id="h-findings">3. Findings</h2>
+    <div class="filters">
+      <label>Severity <select id="f-severity"><option value="">All</option><option>critical</option><option>high</option><option>medium</option><option>low</option><option>informational</option></select></label>
+      <label>Category <select id="f-category"><option value="">All</option></select></label>
+      <label>Search <input type="search" id="f-search" placeholder="resource or rule"></label>
+      <span class="small" id="findings-count"></span>
+    </div>
+    <div class="scroll">
+      <table id="findings">
+        <thead><tr><th>Rule</th><th>Severity</th><th>Resource</th><th>Type</th><th>Category</th><th>Fact</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div class="drawer" id="detail" hidden>
+      <h3>Resource detail</h3>
+      <dl class="detail" id="detail-list"></dl>
+    </div>
+  </section>
+
+  <section class="step" id="step-unknown" hidden aria-labelledby="h-unknown">
+    <h2 id="h-unknown">Rules this export cannot answer</h2>
+    <p class="small">These rules are registered and reported, not dropped: each one names what it needs and why the export does not carry it.</p>
+    <ul id="unknown-list"></ul>
+  </section>
+
+  <section class="step" id="step-cannot" hidden aria-labelledby="h-cannot">
+    <h2 id="h-cannot">What this cannot tell you</h2>
+    <ul class="cannot">
+      <li>Utilisation and saturation of gateways, firewalls, load balancers and circuits (metrics)</li>
+      <li>Diagnostic settings on firewalls and Bastion hosts; attacks in progress</li>
+      <li>BGP peer state, learned and advertised routes; effective routes and effective NSG rules per network interface</li>
+      <li>Private endpoint DNS resolution from inside the VNet; Defender assessments; cost</li>
+      <li>Flow logs, when the export carries no <code>networkwatchers/flowlogs</code> rows</li>
+      <li>Resources outside <code>microsoft.network/</code>, resources the exporting identity could not read, and subscriptions not in the export</li>
+    </ul>
+  </section>
+
+  <section class="step" id="step-actions" hidden aria-labelledby="h-actions">
+    <h2 id="h-actions">4. Report and data</h2>
+    <div class="tabs" role="tablist">
+      <button type="button" role="tab" id="tab-report" aria-selected="true">Report</button>
+      <button type="button" role="tab" id="tab-resources" aria-selected="false">Resources</button>
+    </div>
+    <div class="row">
+      <button type="button" id="download-bundle">Download bundle</button>
+      <button type="button" class="secondary" id="copy-report">Copy report</button>
+      <button type="button" class="danger" id="delete">Delete my data now</button>
+      <span class="small" id="expiry"></span>
+    </div>
+    <p class="small" id="copy-note"></p>
+    <pre class="report" id="report" tabindex="0" aria-label="Report in Markdown"></pre>
+    <div class="scroll" id="resources-wrap" hidden>
+      <table id="resources">
+        <thead><tr><th>Name</th><th>Type</th><th>Subscription</th><th>Findings</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <p class="small" id="unavailable" hidden>This tool isn't available right now.</p>
+  <footer class="small">Findings state observed configuration only; compliance references are marked for verification. Not for production.</footer>
+</main>
+<script src="/app.js"></script>
+</body>
+</html>
