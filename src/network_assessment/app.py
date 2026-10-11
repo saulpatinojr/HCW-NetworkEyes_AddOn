@@ -20,6 +20,7 @@ from network_assessment.security.cors import ExactOriginCorsMiddleware
 from network_assessment.security.headers import SecurityHeadersMiddleware
 from network_assessment.security.ratelimit import ConcurrencyBound, TokenBucketLimiter
 from network_assessment.store import AssessmentStore
+from network_assessment.workspace import CoderWorkspaceProvider
 
 assert_lab_cannot_reach_azure()
 
@@ -33,7 +34,9 @@ def _envelope(status: int, code: str, message: str, details=None, headers=None) 
     return JSONResponse({"error": error}, status_code=status, headers=headers or {})
 
 
-def create_app(settings: Settings | None = None, *, verifier=None, sweep: bool = True) -> FastAPI:
+def create_app(
+    settings: Settings | None = None, *, verifier=None, workspace_opener=None, sweep: bool = True
+) -> FastAPI:
     settings = settings or Settings.from_env()
     logs.configure(silent=settings.log_silent)
 
@@ -63,6 +66,14 @@ def create_app(settings: Settings | None = None, *, verifier=None, sweep: bool =
     app.state.limiter = TokenBucketLimiter(settings.rate_limit_posts, settings.rate_limit_window_minutes * 60)
     app.state.bound = ConcurrencyBound(settings.max_concurrent)
     app.state.verifier = verifier
+    app.state.workspace = CoderWorkspaceProvider(
+        coder_url=settings.coder_url,
+        template_id=settings.coder_template_id,
+        api_base_url=settings.public_base_url,
+        ttl_minutes=settings.workspace_ttl_minutes,
+        session_token=settings.coder_session_token,
+        opener=workspace_opener,
+    )
 
     @app.exception_handler(ApiError)
     async def _api_error(request: Request, exc: ApiError):

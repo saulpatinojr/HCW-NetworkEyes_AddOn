@@ -1,0 +1,25 @@
+# Actions are pinned to full commit SHAs (version in the trailing comment); Dependabot (github-actions ecosystem) proposes updates.
+# Pushes the guided-lab Coder template (`na-guided-lab`) when it changes. Requires repository secrets CODER_URL and
+# CODER_SESSION_TOKEN (a template-admin token; never a personal admin token) and the repository variable
+# CODER_TEMPLATE_ENABLED set to "true".
+name: coder-template
+on:
+  push:
+    branches: [main]
+    paths: ["infrastructure/coder/template/**", ".github/workflows/coder-template.yml"]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  push-template:
+    if: vars.CODER_TEMPLATE_ENABLED == 'true'
+    runs-on: ubuntu-26.04
+    environment: lab
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: coder/setup-action@4a607a8113d4e676e2d7c34caa20a814bc88bfda # v1
+      - name: Push template
+        env:
+          CODER_URL: ${{ secrets.CODER_URL }}
+          CODER_SESSION_TOKEN: ${{ secrets.CODER_SESSION_TOKEN }}
+        run: coder templates push na-guided-lab --directory infrastructure/coder/template --yes --message "${{ github.sha }}"

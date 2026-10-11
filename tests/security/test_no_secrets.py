@@ -54,10 +54,12 @@ def test_no_credential_shaped_strings():
 
 def test_env_example_defines_no_secret_values():
     env = (ROOT / ".env.example").read_text(encoding="utf-8")
-    assert "TURNSTILE_SECRET=" in env
+    assert "TURNSTILE_SECRET=" in env and "CODER_SESSION_TOKEN=" in env
     for line in env.splitlines():
         if line.startswith("TURNSTILE_SECRET"):
             assert line.strip() == "TURNSTILE_SECRET=", line
+        if line.startswith("CODER_SESSION_TOKEN"):
+            assert line.strip() == "CODER_SESSION_TOKEN=", line
     assert not re.search(r"SECRET\s*=[ \t]*\S", env)
     for key in (
         "PORT",
@@ -66,6 +68,11 @@ def test_env_example_defines_no_secret_values():
         "NA_SITE_ORIGINS",
         "NA_TURNSTILE_SITE_KEY",
         "NA_PUBLIC_HOST",
+        "NA_PUBLIC_BASE_URL",
+        "CODER_URL",
+        "CODER_SESSION_TOKEN",
+        "CODER_TEMPLATE_ID",
+        "NA_WORKSPACE_TTL_MINUTES",
         "NA_ALLOW_NO_TURNSTILE",
         "NA_TTL_MINUTES",
         "NA_MAX_ITEMS",

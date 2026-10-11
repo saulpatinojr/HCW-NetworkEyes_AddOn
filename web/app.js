@@ -315,6 +315,23 @@
     };
     if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(state.reportMd).then(done, fallback); else fallback();
   }
+  function openWorkspace() {
+    if (!state.assessment) return;
+    var status = 0;
+    api('/api/assessments/' + encodeURIComponent(state.assessment.id) + '/workspace', { method: 'POST' })
+      .then(function (r) { status = r.status; return r.json().catch(function () { return null; }); })
+      .then(function (json) {
+        if (status !== 202 || !json || !json.launchUrl) throw new Error(errorMessage(json, status));
+        var note = $('copy-note'); clear(note);
+        note.appendChild(document.createTextNode('Lab workspace ready (' + json.workspaceId + '): '));
+        var a = el('a', null, 'Open lab workspace');
+        a.href = json.launchUrl; a.target = '_blank'; a.rel = 'noopener noreferrer';
+        note.appendChild(a);
+      })
+      .catch(function (err) {
+        text($('copy-note'), err && err.message ? err.message : 'The guided workspace could not be started right now.');
+      });
+  }
   function deleteNow() {
     if (!state.assessment) return;
     if (!window.confirm('Delete this assessment and its files now?')) return;
@@ -346,6 +363,7 @@
     $('tab-resources').addEventListener('click', function () { showTab('resources'); });
     $('download-bundle').addEventListener('click', downloadBundle);
     $('copy-report').addEventListener('click', copyReport);
+    $('open-workspace').addEventListener('click', openWorkspace);
     $('delete').addEventListener('click', deleteNow);
   }
 

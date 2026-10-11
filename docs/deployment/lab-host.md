@@ -37,6 +37,11 @@ filesystem needs no exceptions beyond `/tmp`. The role waits for `http://127.0.0
 | `NA_SITE_ORIGINS` | `https://hybridcloudworks.com https://www.hybridcloudworks.com` | the role derives it from `caddy_frame_ancestors` minus `'self'` |
 | `NA_ALLOWED_ORIGINS` | empty | the pane is same-origin with its API |
 | `NA_PUBLIC_HOST` | `network-assessment.lab.hybridcloudworks.com` | the verification token must be bound to this hostname |
+| `NA_PUBLIC_BASE_URL` | `https://network-assessment.lab.hybridcloudworks.com` | base URL passed into guided workspace containers to fetch `bundle.zip` |
+| `CODER_URL` | `https://coder.lab.hybridcloudworks.com` | always-on guided workspace handoff endpoint (ADR-0005) |
+| `CODER_TEMPLATE_ID` | `na-guided-lab` | Coder template (`infrastructure/coder/template/main.tf`) |
+| `CODER_SESSION_TOKEN` | optional (vault) | when unset, `POST /api/assessments/{id}/workspace` returns a browser-session deep link |
+| `NA_WORKSPACE_TTL_MINUTES` | `240` | guided workspace lifetime (4 hours) |
 | `NA_TRUST_PROXY` | `1` | the first `X-Forwarded-For` value is the client address for rate limiting (Caddy sets it; nothing else can reach the port) |
 | `NA_TURNSTILE_SITE_KEY` | the widget's site key | public; published by `/api/health` |
 | `TURNSTILE_SECRET` | from the vault | never in `group_vars`, Git or the site |

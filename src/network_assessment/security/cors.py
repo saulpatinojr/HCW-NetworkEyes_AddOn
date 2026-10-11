@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 
-ALLOW_HEADERS = b"content-type, x-owner-token, x-turnstile-token"
+ALLOW_HEADERS = b"content-type, x-owner-token, x-turnstile-token, x-bundle-token"
 ALLOW_METHODS = b"GET, POST, DELETE, OPTIONS"
 EXPOSE_HEADERS = b"content-disposition, x-addon-id, x-addon-version, retry-after"
 MAX_AGE = b"600"

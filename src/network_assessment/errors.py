@@ -38,6 +38,7 @@ DEFAULT_CODES = {
     422: "invalid_request",
     429: "rate_limited",
     500: "internal_error",
+    502: "workspace_unavailable",
     503: "overloaded",
 }
 DEFAULT_MESSAGES = {
@@ -50,5 +51,6 @@ DEFAULT_MESSAGES = {
     422: "The export could not be processed.",
     429: "Too many uploads from this client; try again later.",
     500: "Something went wrong on our side.",
+    502: "The guided workspace could not be started right now.",
     503: "The service is busy; try again shortly.",
 }

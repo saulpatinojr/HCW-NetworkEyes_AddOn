@@ -16,6 +16,7 @@ CAPABILITIES = (
     "report-json",
     "bundle-zip",
     "sample",
+    "workspace",
 )
 FORBIDDEN_MODULES = ("azure", "msal", "boto3")
 IDENTITY_ENV_VARS = (

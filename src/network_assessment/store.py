@@ -29,6 +29,12 @@ class _Entry:
     expires_at: float = field(default=0.0)
 
 
+@dataclass(frozen=True)
+class _BundleTokenEntry:
+    assessment_id: str
+    expires_at: float
+
+
 def _is_uuid4(value: str) -> bool:
     try:
         return uuid.UUID(value).version == 4
@@ -46,6 +52,7 @@ class AssessmentStore:
         self._max = max_items
         self._clock = clock
         self._items: dict[str, _Entry] = {}
+        self._bundle_tokens: dict[bytes, _BundleTokenEntry] = {}
         self._lock = threading.Lock()
 
     def put(self, assessment: Assessment, files: dict[str, bytes]) -> Stored:
@@ -76,6 +83,36 @@ class AssessmentStore:
         entry = self._lookup(assessment_id, token)
         return None if entry is None else (entry.assessment, entry.files)
 
+    def issue_bundle_token(self, assessment_id: str, owner_token: str | None, ttl_seconds: int = 600) -> str | None:
+        """Issue a single-use, short-lived token scoped only to GET .../bundle.zip (ADR-0005)."""
+        entry = self._lookup(assessment_id, owner_token)
+        if entry is None:
+            return None
+        bundle_token = secrets.token_urlsafe(24)
+        now = self._clock()
+        expires_at = min(entry.expires_at, now + ttl_seconds)
+        with self._lock:
+            self._sweep_locked(now)
+            self._bundle_tokens[_hash(bundle_token)] = _BundleTokenEntry(assessment_id, expires_at)
+        return bundle_token
+
+    def redeem_bundle_token(
+        self, assessment_id: str, bundle_token: str | None
+    ) -> tuple[Assessment, dict[str, bytes]] | None:
+        """Consume a single-use bundle token and return (assessment, files) if valid and unexpired."""
+        if not bundle_token or not assessment_id:
+            return None
+        token_hash = _hash(bundle_token)
+        with self._lock:
+            now = self._clock()
+            bt = self._bundle_tokens.pop(token_hash, None)
+            if bt is None or bt.assessment_id != assessment_id or bt.expires_at <= now:
+                return None
+            entry = self._items.get(assessment_id)
+            if entry is None or entry.expires_at <= now:
+                return None
+            return (entry.assessment, entry.files)
+
     def expires_at(self, assessment_id: str, token: str | None) -> float | None:
         entry = self._lookup(assessment_id, token)
         return None if entry is None else entry.expires_at
@@ -85,6 +122,9 @@ class AssessmentStore:
         if entry is None:
             return False
         with self._lock:
+            dead_tokens = [h for h, bt in self._bundle_tokens.items() if bt.assessment_id == assessment_id]
+            for h in dead_tokens:
+                del self._bundle_tokens[h]
             return self._items.pop(assessment_id, None) is not None
 
     def sweep(self, now: float | None = None) -> int:
@@ -95,6 +135,11 @@ class AssessmentStore:
         expired = [k for k, v in self._items.items() if v.expires_at <= now]
         for k in expired:
             del self._items[k]
+        expired_bt = [
+            h for h, bt in self._bundle_tokens.items() if bt.expires_at <= now or bt.assessment_id not in self._items
+        ]
+        for h in expired_bt:
+            del self._bundle_tokens[h]
         return len(expired)
 
     @property
@@ -105,3 +150,4 @@ class AssessmentStore:
     def clear(self) -> None:
         with self._lock:
             self._items.clear()
+            self._bundle_tokens.clear()
