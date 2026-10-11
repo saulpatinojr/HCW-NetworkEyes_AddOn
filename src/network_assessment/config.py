@@ -44,6 +44,15 @@ def _origins(env: Mapping[str, str], key: str) -> tuple[str, ...]:
     return tuple(dict.fromkeys(origins))
 
 
+def _url(env: Mapping[str, str], key: str, default: str) -> str:
+    raw = env.get(key, "").strip().rstrip("/")
+    if not raw:
+        return default
+    if not raw.startswith(("https://", "http://")) or " " in raw:
+        raise ValueError(f"{key} must be an http(s) URL")
+    return raw
+
+
 @dataclass(frozen=True)
 class Settings:
     port: int = 8080
@@ -53,6 +62,11 @@ class Settings:
     turnstile_secret: str | None = field(default=None, repr=False)
     turnstile_site_key: str | None = None
     public_host: str | None = None
+    public_base_url: str = "https://network-assessment.lab.hybridcloudworks.com"
+    coder_url: str = "https://coder.lab.hybridcloudworks.com"
+    coder_session_token: str | None = field(default=None, repr=False)
+    coder_template_id: str = "na-guided-lab"
+    workspace_ttl_minutes: int = 240
     allow_no_turnstile: bool = False
     ttl_minutes: int = 120
     max_items: int = 200
@@ -79,6 +93,10 @@ class Settings:
     def from_env(cls, env: Mapping[str, str] | None = None) -> Settings:
         env = os.environ if env is None else env
         secret = env.get("TURNSTILE_SECRET", "").strip() or None
+        coder_session_token = env.get("CODER_SESSION_TOKEN", "").strip() or None
+        coder_template_id = env.get("CODER_TEMPLATE_ID", "").strip() or cls.coder_template_id
+        if "/" in coder_template_id or " " in coder_template_id:
+            raise ValueError("CODER_TEMPLATE_ID must be a template slug or UUID")
         frame_ancestors = env.get("NA_FRAME_ANCESTORS", "").strip() or "'none'"
         if any(ch in frame_ancestors for ch in ";\n\r"):
             raise ValueError("NA_FRAME_ANCESTORS must be a single CSP source list")
@@ -95,6 +113,11 @@ class Settings:
             turnstile_secret=secret,
             turnstile_site_key=env.get("NA_TURNSTILE_SITE_KEY", "").strip() or None,
             public_host=public_host,
+            public_base_url=_url(env, "NA_PUBLIC_BASE_URL", cls.public_base_url),
+            coder_url=_url(env, "CODER_URL", cls.coder_url),
+            coder_session_token=coder_session_token,
+            coder_template_id=coder_template_id,
+            workspace_ttl_minutes=_int(env, "NA_WORKSPACE_TTL_MINUTES", 240, minimum=1),
             allow_no_turnstile=_flag(env, "NA_ALLOW_NO_TURNSTILE"),
             ttl_minutes=_int(env, "NA_TTL_MINUTES", 120, minimum=1),
             max_items=_int(env, "NA_MAX_ITEMS", 200, minimum=1),

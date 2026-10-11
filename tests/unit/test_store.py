@@ -79,3 +79,31 @@ def test_eviction_oldest_first():
     assert store.get(second.id, second.owner_token) is not None and store.get(third.id, third.owner_token) is not None
     store.clear()
     assert store.size == 0
+
+
+def test_bundle_token_single_use_expiry_and_delete():
+    clock = Clock()
+    store = AssessmentStore(ttl_seconds=100, max_items=5, clock=clock)
+    stored = store.put(_assessment(1), {"bundle.zip": b"PK"})
+    assert store.issue_bundle_token(stored.id, "wrong") is None
+    assert store.issue_bundle_token("nope", stored.owner_token) is None
+
+    bt1 = store.issue_bundle_token(stored.id, stored.owner_token, ttl_seconds=10)
+    assert bt1 is not None
+    assert store.redeem_bundle_token(stored.id, None) is None
+    assert store.redeem_bundle_token("", bt1) is None
+    redeemed = store.redeem_bundle_token(stored.id, bt1)
+    assert redeemed is not None and redeemed[1] == {"bundle.zip": b"PK"}
+    assert store.redeem_bundle_token(stored.id, bt1) is None, "single-use"
+
+    bt2 = store.issue_bundle_token(stored.id, stored.owner_token, ttl_seconds=10)
+    assert store.redeem_bundle_token("other-id", bt2) is None, "wrong assessment id consumes token"
+    assert store.redeem_bundle_token(stored.id, bt2) is None
+
+    bt3 = store.issue_bundle_token(stored.id, stored.owner_token, ttl_seconds=5)
+    clock.now += 6
+    assert store.redeem_bundle_token(stored.id, bt3) is None, "expired bundle token"
+
+    bt4 = store.issue_bundle_token(stored.id, stored.owner_token, ttl_seconds=50)
+    assert store.delete(stored.id, stored.owner_token) is True
+    assert store.redeem_bundle_token(stored.id, bt4) is None, "deleting assessment revokes bundle tokens"

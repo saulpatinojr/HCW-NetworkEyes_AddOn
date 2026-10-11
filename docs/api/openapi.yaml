@@ -113,7 +113,8 @@ paths:
   /api/assessments/{id}/bundle.zip:
     parameters:
       - { $ref: "#/components/parameters/Id" }
-      - { $ref: "#/components/parameters/OwnerToken" }
+      - { name: x-owner-token, in: header, required: false, schema: { type: string } }
+      - { name: x-bundle-token, in: header, required: false, schema: { type: string, description: Single-use 10-minute token issued by POST /api/assessments/{id}/workspace } }
     get:
       summary: README.md, report.md, findings.json, topology.json, summary.json, rules.json and NOT-FOR-PRODUCTION.md zipped with STORE (attachment)
       responses:
@@ -129,6 +130,21 @@ paths:
       responses:
         "200": { description: File content with a type-appropriate content-type }
         "404": { description: not_found }
+  /api/assessments/{id}/workspace:
+    parameters:
+      - { $ref: "#/components/parameters/Id" }
+      - { $ref: "#/components/parameters/OwnerToken" }
+    post:
+      summary: Issue a one-time bundle token and launch or deep-link a guided Linux container workspace (ADR-0005)
+      responses:
+        "202":
+          description: Accepted
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WorkspaceResponse" }
+        "404": { description: not_found }
+        "429": { description: "rate_limited (Retry-After)" }
+        "502": { description: workspace_unavailable }
 components:
   parameters:
     Id: { name: id, in: path, required: true, schema: { type: string, format: uuid } }
@@ -145,18 +161,27 @@ components:
             code: { type: string, pattern: "^[a-z_]+$" }
             message: { type: string }
             details: { type: object }
+    WorkspaceResponse:
+      type: object
+      required: [workspaceId, status, launchUrl, expiresAt]
+      properties:
+        workspaceId: { type: string }
+        status: { enum: [pending, ready] }
+        launchUrl: { type: string, format: uri }
+        expiresAt: { type: string, format: date-time }
     Health:
       type: object
-      required: [ok, id, version, edition, capabilities, asOf, siteOrigins, turnstile, azureConnectivity, rules, model, limits]
+      required: [ok, id, version, edition, capabilities, asOf, siteOrigins, turnstile, workspace, azureConnectivity, rules, model, limits]
       properties:
         ok: { type: boolean }
         id: { const: network-assessment }
         version: { type: string, pattern: "^\\d+\\.\\d+\\.\\d+" }
         edition: { const: lab }
-        capabilities: { type: array, items: { type: string, maxLength: 40 }, maxItems: 20, description: "resource-graph-export, report-markdown, report-json, bundle-zip, sample" }
+        capabilities: { type: array, items: { type: string, maxLength: 40 }, maxItems: 20, description: "resource-graph-export, report-markdown, report-json, bundle-zip, sample, workspace" }
         asOf: { type: string, format: date-time }
         siteOrigins: { type: array, items: { type: string, format: uri } }
         turnstile: { type: object, properties: { required: { type: boolean }, siteKey: { type: [string, "null"] } } }
+        workspace: { const: coder }
         azureConnectivity: { const: disabled-by-design }
         rules: { type: object, properties: { version: { type: string }, count: { type: integer }, liveOnly: { type: integer } } }
         model: { type: object, properties: { version: { type: string } } }
@@ -167,6 +192,7 @@ components:
         turnstileSiteKey: { type: [string, "null"] }
         turnstileRequired: { type: boolean }
         turnstileAction: { const: network-assessment-upload }
+        workspace: { const: coder }
         limits: { type: object, properties: { maxUploadBytes: { type: integer }, maxRows: { type: integer } } }
         ttlMinutes: { type: integer }
         siteOrigins: { type: array, items: { type: string } }

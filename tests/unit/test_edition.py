@@ -1,4 +1,5 @@
 import importlib
+import os
 import subprocess
 import sys
 
@@ -19,7 +20,14 @@ from network_assessment.edition import (
 
 def test_constants():
     assert EDITION == "lab" and AZURE_CONNECTIVITY == "disabled-by-design"
-    assert CAPABILITIES == ("resource-graph-export", "report-markdown", "report-json", "bundle-zip", "sample")
+    assert CAPABILITIES == (
+        "resource-graph-export",
+        "report-markdown",
+        "report-json",
+        "bundle-zip",
+        "sample",
+        "workspace",
+    )
     assert FORBIDDEN_MODULES == ("azure", "msal", "boto3")
     assert set(IDENTITY_ENV_VARS) == {
         "IDENTITY_ENDPOINT",
@@ -56,10 +64,17 @@ def test_import_guard_blocks_cloud_sdks_and_is_idempotent():
     assert_lab_cannot_reach_azure({})
 
 
+def _sub_env(extra: dict[str, str]) -> dict[str, str]:
+    base = {"PATH": "/usr/bin:/bin", "PYTHONPATH": os.pathsep.join(sys.path), **extra}
+    if "SYSTEMROOT" in os.environ:
+        base["SYSTEMROOT"] = os.environ["SYSTEMROOT"]
+    return base
+
+
 def test_app_import_exits_non_zero_under_identity_endpoint():
     proc = subprocess.run(
         [sys.executable, "-c", "import network_assessment.app"],
-        env={"PATH": "/usr/bin:/bin", "IDENTITY_ENDPOINT": "http://169.254.169.254", "PYTHONPATH": ":".join(sys.path)},
+        env=_sub_env({"IDENTITY_ENDPOINT": "http://169.254.169.254"}),
         capture_output=True,
         text=True,
         timeout=60,
@@ -70,7 +85,7 @@ def test_app_import_exits_non_zero_under_identity_endpoint():
 def test_main_refuses_with_exit_code_3():
     proc = subprocess.run(
         [sys.executable, "-m", "network_assessment"],
-        env={"PATH": "/usr/bin:/bin", "MSI_ENDPOINT": "http://169.254.169.254", "PYTHONPATH": ":".join(sys.path)},
+        env=_sub_env({"MSI_ENDPOINT": "http://169.254.169.254"}),
         capture_output=True,
         text=True,
         timeout=60,

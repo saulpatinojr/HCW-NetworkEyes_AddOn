@@ -33,7 +33,15 @@ def test_health_is_flat_and_complete(client):
         "version": "lab-1.0.0"
     }
     assert body["limits"] == {"maxUploadBytes": 5242880, "maxRows": 5000, "ttlMinutes": 120}
-    assert body["capabilities"] == ["resource-graph-export", "report-markdown", "report-json", "bundle-zip", "sample"]
+    assert body["workspace"] == "coder"
+    assert body["capabilities"] == [
+        "resource-graph-export",
+        "report-markdown",
+        "report-json",
+        "bundle-zip",
+        "sample",
+        "workspace",
+    ]
     assert body["asOf"].endswith("Z")
     assert r.headers["x-addon-id"] == "network-assessment" and r.headers["x-addon-version"] == __version__
     assert r.headers["x-content-type-options"] == "nosniff" and r.headers["referrer-policy"] == "no-referrer"
@@ -45,6 +53,7 @@ def test_health_is_flat_and_complete(client):
 def test_config_and_rules(client):
     c = client.get("/api/config").json()
     assert c["turnstileAction"] == TURNSTILE_ACTION and c["turnstileRequired"] is False and c["ttlMinutes"] == 120
+    assert c["workspace"] == "coder"
     assert c["siteOrigins"] == ["https://hybridcloudworks.com"] and c["limits"]["maxRows"] == 5000
     k = client.get("/api/rules").json()
     assert k["count"] == 45 and k["liveOnly"] == 11 and k["version"] == "2026.10.0" and k["verify"] is True
@@ -401,7 +410,104 @@ def test_unhandled_error_is_enveloped_and_logged(client, monkeypatch):
 def test_api_routes_table(client):
     table = api_routes(client.app)
     assert table["/api/assessments"] == {"POST"} and table["/api/assessments/{assessment_id}"] == {"GET", "DELETE"}
+    assert table["/api/assessments/{assessment_id}/workspace"] == {"POST"}
     assert "/api/{rest:path}" not in table and table["/api/rules"] == {"GET"}
+
+
+def test_workspace_handoff_deep_link_and_bundle_token_redemption(client, created):
+    import urllib.parse
+
+    assessment_id, headers, _ = created
+    assert client.post(f"/api/assessments/{assessment_id}/workspace").status_code == 404
+    assert (
+        client.post(f"/api/assessments/{assessment_id}/workspace", headers={"x-owner-token": "wrong"}).status_code
+        == 404
+    )
+    ws_res = client.post(f"/api/assessments/{assessment_id}/workspace", headers=headers)
+    assert ws_res.status_code == 202
+    ws = ws_res.json()
+    assert ws["workspaceId"] == f"na-{assessment_id[:8]}"
+    assert ws["status"] == "ready"
+    assert ws["expiresAt"].endswith("Z")
+    assert ws["launchUrl"].startswith("https://coder.lab.hybridcloudworks.com/templates/na-guided-lab/workspace?")
+    qs = dict(urllib.parse.parse_qsl(urllib.parse.urlsplit(ws["launchUrl"]).query))
+    assert qs["mode"] == "auto" and qs["param.assessment_id"] == assessment_id
+    assert qs["param.api_base_url"] == "https://network-assessment.lab.hybridcloudworks.com"
+    bundle_token = qs["param.bundle_token"]
+    assert bundle_token and bundle_token != headers["x-owner-token"]
+
+    z = client.get(f"/api/assessments/{assessment_id}/bundle.zip", headers={"x-bundle-token": bundle_token})
+    assert z.status_code == 200 and z.headers["content-type"] == "application/zip"
+    assert "report.md" in zipfile.ZipFile(io.BytesIO(z.content)).namelist()
+    assert (
+        client.get(f"/api/assessments/{assessment_id}/bundle.zip", headers={"x-bundle-token": bundle_token}).status_code
+        == 404
+    ), "bundle token is single-use"
+
+
+def test_workspace_handoff_api_provisioning_and_unavailable(sample_rows):
+    import urllib.error
+
+    captured = []
+    mode = ["ok"]
+
+    def ws_opener(request, timeout):
+        captured.append((request.full_url, dict(request.headers), json.loads(request.data.decode("utf-8")), timeout))
+        if mode[0] == "error":
+            raise urllib.error.URLError("down")
+        if mode[0] == "bad_json":
+            return b"{}"
+        return json.dumps({"id": "ws-uuid-1234"}).encode("utf-8")
+
+    app = create_app(
+        make_settings(
+            coder_url="https://coder.lab.hybridcloudworks.com",
+            coder_session_token="coder-session-value",
+            coder_template_id="na-guided-lab",
+            public_base_url="https://network-assessment.lab.hybridcloudworks.com",
+            workspace_ttl_minutes=180,
+            rate_limit_posts=3,
+        ),
+        workspace_opener=ws_opener,
+        sweep=False,
+    )
+    with TestClient(app) as c:
+        created = c.post("/api/assessments", json=sample_rows[:1]).json()
+        aid = created["assessmentId"]
+        headers = {"x-owner-token": created["ownerToken"]}
+
+        r = c.post(f"/api/assessments/{aid}/workspace", headers=headers)
+        assert r.status_code == 202
+        body = r.json()
+        assert body["workspaceId"] == "ws-uuid-1234" and body["status"] == "pending"
+        assert body["launchUrl"] == f"https://coder.lab.hybridcloudworks.com/@me/na-{aid[:8]}"
+        url, req_headers, payload, timeout = captured[-1]
+        assert url == "https://coder.lab.hybridcloudworks.com/api/v2/users/me/workspaces" and timeout == 10.0
+        assert req_headers["Coder-session-token"] == "coder-session-value"
+        assert payload["template_id"] == "na-guided-lab" and payload["ttl_ms"] == 180 * 60_000
+        params = {p["name"]: p["value"] for p in payload["rich_parameter_values"]}
+        assert params["assessment_id"] == aid and params["bundle_token"]
+
+        mode[0] = "error"
+        r_err = c.post(f"/api/assessments/{aid}/workspace", headers=headers)
+        assert r_err.status_code == 502 and r_err.json()["error"]["code"] == "workspace_unavailable"
+
+        r_rl = c.post(f"/api/assessments/{aid}/workspace", headers=headers)
+        assert r_rl.status_code == 429 and r_rl.json()["error"]["code"] == "rate_limited"
+
+    mode[0] = "bad_json"
+    app2 = create_app(
+        make_settings(coder_session_token="coder-session-value"),
+        workspace_opener=ws_opener,
+        sweep=False,
+    )
+    with TestClient(app2) as c2:
+        created2 = c2.post("/api/assessments", json=sample_rows[:1]).json()
+        r_bad = c2.post(
+            f"/api/assessments/{created2['assessmentId']}/workspace",
+            headers={"x-owner-token": created2["ownerToken"]},
+        )
+        assert r_bad.status_code == 502 and r_bad.json()["error"]["code"] == "workspace_unavailable"
 
 
 def test_lifespan_sweeper_runs(sample_rows, monkeypatch):

@@ -8,6 +8,9 @@ def test_defaults_from_empty_env():
     assert s.port == 8080 and s.frame_ancestors == "'none'" and s.ttl_minutes == 120 and s.max_items == 200
     assert s.rate_limit_posts == 10 and s.rate_limit_window_minutes == 10 and s.max_concurrent == 2
     assert not s.trust_proxy and not s.allow_no_turnstile and s.turnstile_secret is None and s.public_host is None
+    assert s.public_base_url == "https://network-assessment.lab.hybridcloudworks.com"
+    assert s.coder_url == "https://coder.lab.hybridcloudworks.com"
+    assert s.coder_session_token is None and s.coder_template_id == "na-guided-lab" and s.workspace_ttl_minutes == 240
     assert s.turnstile_enforced and not s.turnstile_required, (
         "fail closed: no secret and no override means uploads answer 503"
     )
@@ -25,6 +28,11 @@ def test_full_env():
             "TURNSTILE_SECRET": " s3 ",
             "NA_TURNSTILE_SITE_KEY": "k",
             "NA_PUBLIC_HOST": "Network-Assessment.lab.hybridcloudworks.com",
+            "NA_PUBLIC_BASE_URL": "https://network-assessment.lab.hybridcloudworks.com/",
+            "CODER_URL": "https://coder.lab.hybridcloudworks.com/",
+            "CODER_SESSION_TOKEN": " c-tok ",
+            "CODER_TEMPLATE_ID": "na-custom-lab",
+            "NA_WORKSPACE_TTL_MINUTES": "180",
             "NA_ALLOW_NO_TURNSTILE": "true",
             "NA_TTL_MINUTES": "5",
             "NA_MAX_ITEMS": "3",
@@ -40,8 +48,11 @@ def test_full_env():
     assert s.port == 9000 and s.allowed_origins == ("https://a.example", "https://b.example")
     assert s.site_origins == ("https://hybridcloudworks.com",) and s.turnstile_secret == "s3" and s.turnstile_required
     assert s.public_host == "network-assessment.lab.hybridcloudworks.com"
-    assert s.turnstile_enforced and s.trust_proxy and s.log_silent and str(s.static_dir) == "/tmp/web"
-    assert "s3" not in repr(s), "the secret never appears in repr"
+    assert s.public_base_url == "https://network-assessment.lab.hybridcloudworks.com"
+    assert s.coder_url == "https://coder.lab.hybridcloudworks.com" and s.coder_session_token == "c-tok"
+    assert s.coder_template_id == "na-custom-lab" and s.workspace_ttl_minutes == 180
+    assert s.turnstile_enforced and s.trust_proxy and s.log_silent and s.static_dir.as_posix() == "/tmp/web"
+    assert "s3" not in repr(s) and "c-tok" not in repr(s), "secrets never appear in repr"
 
 
 def test_override_only_applies_without_secret():
@@ -61,6 +72,10 @@ def test_override_only_applies_without_secret():
         {"NA_ALLOWED_ORIGINS": "example.com"},
         {"NA_FRAME_ANCESTORS": "'self'; script-src *"},
         {"NA_PUBLIC_HOST": "https://host/"},
+        {"NA_PUBLIC_BASE_URL": "network-assessment.lab.hybridcloudworks.com"},
+        {"CODER_URL": "ftp://coder.example.com"},
+        {"CODER_TEMPLATE_ID": "bad/template"},
+        {"NA_WORKSPACE_TTL_MINUTES": "0"},
     ],
 )
 def test_invalid_values_raise(env):
