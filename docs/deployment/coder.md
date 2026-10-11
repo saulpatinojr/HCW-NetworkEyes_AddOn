@@ -13,12 +13,12 @@ Every Network Assessment run in the lab edition can be opened in an isolated Lin
    - **Direct API provisioning (when `CODER_SESSION_TOKEN` is set):** `POST {CODER_URL}/api/v2/users/me/workspaces` creates workspace `na-<first-8-of-id>` from template `CODER_TEMPLATE_ID` (`na-guided-lab`) with rich parameters `assessment_id`, `bundle_token`, and `api_base_url` (`NA_PUBLIC_BASE_URL`), returning `status: "pending"` and `launchUrl: "{CODER_URL}/@me/na-<id8>"`.
    - **Browser-session deep-link provisioning (default when `CODER_SESSION_TOKEN` is unset):** Returns `status: "ready"` and `launchUrl: "{CODER_URL}/templates/{CODER_TEMPLATE_ID}/workspace?mode=auto&name=na-<id8>&param.assessment_id=...&param.bundle_token=...&param.api_base_url=..."` so the signed-in visitor's browser session creates the workspace automatically.
 4. **Container startup (`infrastructure/coder/template/main.tf`):**
-   - Runs `docker.io/hybridcloudworks/hcw-lab:latest` (`privileged = false`, `network_mode = "bridge"`, 2 GB RAM, 512 CPU shares, no volumes, no Docker socket, no cloud credentials).
-   - Fetches `/api/assessments/{assessment_id}/bundle.zip` once using `x-bundle-token`, unzips the bundle into `~/assessment`, writes `START-HERE.md`, and starts `code-server` on port `13337`.
+   - Runs the digest-pinned `docker.io/hybridcloudworks/hcw-lab` Linux container image under the ADR-0032 / LAB-5 boundary (`tcp://coder-docker-proxy:2375`, `user = "65534:65534"`, `HOME = "/tmp/home"`, `privileged = false`, `no-new-privileges:true`, `capabilities { drop = ["ALL"] }`, isolated per-workspace bridge network `coder-ws-<id>`, 1 CPU / 2 GiB hard limits, no Docker socket, no host path, no cloud credentials).
+   - Dispatches to `/usr/local/libexec/hcw-boot/hcw-boot network-assessment` (with inline `python3 -m zipfile -e` fallback), fetching `/api/assessments/{assessment_id}/bundle.zip` once via `x-bundle-token` into `/tmp/home/assessment` and serving `code-server` on its own subdomain (`subdomain = true`, compatible with `CODER_DISABLE_PATH_APPS=true`).
 
 ## Template deployment
 
-Push the template from a machine with the `coder` CLI authenticated to `https://coder.lab.hybridcloudworks.com` (or via `.github/workflows/coder-template.yml` when `CODER_TEMPLATE_ENABLED=true`):
+Publish on the lab host via `/usr/local/sbin/hcw-coder-template-push na-guided-lab`, or from a machine with the `coder` CLI authenticated to `https://coder.lab.hybridcloudworks.com` (or via `.github/workflows/coder-template.yml` when `CODER_TEMPLATE_ENABLED=true`):
 
 ```bash
 coder templates push na-guided-lab --directory infrastructure/coder/template --yes

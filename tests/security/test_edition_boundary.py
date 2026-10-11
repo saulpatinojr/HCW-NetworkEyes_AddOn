@@ -95,3 +95,23 @@ def test_dockerfile_and_compose_have_no_azure():
 
 def test_health_reports_disabled_by_design(client):
     assert client.get("/api/health").json()["azureConnectivity"] == "disabled-by-design"
+
+
+def test_coder_template_enforces_adr0032_sandbox_boundary():
+    """The na-guided-lab Coder template enforces ADR-0032 / LAB-5 sandbox hardening."""
+    tf = (ROOT / "infrastructure" / "coder" / "template" / "main.tf").read_text(encoding="utf-8")
+    code_lines = [line.split("#", 1)[0] for line in tf.splitlines()]
+    code = "\n".join(code_lines)
+    assert 'host = "tcp://coder-docker-proxy:2375"' in code
+    assert 'uid            = "65534:65534"' in code
+    assert 'home           = "/tmp/home"' in code
+    assert 'assessment_dir = "/tmp/home/assessment"' in code
+    assert "subdomain       = true" in code
+    assert "subdomain = false" not in code
+    assert "privileged    = false" in code
+    assert 'security_opts = ["no-new-privileges:true"]' in code
+    assert 'drop = ["ALL"]' in code
+    assert "host_path" not in code
+    assert "docker.sock" not in code
+    assert "/usr/local/libexec/hcw-boot/hcw-boot network-assessment" in code
+    assert "python3 -m zipfile -e" in code
