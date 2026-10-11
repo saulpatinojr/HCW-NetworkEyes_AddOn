@@ -36,6 +36,13 @@ test("pane: sample → summary → filter → detail → unknowns → copy repor
   const download = page.waitForEvent("download");
   await page.getByRole("button", { name: "Download bundle" }).click();
   expect((await download).suggestedFilename()).toMatch(/^assessment-[0-9a-f]{8}\.zip$/);
+  await page.getByRole("button", { name: "Open in lab workspace" }).click();
+  await expect(page.locator("#copy-note")).toContainText("Lab workspace ready");
+  const wsLink = page.locator("#copy-note a");
+  await expect(wsLink).toHaveText("Open lab workspace");
+  await expect(wsLink).toHaveAttribute("href", /\/templates\/na-guided-lab\/workspace\?/);
+  const bodyAfterWs = (await page.locator("body").innerText()).toLowerCase();
+  for (const word of ["cloudflare", "turnstile", "hostinger", "vps", "coder", "ttl"]) expect(bodyAfterWs, word).not.toContain(word);
   page.once("dialog", (d) => d.accept());
   await page.getByRole("button", { name: "Delete my data now" }).click();
   await expect(page.getByRole("heading", { name: "2. Summary" })).toBeHidden();

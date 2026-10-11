@@ -102,6 +102,11 @@ Never `allow-top-navigation`; `allow-popups` is not requested.
 | `NA_SITE_ORIGINS` | `addons[].env` | `https://hybridcloudworks.com https://www.hybridcloudworks.com` |
 | `NA_ALLOWED_ORIGINS` | `addons[].env` | empty (the pane is same-origin with its API) |
 | `NA_PUBLIC_HOST` | `addons[].env` | `network-assessment.lab.hybridcloudworks.com` (the verification token's hostname must equal it) |
+| `NA_PUBLIC_BASE_URL` | `addons[].env` | `https://network-assessment.lab.hybridcloudworks.com` |
+| `CODER_URL` | `addons[].env` | `https://coder.lab.hybridcloudworks.com` (always-on guided workspace handoff, ADR-0005) |
+| `CODER_TEMPLATE_ID` | `addons[].env` | `na-guided-lab` |
+| `CODER_SESSION_TOKEN` | optional vault | optional; when absent, workspace handoff uses browser-session deep links |
+| `NA_WORKSPACE_TTL_MINUTES` | `addons[].env` | `240` |
 | `NA_TRUST_PROXY` | `addons[].env` | `1` (the host's reverse proxy sets `X-Forwarded-For`) |
 | `NA_TURNSTILE_SITE_KEY` | `addons[].env` | the widget's public site key |
 | `TURNSTILE_SECRET` | vault | `vault_addon_network_assessment_turnstile_secret` (`secret_env`) |

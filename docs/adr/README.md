@@ -10,5 +10,6 @@ header saying where they came from.
 | [ADR-0002 (copy)](ADR-0002-shared-addon-skeleton-no-kit-yet.md) | One shared AddOn skeleton convention across the Python AddOns; no `hcw-addon-kit` package yet |
 | [ADR-0003](ADR-0003-lab-edition-on-the-lab-host-appliance-on-container-apps.md) | The lab edition runs on the lab host; the appliance on Azure Container Apps |
 | [ADR-0004](ADR-0004-upstream-downstream-for-this-addon.md) | Upstream/downstream for this AddOn: the Core publishes, this edition consumes and never forks |
+| [ADR-0005](ADR-0005-always-on-guided-workspace-handoff.md) | Always-on guided workspace handoff with one-time bundle tokens |
 
-Next number: 0005.
+Next number: 0006.

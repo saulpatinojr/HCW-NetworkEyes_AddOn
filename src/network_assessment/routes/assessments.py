@@ -46,6 +46,11 @@ def _owner_token(request: Request) -> str | None:
     return token if 0 < len(token) <= 128 else None
 
 
+def _bundle_token(request: Request) -> str | None:
+    token = request.headers.get("x-bundle-token", "").strip()
+    return token if 0 < len(token) <= 128 else None
+
+
 def _expires_at(state, assessment) -> str:
     return (assessment.created_at + timedelta(minutes=state.settings.ttl_minutes)).isoformat().replace("+00:00", "Z")
 
@@ -211,7 +216,14 @@ async def get_report_json(request: Request, assessment_id: str) -> Response:
 
 @router.get("/api/assessments/{assessment_id}/bundle.zip")
 async def get_bundle(request: Request, assessment_id: str) -> Response:
-    _, files = _load(request, assessment_id)
+    owner_token = _owner_token(request)
+    if owner_token is not None:
+        _, files = _load(request, assessment_id)
+    else:
+        entry = request.app.state.store.redeem_bundle_token(assessment_id, _bundle_token(request))
+        if entry is None:
+            raise ApiError(404, "not_found", "Not found.")
+        _, files = entry
     return Response(
         files["bundle.zip"],
         media_type="application/zip",
@@ -225,6 +237,27 @@ async def get_file(request: Request, assessment_id: str, path: str) -> Response:
     if path not in BUNDLE_FILES or path not in files:
         raise ApiError(404, "not_found", "Not found.")
     return Response(files[path], media_type=CONTENT_TYPES[path.rsplit(".", 1)[-1]])
+
+
+@router.post("/api/assessments/{assessment_id}/workspace", status_code=202)
+async def create_workspace(request: Request, assessment_id: str) -> Response:
+    state = request.app.state
+    settings = state.settings
+    allowed, retry_after = state.limiter.acquire(client_address(request, settings.trust_proxy))
+    if not allowed:
+        log_event("rate_limited", retryAfter=retry_after)
+        raise ApiError(
+            429,
+            "rate_limited",
+            "Too many uploads from this client; try again later.",
+            headers={"Retry-After": str(retry_after)},
+        )
+    bundle_token = state.store.issue_bundle_token(assessment_id, _owner_token(request))
+    if bundle_token is None:
+        raise ApiError(404, "not_found", "Not found.")
+    ws = state.workspace.create_workspace(assessment_id, bundle_token)
+    log_event("workspace_requested")
+    return Response(json.dumps(ws.to_dict()), status_code=202, media_type="application/json")
 
 
 @router.delete("/api/assessments/{assessment_id}")
