@@ -19,8 +19,12 @@ the export carried, never what is assumed (the observed-state enforcer gates eve
 metrics, diagnostic settings, BGP state or cost are reported as `unknowns`, in data, not only in prose. It is not for
 production.
 
+**Where to try it.** The pane will appear at [hybridcloudworks.com/tools/network-assessment](https://hybridcloudworks.com/tools/network-assessment)
+once the first image is published; until then, run it on your own machine with the Quick start below and open
+`http://127.0.0.1:8080`. There is no account and nothing to install in Azure: you export, you upload, you read.
+
 > **Status:** lab edition, not production. Limitations are recorded in [`VALIDATION.md`](VALIDATION.md). The engine is
-> an interim port of the Core's, with provenance ([`PROVENANCE.md`](PROVENANCE.md)); every rule's reference link and
+> an interim port of the App's, with provenance ([`PROVENANCE.md`](PROVENANCE.md)); every rule's reference link and
 > every compliance-framework reference is marked `[VERIFY]` until the owner confirms it; the MIT relicensing of the
 > ported code is `[REVIEW REQUIRED]` ([`NOTICE`](NOTICE)).
 
@@ -29,7 +33,7 @@ production.
 ```mermaid
 flowchart LR
   Core["HCW-NetworkEyes_App<br/>upstream: the engine, the appliance edition on Azure"]
-  Wheel["cna-azure-network-engine<br/>wheel (future, REFACTOR_APP.md change set C)"]
+  Wheel["cna-azure-network-engine<br/>wheel attached to each engine-v* release of the App"]
   subgraph AddOn["HCW-NetworkEyes_AddOn (this repository)"]
     Port["src/network_assessment/{model,rules,classify}<br/>interim ported engine (PROVENANCE.md)"]
     Lab["src/network_assessment<br/>lab edition: ingestion, FastAPI, upload-only, in-memory"]
@@ -39,7 +43,7 @@ flowchart LR
   Image["docker.io/hybridcloudworks/hcw-addon-network-assessment<br/>scanned, by digest"]
   Host["lab host<br/>network-assessment.lab.hybridcloudworks.com (port 18082, loopback)"]
   Site["hybridcloudworks.com<br/>/tools/network-assessment (sandboxed pane)"]
-  Core -. "publishes (future)" .-> Wheel
+  Core -. "publishes on every engine-v* tag" .-> Wheel
   Wheel -. "core-update PR pins it; the port is deleted (ADR-0001)" .-> Lab
   Lab -- "publish-images.yml on v* tags" --> Image
   Image -- "website repo: addons Ansible role, digest in group_vars" --> Host
