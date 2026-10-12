@@ -51,6 +51,7 @@ data "coder_parameter" "assessment_id" {
   name         = "assessment_id"
   display_name = "Assessment ID"
   type         = "string"
+  default      = "00000000-0000-0000-0000-000000000000"
   mutable      = false
   validation {
     regex = "^[0-9a-f-]{36}$"
@@ -62,7 +63,8 @@ data "coder_parameter" "bundle_token" {
   name         = "bundle_token"
   display_name = "One-time bundle token"
   type         = "string"
-  mutable      = false
+  default      = ""
+  mutable      = true
   ephemeral    = true
 }
 
