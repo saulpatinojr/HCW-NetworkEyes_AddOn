@@ -10,7 +10,7 @@
 #
 # The lab edition is technically unable to reach Azure: no cloud SDK is installed, the process refuses to start
 # under an identity endpoint, and publish-images.yml asserts `python -c "import azure"` fails inside this image.
-# ARG EDITION must be "lab"; the appliance edition is defined upstream (Work-Cloud_Network_Core), never here.
+# ARG EDITION must be "lab"; the appliance edition is defined upstream (saulpatinojr/HCW-NetworkEyes_App), never here.
 # The container runs on the default bridge network with no host mounts, so the lab host's Arc identity endpoint
 # is unreachable from inside it (docs/security/threat-model.md).
 #

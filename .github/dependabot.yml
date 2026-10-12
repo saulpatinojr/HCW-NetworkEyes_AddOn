@@ -10,9 +10,7 @@ updates:
   - package-ecosystem: github-actions
     directory: /
     schedule: { interval: weekly }
+    groups: { all-actions: { patterns: ["*"] } }
   - package-ecosystem: docker
     directory: /infrastructure/docker
-    schedule: { interval: weekly }
-  - package-ecosystem: npm
-    directory: /tests/e2e
     schedule: { interval: weekly }

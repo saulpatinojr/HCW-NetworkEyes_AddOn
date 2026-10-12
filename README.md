@@ -111,7 +111,7 @@ answer `503 turnstile_not_configured` (fail closed). Browser suite: `make e2e` (
 | `samples/` | 48 fictional rows (subscriptions `…0001` hub and `…0002` spokes, `hcw-sample-*`, `eastus2`) in three export shapes, designed so every portable rule fires; results pinned in a test |
 | `tests/` | `unit` (incl. ported rule tests, sample expectations, registry invariants), `contract` (OpenAPI two-way), `security` (edition boundary, no secrets, content-free logs), `end_to_end` (manifest, provenance headers), `e2e` (Playwright, with a host page that applies the site's sandbox) |
 | [`docs/`](docs/README.md) | Website integration, API, lab-host deployment, appliance pointer, runbook, threat model, user guide, bundle, generated rule catalog, ADRs |
-| [`infrastructure/`](infrastructure/README.md) | Dockerfile (two stages, hash-pinned, uid 10001, `HEALTHCHECK`), `versions.env` |
+| [`infrastructure/`](infrastructure/README.md) | Dockerfile (two stages, hash-pinned, uid 10001, `HEALTHCHECK`), `versions.env`, `coder/template/main.tf` (`na-guided-lab` on `hcw-lab`) |
 | `scripts/` | `rules-doc.py` (catalog generation and drift check), `package-repository.{sh,ps1}` |
 
 ## Releases and artifacts

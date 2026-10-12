@@ -35,5 +35,5 @@ GitHub Release asset of every `engine-v*` tag, pinned here by URL and sha256 thr
 - `/api/health` is flat (`id`, `version` at the top level); the pane posts `{type:'hcw-addon', id, state}` with states
   `loading | ready | working | unavailable` to each origin in `siteOrigins` only; the concurrency-cap error is
   `503 overloaded` with `Retry-After: 2`.
-- ADRs: this edition's own in `docs/adr/` (next number: 0005); upstream ones copied with a header. Record limitations in
+- ADRs: this edition's own in `docs/adr/` (next number: 0006); upstream ones copied with a header. Record limitations in
   `VALIDATION.md`. Keep `CHANGELOG.md` current. Pull requests open ready for review and follow the template.
