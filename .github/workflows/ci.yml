@@ -35,11 +35,14 @@ jobs:
             if [ "${as,,}" = as ] && [ -n "$name" ]; then stages="${stages}${name} "; fi
           done < <(grep -E '^FROM ' infrastructure/docker/Dockerfile)
           exit $bad
-      - name: requirements.lock.txt is the export of uv.lock
+      # uv.lock is the only lock: the image build exports it (Dockerfile), so there is no committed export to drift.
+      - name: uv.lock is current with pyproject.toml
+        run: uv lock --check
+      - name: The Dockerfile exports with the uv this workflow uses, by digest
         run: |
           set -euo pipefail
-          uv export --format requirements-txt --no-dev --no-emit-project --no-emit-workspace --no-header -o /tmp/requirements.lock.txt
-          diff -u requirements.lock.txt /tmp/requirements.lock.txt
+          grep -Eq "^COPY --from=ghcr\.io/astral-sh/uv:${UV_VERSION}@sha256:[0-9a-f]{64} " infrastructure/docker/Dockerfile \
+            || { echo "::error file=infrastructure/docker/Dockerfile::the uv image is not ghcr.io/astral-sh/uv:${UV_VERSION} by digest"; exit 1; }
   test:
     runs-on: ubuntu-26.04
     steps:

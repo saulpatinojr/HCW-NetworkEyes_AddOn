@@ -21,7 +21,7 @@ def _py_files():
 
 
 def test_no_cloud_sdk_in_dependency_manifests():
-    for name in ("pyproject.toml", "uv.lock", "requirements.lock.txt"):
+    for name in ("pyproject.toml", "uv.lock"):
         text = (ROOT / name).read_text(encoding="utf-8")
         for pkg in ("azure-", "msal", "msrest", "boto3", "botocore"):
             assert not re.search(rf'name = "{pkg}', text), f"{name} depends on {pkg}"

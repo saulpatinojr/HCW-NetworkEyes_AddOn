@@ -5,6 +5,14 @@ All notable changes to this repository are recorded here. The format follows Kee
 ## [Unreleased] — 0.1.0
 
 ### Changed
+- Dependency updates pass CI as Dependabot opens them. Its `pip` updater rewrote `pyproject.toml` and the committed
+  `requirements.lock.txt` but never `uv.lock`, so every one of its pull requests failed the export check (#16 to #19).
+  `.github/dependabot.yml` now uses the `uv` ecosystem, which moves `pyproject.toml` and `uv.lock` together. The
+  committed export is gone: the image's build stage runs `uv export --frozen` from `uv.lock` with the uv CI uses, by
+  digest, and still installs with `pip --require-hashes --no-deps`; uv never reaches the lab stage. CI checks
+  `uv lock --check` and that the Dockerfile's uv is `UV_VERSION`; `pip-audit` audits the same export.
+- Base image `python:3.14.8-slim-trixie` by digest, the website's current pin (CONTRACT-DECISIONS item 20). There is
+  no docker Dependabot entry: the base follows the website, and the uv image follows `UV_VERSION`.
 - Repository hygiene: `.github/dependabot.yml` groups GitHub Actions updates under `all-actions` and removes the unused `/tests/e2e` npm entry; `infrastructure/docker/Dockerfile`, `README.md`, and `CLAUDE.md` updated to match `HCW-NetworkEyes_App` and `ADR-0005`.
 - README: a "where to try it" paragraph for new visitors; the diagram says the engine wheel is attached to each `engine-v*` release of the App. `core-update.yml`'s checkout no longer persists credentials (two Authorization headers made GitHub answer `400` to `create-pull-request`'s push in the Migrate App's `rules-refresh`).
 - **Upstream is `saulpatinojr/HCW-NetworkEyes_App`** (owner decision 2026-10-10: the Core lineage was merged back into the App, which now holds the engine package and its `engine-v*` releases). `core-update.yml` watches that repository and pins the engine as the GitHub Release wheel asset by URL, so `uv lock` records its sha256 and the image's `pip install --require-hashes` keeps verifying it (a git+https pin cannot be hash-checked); no PyPI step is needed for adoption. Provenance headers, `PROVENANCE.md`, the governance files and the docs name the App; ADR-0001 and ADR-0004 carry an amendment note.

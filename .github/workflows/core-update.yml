@@ -4,7 +4,7 @@
 # attaches it to the GitHub Release (320-release-engine.yml); PyPI publishing there is optional and not needed here.
 # This repository then pins the release asset by URL in pyproject.toml, on one line, as
 #   "cna-azure-network-engine @ https://github.com/saulpatinojr/HCW-NetworkEyes_App/releases/download/engine-v<version>/cna_azure_network_engine-<version>-py3-none-any.whl",  # ENGINE_REF <version>
-# `uv lock` records the wheel's sha256 and `uv export` writes it to requirements.lock.txt, so the image's
+# `uv lock` records the wheel's sha256 and the image build's `uv export --frozen` carries it, so the image's
 # `pip install --require-hashes` keeps verifying every third-party file (a git+https pin cannot be hash-checked and would
 # break that build). Adopting the wheel deletes the ported copy under src/network_assessment/{model,rules,classify} and
 # the PROVENANCE.md rows for it. This workflow compares the pinned ENGINE_REF with the App's latest `engine-v*` release on
@@ -64,7 +64,6 @@ jobs:
           sed -i -E "s|releases/download/engine-v${CURRENT}/cna_azure_network_engine-${CURRENT}-py3-none-any\.whl(\",?[[:space:]]*#[[:space:]]*ENGINE_REF[[:space:]]+)${CURRENT}|releases/download/engine-v${LATEST}/cna_azure_network_engine-${LATEST}-py3-none-any.whl\1${LATEST}|" pyproject.toml
           grep -q "ENGINE_REF ${LATEST}" pyproject.toml
           uv lock --upgrade-package "${PACKAGE}"
-          uv export --format requirements-txt --no-dev --no-emit-project --no-emit-workspace --no-header -o requirements.lock.txt
           git --no-pager diff --stat
       - if: steps.refs.outputs.changed == 'true'
         id: compat
@@ -88,7 +87,6 @@ jobs:
           add-paths: |
             pyproject.toml
             uv.lock
-            requirements.lock.txt
           body: |
             The App `saulpatinojr/HCW-NetworkEyes_App` released engine **${{ steps.refs.outputs.latest }}** (this edition pinned `${{ steps.refs.outputs.current }}`).
 
