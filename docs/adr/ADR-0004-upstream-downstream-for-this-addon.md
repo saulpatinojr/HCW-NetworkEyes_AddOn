@@ -33,7 +33,7 @@ repository's `REFACTOR_APP.md` addressed to Core paths.
    and on demand) compares the latest engine release with the pinned `ENGINE_REF`; when it differs it bumps the pin,
    re-locks, runs this edition's lint, unit, contract, security, catalog-drift and browser e2e suites, and opens a
    ready-for-review pull request labelled `compatible` or `needs-adaptation`. A compatible PR auto-merges only when the
-   repository variable `CORE_AUTOMERGE` is `true`. Once the wheel is on PyPI, Dependabot's `pip` ecosystem proposes the
+   repository variable `CORE_AUTOMERGE` is `true`. Once the wheel is on PyPI, Dependabot's `uv` ecosystem proposes the
    same bumps and the interim workflow becomes redundant.
 3. **Shared contracts the Core must keep.** Rule ids, severities and `applies_to` (hash-pinned in
    `tests/unit/test_registry.py`), `TOPOLOGY_MODEL_VERSION` (the lab's `lab-1.0.0` is declared equivalent to the Core's

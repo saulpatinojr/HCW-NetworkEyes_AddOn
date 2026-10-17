@@ -20,7 +20,7 @@
 | Rules | Tampering, drift | The registry is code in the image; `RULES_VERSION` and a digest of ids, versions, severities and `applies_to` are pinned in a test; `docs/rules/catalog.md` drift fails CI; version and count in `/api/health`; ported code changes only through `PROVENANCE.md` |
 | Output | Misrepresented as an audit or as inference | Every finding carries an observed fact (hedge-free, enforced) and the field it came from; the rules the export cannot answer are listed with reasons; `NOT-FOR-PRODUCTION.md` in every bundle; compliance references marked for verification; "What this cannot tell you" panel |
 | Site | Message spoofing to the pane page | The site accepts only `origin === the AddOn origin`, `source === frame.contentWindow`, `type/id/state` known; the pane posts only to `siteOrigins`, never `*` |
-| Supply chain | Tampered dependencies or actions | `uv.lock` and `requirements.lock.txt` with hashes (`pip --require-hashes --no-deps`); base image by digest with a CI drift check; every action pinned by full SHA; Trivy before push; provenance, SBOM and attestation on every published image; `pip-audit` weekly |
+| Supply chain | Tampered dependencies or actions | `uv.lock` with hashes, exported at build and installed with `pip --require-hashes --no-deps`; base image by digest with a CI drift check; every action pinned by full SHA; Trivy before push; provenance, SBOM and attestation on every published image; `pip-audit` weekly |
 
 Secrets: `TURNSTILE_SECRET` exists only in the lab host's Ansible vault (`vault_addon_network_assessment_turnstile_secret`);
 public values (`NA_TURNSTILE_SITE_KEY`, `NA_PUBLIC_HOST`, origins, limits) in the role's env. Visitor data in the report

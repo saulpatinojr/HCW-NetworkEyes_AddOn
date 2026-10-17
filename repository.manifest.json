@@ -5,7 +5,7 @@
   "archiveLayout": "repository files at archive root (no nested parent directory)",
   "requiredFiles": [
     "README.md", "CLAUDE.md", "AGENTS.md", "SECURITY.md", "CONTRIBUTING.md", "CODE_OF_CONDUCT.md", "LICENSE", "NOTICE", "PROVENANCE.md", "CHANGELOG.md", "VALIDATION.md",
-    "pyproject.toml", "uv.lock", "requirements.lock.txt", ".python-version", "ruff.toml", "Makefile", ".env.example", ".gitignore", ".dockerignore", "docker-compose.yml",
+    "pyproject.toml", "uv.lock", ".python-version", "ruff.toml", "Makefile", ".env.example", ".gitignore", ".dockerignore", "docker-compose.yml",
     "src/network_assessment/app.py", "src/network_assessment/edition.py", "src/network_assessment/__main__.py", "src/network_assessment/assess.py", "src/network_assessment/workspace.py",
     "src/network_assessment/model/enforcer.py", "src/network_assessment/model/findings.py", "src/network_assessment/model/topology.py",
     "src/network_assessment/rules/registry.py", "src/network_assessment/rules/azure_net.py", "src/network_assessment/rules/azure_bcdr.py",

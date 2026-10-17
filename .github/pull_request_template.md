@@ -19,7 +19,7 @@
 
 ## Infrastructure (if `infrastructure/**` or `docker-compose.yml` changed)
 
-- [ ] `versions.env` and every `FROM` agree; `requirements.lock.txt` re-exported
+- [ ] `versions.env` and every `FROM` agree; `uv lock --check` passes
 - [ ] No privileged containers, host network, host mounts, Docker socket exposure or secrets introduced
 
 ## Security and data review

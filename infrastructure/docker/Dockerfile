@@ -1,7 +1,8 @@
 # Network Assessment lab edition image: docker.io/hybridcloudworks/hcw-addon-network-assessment
 #
 # Two stages on one digest-pinned base (infrastructure/docker/versions.env; CI checks every FROM against it).
-#   build  installs the hash-pinned third-party set from requirements.lock.txt into /install with
+#   build  exports the hash-pinned third-party set from uv.lock (`uv export --frozen`, with the uv CI uses, by
+#          digest; nothing resolves, and uv never reaches the lab stage), installs it into /install with
 #          pip --require-hashes --no-deps (nothing resolves beyond the lock), then places the lab application
 #          (which carries the ported engine, ADR-0001) beside them as a source tree, so no build backend enters
 #          the image.
@@ -17,13 +18,15 @@
 # Build:  docker build -f infrastructure/docker/Dockerfile --build-arg EDITION=lab -t hcw-addon-network-assessment:dev .
 # Run:    docker compose up   (docker-compose.yml: hardened, loopback-only, NA_ALLOW_NO_TURNSTILE=1 for local use)
 
-FROM python:3.14.7-slim-trixie@sha256:51dafde81dbdb6ebde285137a295cf18a47ca95234fe388a343719cb97305b3d AS build
+FROM python:3.14.8-slim-trixie@sha256:a2b82f3c48559aa0a8446d9af49826b6e2b2016f4cd2afabfe6013ec53729170 AS build
 ARG EDITION=lab
 RUN test "$EDITION" = "lab" || { echo "this Dockerfile builds the lab edition only (EDITION=$EDITION)"; exit 1; }
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1 PIP_NO_CACHE_DIR=1 PYTHONDONTWRITEBYTECODE=1
 WORKDIR /build
-COPY requirements.lock.txt ./
-RUN pip install --require-hashes --no-deps --prefix /install -r requirements.lock.txt
+COPY --from=ghcr.io/astral-sh/uv:0.11.32@sha256:df4cae8f3a96d175e2e5f992e597550000edbe78fdc2594d5cd8de1a217f504c /uv /usr/local/bin/uv
+COPY pyproject.toml uv.lock ./
+RUN UV_NO_CACHE=1 uv export --frozen --format requirements-txt --no-dev --no-emit-project --no-emit-workspace --no-header -o requirements.lock.txt \
+ && pip install --require-hashes --no-deps --prefix /install -r requirements.lock.txt
 COPY src/network_assessment /install/lib/python3.14/site-packages/network_assessment
 RUN find /install -name "__pycache__" -type d -prune -exec rm -rf {} + \
  && python - <<'PY'
@@ -35,7 +38,7 @@ for forbidden in ("azure", "msal", "boto3"):
 print("edition boundary: no cloud SDK in /install")
 PY
 
-FROM python:3.14.7-slim-trixie@sha256:51dafde81dbdb6ebde285137a295cf18a47ca95234fe388a343719cb97305b3d AS lab
+FROM python:3.14.8-slim-trixie@sha256:a2b82f3c48559aa0a8446d9af49826b6e2b2016f4cd2afabfe6013ec53729170 AS lab
 ARG EDITION=lab
 RUN test "$EDITION" = "lab"
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PORT=8080 \

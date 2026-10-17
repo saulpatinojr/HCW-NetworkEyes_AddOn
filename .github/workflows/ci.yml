@@ -35,11 +35,34 @@ jobs:
             if [ "${as,,}" = as ] && [ -n "$name" ]; then stages="${stages}${name} "; fi
           done < <(grep -E '^FROM ' infrastructure/docker/Dockerfile)
           exit $bad
-      - name: requirements.lock.txt is the export of uv.lock
+      # uv.lock is the only lock: the image build exports it (Dockerfile), so there is no committed export to drift.
+      - name: uv.lock is current with pyproject.toml
+        run: uv lock --check
+      # UV_VERSION is the one uv version. The digest is resolved from the registry, so a tag bumped without its digest
+      # fails here rather than exporting with the old uv; the two workflows that install uv by version follow it too.
+      - name: The Dockerfile and every workflow use the uv this workflow uses
         run: |
           set -euo pipefail
-          uv export --format requirements-txt --no-dev --no-emit-project --no-emit-workspace --no-header -o /tmp/requirements.lock.txt
-          diff -u requirements.lock.txt /tmp/requirements.lock.txt
+          digest="$(docker buildx imagetools inspect "ghcr.io/astral-sh/uv:${UV_VERSION}" --format '{{json .Manifest.Digest}}' | tr -d '"')"
+          case "$digest" in sha256:*) ;; *) echo "::error::could not resolve ghcr.io/astral-sh/uv:${UV_VERSION}"; exit 1 ;; esac
+          grep -Fq "COPY --from=ghcr.io/astral-sh/uv:${UV_VERSION}@${digest} /uv " infrastructure/docker/Dockerfile \
+            || { echo "::error file=infrastructure/docker/Dockerfile::the uv image is not ghcr.io/astral-sh/uv:${UV_VERSION}@${digest}"; exit 1; }
+          for f in .github/workflows/security.yml .github/workflows/core-update.yml; do
+            grep -Fq "\"uv==${UV_VERSION}\"" "$f" || { echo "::error file=${f}::installs a uv other than ${UV_VERSION}"; exit 1; }
+          done
+  image:
+    runs-on: ubuntu-26.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      # The build stage exports uv.lock, so a lock or Dockerfile change is proven here, not first at a release tag.
+      - name: The lab image builds and keeps its edition boundary
+        run: |
+          set -euo pipefail
+          docker build -f infrastructure/docker/Dockerfile --build-arg EDITION=lab -t addon:ci .
+          if docker run --rm --entrypoint python addon:ci -c 'import azure' 2>/dev/null; then
+            echo '::error::azure is importable in the lab image'; exit 1
+          fi
+          docker run --rm --entrypoint python addon:ci -c 'import fastapi, pydantic, uvicorn'
   test:
     runs-on: ubuntu-26.04
     steps:

@@ -1,8 +1,14 @@
 version: 2
 updates:
-  - package-ecosystem: pip
+  # uv, not pip (2026-10-16). The pip updater rewrote pyproject.toml and the committed requirements export but never
+  # uv.lock, so every one of its pull requests failed CI. uv updates pyproject.toml and uv.lock together, and the image
+  # build exports uv.lock itself (infrastructure/docker/Dockerfile), so nothing else has to move. pydantic-core is not a
+  # direct dependency: it moves with pydantic.
+  - package-ecosystem: uv
     directory: /
     schedule: { interval: weekly }
+    # Every locked package, as the pip updater covered through the export, not only direct dependencies.
+    allow: [{ dependency-type: all }]
     groups:
       # Pre-emptive: no Azure SDK may ever enter this edition; a grouped PR makes an attempt visible at a glance.
       azure-sdk: { patterns: ["azure-*", "msal*", "msrest*"] }
@@ -11,6 +17,6 @@ updates:
     directory: /
     schedule: { interval: weekly }
     groups: { all-actions: { patterns: ["*"] } }
-  - package-ecosystem: docker
-    directory: /infrastructure/docker
-    schedule: { interval: weekly }
+  # No docker entry. The base image follows the website's pin (CONTRACT-DECISIONS item 20; infrastructure/docker/
+  # versions.env), and the uv image used to export follows UV_VERSION in ci.yml, which CI checks against the Dockerfile.
+  # A Dependabot bump of either would move one of a pair and fail CI by design.
