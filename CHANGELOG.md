@@ -5,6 +5,13 @@ All notable changes to this repository are recorded here. The format follows Kee
 ## [Unreleased] — 0.1.0
 
 ### Changed
+- `docs/website-integration/integration-guide.md` now follows the website's real catalogue row. The row pasted into it was
+  written before the row shipped and had drifted: 6 of its 10 fields differed from the website's (title, summary, pane
+  path, technology, status and capabilities, plus the `comingSince` and `comingReason` fields). The block is now a copy
+  of the website's current row, with the website commit it came from, and says the website is the authority. The guide
+  also says that the site frames `origin + panePath` with no `?theme=` parameter (the pane still honours one), and that
+  the site grants `navigate` and `downloads` where this AddOn asked for `downloads` and `clipboard`; the owner confirms
+  whether that is intended. Compared field by field with a script on 2026-10-24: 0 of 10 now differ.
 - `.github/dependabot.yml` groups `pydantic` and `pydantic-core` so they arrive in one pull request. pydantic requires one exact `pydantic-core`, so a `pydantic-core` bump on its own cannot resolve; the same failure closed the App repository's Dependabot pull requests.
 - Dependency updates pass CI as Dependabot opens them. Its `pip` updater rewrote `pyproject.toml` and the committed
   `requirements.lock.txt` but never `uv.lock`, so every one of its pull requests failed the export check (#16 to #19).

@@ -11,7 +11,7 @@ one page; nothing from this repository is installed into the site bundle.
 | AddOn id | `network-assessment` |
 | Site route | `/tools/network-assessment` (`frontend/src/pages/tools/AddOnPanePage.jsx` with `addonId="network-assessment"`; `NetworkAssessmentPage.jsx` wrapper) |
 | Origin | `https://network-assessment.lab.hybridcloudworks.com` (exactly `'https://' + id + '.lab.hybridcloudworks.com'`) |
-| Frame `src` | `https://network-assessment.lab.hybridcloudworks.com/?theme=dark` or `?theme=light` (the pane cannot read the site's `.dark` class cross-origin; without the param it follows `prefers-color-scheme`) |
+| Frame `src` | `https://network-assessment.lab.hybridcloudworks.com/` exactly (the site builds `origin + panePath` and adds no query string). The pane still honours `?theme=dark` or `?theme=light` if a caller passes one; the site does not, so without it the pane follows `prefers-color-scheme` (read 2026-10-24: `addonPaneUrl` in the catalogue, and `AddOnPanePage.jsx` has no theme handling) |
 | Health path | `/api/health` |
 | Function App setting (status proxy) | `ADDON_NETWORK_ASSESSMENT_URL` = the origin, plain app setting (public value) |
 | Lab-host vault key | `vault_addon_network_assessment_turnstile_secret` |
@@ -20,29 +20,29 @@ one page; nothing from this repository is installed into the site bundle.
 
 ## Catalogue row (`frontend/src/data/addons/catalogue.js`)
 
+The website's row is the authority. This is a copy of it as of 2026-10-24 (website commit 5757bb71, the last change to that file). An earlier copy, written
+before the row shipped, was kept here and drifted: the site's title, summary, pane path, technology, status and
+capabilities all ended up different from it. When this block and the website disagree, the website is right.
+
 ```js
 {
   id: 'network-assessment',
-  title: 'Network assessment',
-  summary:
-    'Upload a Resource Graph export of your Azure network resources and read the topology pattern and the findings, each with the fact the export carried. Nothing you upload is kept beyond two hours.',
+  title: 'Cloud network assessment',
+  summary: 'Upload an export of your Azure network resources and get an assessment of its topology, segmentation and exposure, with the findings explained. Nothing you upload is kept beyond two hours.',
   origin: 'https://network-assessment.lab.hybridcloudworks.com',
-  panePath: '/?theme=dark',
+  panePath: '/',
   healthPath: '/api/health',
   providers: ['azure'],
-  technology: ['azure-resource-graph', 'virtual-network', 'azure-firewall', 'vpn-gateway'],
-  status: 'coming',
-  comingSince: '2026-10-10',
-  comingReason: 'The assessment tool is being prepared; it opens here as soon as its image is published.',
-  capabilities: ['downloads', 'clipboard'],
+  technology: ['azure-networking', 'resource-graph'],
+  status: 'available',
+  capabilities: ['navigate', 'downloads'],
   docsUrl: 'https://github.com/saulpatinojr/HCW-NetworkEyes_AddOn#readme',
-  articleSlugs: [],
+  articleSlugs: []
 }
 ```
 
-`status` flips to `available` (and `comingSince`/`comingReason` are removed) when the digest is pinned and the row
-passes the standard's compliance checklist. `title`, `summary` and `comingReason` obey the site's public-copy rule
-(no vendor names; "human verification", "expires after two hours").
+The row became `available` on 2026-10-12 (website #1089), when the digest was pinned. `title`, `summary` and
+`comingReason` obey the site's public-copy rule (no vendor names; "human verification", "expires after two hours").
 
 ## Status proxy
 
@@ -85,6 +85,8 @@ Base sandbox `allow-scripts allow-same-origin allow-forms`. This row asks for:
   inside the user gesture exists for browsers that refuse the API).
 
 Never `allow-top-navigation`; `allow-popups` is not requested.
+
+**What the site grants today (read 2026-10-24):** `navigate`, `downloads`. That differs from what this AddOn asked for above: `clipboard` (`clipboard-write`) is not granted, and `navigate` is granted although this AddOn never sends one. Whether that is intended is the owner's to confirm against ADR 0035; until then "Copy report" depends on its in-gesture fallback.
 
 ## Content security policy, both sides
 
