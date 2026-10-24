@@ -41,8 +41,7 @@ capabilities all ended up different from it. When this block and the website dis
 }
 ```
 
-The row became `available` on 2026-10-12 (website #1089), when the digest was pinned. `title`, `summary` and
-`comingReason` obey the site's public-copy rule (no vendor names; "human verification", "expires after two hours").
+The row became `available` on 2026-10-12 (website #1089), when the digest was pinned. `title` and `summary` obey the site's public-copy rule (no vendor names; "human verification", "expires after two hours").
 
 ## Status proxy
 
