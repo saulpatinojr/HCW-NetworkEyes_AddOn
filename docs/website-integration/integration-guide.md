@@ -11,7 +11,7 @@ one page; nothing from this repository is installed into the site bundle.
 | AddOn id | `network-assessment` |
 | Site route | `/tools/network-assessment` (`frontend/src/pages/tools/AddOnPanePage.jsx` with `addonId="network-assessment"`; `NetworkAssessmentPage.jsx` wrapper) |
 | Origin | `https://network-assessment.lab.hybridcloudworks.com` (exactly `'https://' + id + '.lab.hybridcloudworks.com'`) |
-| Frame `src` | `https://network-assessment.lab.hybridcloudworks.com/` exactly (the site builds `origin + panePath` and adds no query string). The pane still honours `?theme=dark` or `?theme=light` if a caller passes one; the site does not, so without it the pane follows `prefers-color-scheme` (read 2026-10-24: `addonPaneUrl` in the catalogue, and `AddOnPanePage.jsx` has no theme handling) |
+| Frame `src` | `https://network-assessment.lab.hybridcloudworks.com/` exactly (the site builds `origin + panePath`) plus `?theme=dark` or `?theme=light`, read once from the site's own theme when the page first renders and never updated afterwards, so a theme toggle reaches an open pane at its next page load. The pane honours it; with no value, or any other, it follows `prefers-color-scheme` (hybridcloudworks.com#1353, merged in #1359 on 2026-10-24: `addonFrameUrl` in the catalogue; the site is deployed after the merge, so a live frame carries it from the deploy on) |
 | Health path | `/api/health` |
 | Function App setting (status proxy) | `ADDON_NETWORK_ASSESSMENT_URL` = the origin, plain app setting (public value) |
 | Lab-host vault key | `vault_addon_network_assessment_turnstile_secret` |
@@ -20,7 +20,7 @@ one page; nothing from this repository is installed into the site bundle.
 
 ## Catalogue row (`frontend/src/data/addons/catalogue.js`)
 
-The website's row is the authority. This is a copy of it as of 2026-10-24 (website commit 5757bb71, the last change to that file). An earlier copy, written
+The website's row is the authority. This is a copy of it as of 2026-10-24 (website commit b0cf0055, #1359, the last change to that file). An earlier copy, written
 before the row shipped, was kept here and drifted: the site's title, summary, pane path, technology, status and
 capabilities all ended up different from it. When this block and the website disagree, the website is right.
 
@@ -35,7 +35,7 @@ capabilities all ended up different from it. When this block and the website dis
   providers: ['azure'],
   technology: ['azure-networking', 'resource-graph'],
   status: 'available',
-  capabilities: ['navigate', 'downloads'],
+  capabilities: ['downloads', 'clipboard-write'],
   docsUrl: 'https://github.com/saulpatinojr/HCW-NetworkEyes_AddOn#readme',
   articleSlugs: []
 }
@@ -80,12 +80,13 @@ Base sandbox `allow-scripts allow-same-origin allow-forms`. This row asks for:
   **[REVIEW REQUIRED]** Owner decision as a website security change (standard section 21, ADR 0035). The pane works
   without it: "Copy report" puts `report.md` on the clipboard and the report is rendered in a selectable block, and the
   pane says so when a download does not start.
-- `clipboard` -> `allow="clipboard-write"` on the frame for "Copy report" (a `document.execCommand('copy')` fallback
-  inside the user gesture exists for browsers that refuse the API).
+- `clipboard-write` -> `allow="clipboard-write <this origin>"` on the frame for "Copy report" (a `document.execCommand('copy')`
+  fallback inside the user gesture exists for browsers that refuse the API). It is write only: the site's broader
+  `clipboard` capability also grants `clipboard-read`, which this AddOn never needs, so the site added this narrower one.
 
 Never `allow-top-navigation`; `allow-popups` is not requested.
 
-**What the site grants today (read 2026-10-24):** `navigate`, `downloads`. That differs from what this AddOn asked for above: `clipboard` (`clipboard-write`) is not granted, and `navigate` is granted although this AddOn never sends one. Whether that is intended is the owner's to confirm against ADR 0035; until then "Copy report" depends on its in-gesture fallback.
+**What the site grants today (owner decision 2026-10-24, hybridcloudworks.com#1354, merged in #1359):** `downloads` and `clipboard-write`, which is exactly what this AddOn asked for. `navigate`, which the row held before because it was copied from the migration row, is gone: this AddOn never sends one. The grants take effect in the browser once the site is deployed after the merge.
 
 ## Content security policy, both sides
 
@@ -125,5 +126,5 @@ exactly `This tool isn't available right now.` Status is shown in words (`Checki
 ## Acceptance tests on the website side
 
 Catalogue row validity and registry parity, `AddOnPanePage.test.jsx` (status gate, exact sandbox for
-`['downloads', 'clipboard']`, `allow`, watchdog, message acceptance), `csp.test.js` parity, route completeness, public
+`['downloads', 'clipboard-write']`, `allow`, the frame `src` with `?theme=`, watchdog, message acceptance), `csp.test.js` parity, route completeness, public
 copy with `data/addons` in its roots, the status proxy with a fake fetch answering this AddOn's health shape.
