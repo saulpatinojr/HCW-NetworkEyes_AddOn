@@ -36,7 +36,7 @@ pin at authoring, CONTRACT-DECISIONS item 20; `python:3.14.8-slim-trixie` with t
 | Trivy scan, SBOM, provenance, attestation | **no**, CI only | as above |
 | Human verification against the real siteverify endpoint | **no** | mocked in `tests/unit/test_api.py` and `test_security_modules.py` (success, wrong action, wrong hostname, refusal, unavailable); the real call needs the owner's widget and secret (`docs/deployment/lab-host.md`) |
 | Lab-host deployment, Caddy route, website pane | **no** | owner steps and the website PR (Phase 6); the catalogue row stays `coming` until the digest exists |
-| `core-update.yml` against a Core release | **no** | inert by design until the Core publishes `cna-azure-network-engine` (`engine-v*`); the comparison step exits cleanly without an `ENGINE_REF` |
+| `core-update.yml` against a Core release | **no** | inert: the App published `cna-azure-network-engine` as `engine-v0.1.0` on 2026-10-12, but `pyproject.toml` has no `ENGINE_REF` line yet, so the comparison step exits cleanly (adoption steps: `docs/whats-new-upstream.md`) |
 | CodeQL, gitleaks, dependency-review | **no**, CI only | `security.yml` |
 
 ## Limitations recorded
