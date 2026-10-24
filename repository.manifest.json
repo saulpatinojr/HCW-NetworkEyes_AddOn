@@ -16,7 +16,7 @@
     "samples/sample-resource-graph.json", "samples/sample-resource-graph.csv", "samples/sample-all-resources-export.csv",
     "docs/README.md", "docs/website-integration/integration-guide.md", "docs/website-integration/routes.md", "docs/api/openapi.yaml",
     "docs/deployment/lab-host.md", "docs/deployment/coder.md", "docs/deployment/appliance.md", "docs/operations/runbook.md", "docs/security/threat-model.md",
-    "docs/demo/user-guide.md", "docs/demo/output-bundle.md", "docs/rules/catalog.md",
+    "docs/demo/user-guide.md", "docs/demo/output-bundle.md", "docs/rules/catalog.md", "docs/whats-new-upstream.md",
     "docs/adr/README.md", "docs/adr/ADR-0001-interim-ported-engine.md", "docs/adr/ADR-0002-shared-addon-skeleton-no-kit-yet.md",
     "docs/adr/ADR-0003-lab-edition-on-the-lab-host-appliance-on-container-apps.md", "docs/adr/ADR-0004-upstream-downstream-for-this-addon.md",
     "docs/adr/ADR-0005-always-on-guided-workspace-handoff.md",

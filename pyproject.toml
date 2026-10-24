@@ -29,7 +29,7 @@ packages = ["src/network_assessment"]
 
 [tool.uv]
 # One project, no workspace member: the ported engine under src/network_assessment/{model,rules,classify} is interim
-# (ADR-0001) and is deleted, not handed upstream, once the Core publishes cna-azure-network-engine.
+# (ADR-0001) and is deleted, not handed upstream, once cna-azure-network-engine (published as engine-v0.1.0) is adopted.
 package = true
 
 [tool.pytest.ini_options]

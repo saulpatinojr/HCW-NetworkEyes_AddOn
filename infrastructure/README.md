@@ -16,7 +16,7 @@ into `/usr/local/lib/python3.14/site-packages` as a source tree rather than buil
 enters the image. The build stage exports `uv.lock` with `uv export --frozen --format requirements-txt --no-dev
 --no-emit-project --no-emit-workspace --no-header` (hashes on by default), using the uv CI uses by digest; that
 export is the only input `pip install --require-hashes --no-deps` reads, and uv stays in the build stage. There is no
-committed export: `uv.lock` is the one lock, which Dependabot (`uv` ecosystem) updates with `pyproject.toml`. Once the App (`HCW-NetworkEyes_App`) publishes `cna-azure-network-engine`, the wheel (a GitHub Release asset, pinned by URL and sha256) joins `uv.lock` and the ported tree is deleted.
+committed export: `uv.lock` is the one lock, which Dependabot (`uv` ecosystem) updates with `pyproject.toml`. The App (`HCW-NetworkEyes_App`) has published `cna-azure-network-engine` as `engine-v0.1.0` (2026-10-12); once it is adopted (`docs/whats-new-upstream.md`), the wheel (a GitHub Release asset, pinned by URL and sha256) joins `uv.lock` and the ported tree is deleted.
 
 Image build, Trivy and the `import azure` image check run in CI (`publish-images.yml`); the authoring container had no
 Docker daemon (see `VALIDATION.md`).
