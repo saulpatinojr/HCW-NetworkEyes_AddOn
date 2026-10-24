@@ -13,6 +13,9 @@ updates:
       # Pre-emptive: no Azure SDK may ever enter this edition; a grouped PR makes an attempt visible at a glance.
       azure-sdk: { patterns: ["azure-*", "msal*", "msrest*"] }
       dev: { dependency-type: development }
+      # pydantic pins pydantic-core to one exact version, so the two must move in one pull request; a pydantic-core
+      # bump on its own cannot resolve against the pinned pydantic.
+      pydantic: { patterns: ["pydantic", "pydantic-core"] }
   - package-ecosystem: github-actions
     directory: /
     schedule: { interval: weekly }
