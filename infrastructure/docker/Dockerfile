@@ -1,4 +1,4 @@
-# Network Assessment lab edition image: docker.io/hybridcloudworks/hcw-networkeyes
+# Network Assessment lab edition image: docker.io/hybridcloudworks/img-ne-lab-addon
 #
 # Two stages on one digest-pinned base (infrastructure/docker/versions.env; CI checks every FROM against it).
 #   build  exports the hash-pinned third-party set from uv.lock (`uv export --frozen`, with the uv CI uses, by
@@ -15,7 +15,7 @@
 # The container runs on the default bridge network with no host mounts, so the lab host's Arc identity endpoint
 # is unreachable from inside it (docs/security/threat-model.md).
 #
-# Build:  docker build -f infrastructure/docker/Dockerfile --build-arg EDITION=lab -t hcw-networkeyes:dev .
+# Build:  docker build -f infrastructure/docker/Dockerfile --build-arg EDITION=lab -t img-ne-lab-addon:dev .
 # Run:    docker compose up   (docker-compose.yml: hardened, loopback-only, NA_ALLOW_NO_TURNSTILE=1 for local use)
 
 FROM python:3.14.8-slim-trixie@sha256:a2b82f3c48559aa0a8446d9af49826b6e2b2016f4cd2afabfe6013ec53729170 AS build
