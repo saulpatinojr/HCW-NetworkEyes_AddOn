@@ -4,6 +4,9 @@ All notable changes to this repository are recorded here. The format follows Kee
 
 ## [Unreleased] — 0.1.0
 
+### Added
+- `.github/workflows/codeql.yml` (CodeQL for the workflow files and the Python, on pull requests, on `main` and every Monday) and `.github/workflows/dependency-review.yml` (blocks a pull request that adds a dependency with a known high or critical vulnerability), both copied from `HCW-CloudCrawler_AddOn`, which had them while this repository did not. Both are read-only (`contents: read`, plus `security-events: write` for CodeQL's own upload), pin every action to a full commit, and are not required checks. The dependency-review job drops its pull request comment and write permission.
+
 ### Changed
 - The lab image repository on Docker Hub is renamed from `hybridcloudworks/hcw-addon-network-assessment` to `hybridcloudworks/img-ne-lab-addon` (owner naming convention `img-<short name>-<job>-<type>`, 2026-10-25), and its tag is now the full release tag (`v0.1.0`, not `0.1.0`). `publish-images.yml` (`IMAGE`, the tag, the image title label), the local `:dev` build tag, the README and the deployment and integration documents follow. The container name on the lab host (`hcw-addon-network-assessment`) is **not** changed: the website's host role owns it. Nothing is published by this change; the next `v*` tag pushes to the new name once the Docker OIDC connection allows it (`docs/deployment/lab-host.md`, step 4).
 - Hardening: the last step of `publish-images.yml` printed the release version straight into a shell command (`echo "image_tag: ${{ steps.version.outputs.version }}"`). The version comes from the pushed tag's name, so a crafted tag name could inject a command. It now reaches the shell through the environment variable `IMAGE_TAG` and is printed as `"${IMAGE_TAG}"`. This was already present before the rename; only people with write access can push tags.
