@@ -118,7 +118,7 @@ answer `503 turnstile_not_configured` (fail closed). Browser suite: `make e2e` (
 ## Releases and artifacts
 
 A `v*` tag builds the image, proves the edition boundary inside it, scans it (Trivy, HIGH/CRITICAL, fixed only), pushes
-`docker.io/hybridcloudworks/img-ne-lab-addon:<version>` with provenance and SBOM, attests it, and prints the
+`docker.io/hybridcloudworks/img-ne-lab-addon:v<version>` with provenance and SBOM, attests it, and prints the
 digest in the run summary. The website pins that digest in its lab-host `group_vars`; the digest is the only coupling.
 The push is skipped until the owner enables the Docker OIDC connection (`docs/deployment/lab-host.md`).
 
