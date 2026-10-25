@@ -17,7 +17,7 @@ run:
 	NA_ALLOW_NO_TURNSTILE=1 PORT=8080 uv run python -m network_assessment
 
 image:
-	docker build -f infrastructure/docker/Dockerfile --build-arg EDITION=lab -t hcw-addon-network-assessment:dev .
+	docker build -f infrastructure/docker/Dockerfile --build-arg EDITION=lab -t img-ne-lab-addon:dev .
 
 e2e:
 	npx --yes playwright@1.63.0 test -c tests/e2e/playwright.config.ts

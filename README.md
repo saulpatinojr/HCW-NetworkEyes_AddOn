@@ -7,7 +7,7 @@
 [![publish-images](https://github.com/saulpatinojr/HCW-NetworkEyes_AddOn/actions/workflows/publish-images.yml/badge.svg)](https://github.com/saulpatinojr/HCW-NetworkEyes_AddOn/actions/workflows/publish-images.yml)
 [![core-update](https://github.com/saulpatinojr/HCW-NetworkEyes_AddOn/actions/workflows/core-update.yml/badge.svg)](https://github.com/saulpatinojr/HCW-NetworkEyes_AddOn/actions/workflows/core-update.yml)
 [![python](https://img.shields.io/badge/python-3.14.6%2B-3776AB?logo=python&logoColor=white)](.python-version)
-[![image](https://img.shields.io/badge/docker.io-hybridcloudworks%2Fhcw--addon--network--assessment-2496ED?logo=docker&logoColor=white)](docs/deployment/lab-host.md)
+[![image](https://img.shields.io/badge/docker.io-hybridcloudworks%2Fimg--ne--lab--addon-2496ED?logo=docker&logoColor=white)](docs/deployment/lab-host.md)
 [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
 Upload the JSON that `az graph query` prints for `microsoft.network/*`, or the CSV that Resource Graph Explorer
@@ -40,7 +40,7 @@ flowchart LR
     Pane["web/<br/>vanilla pane, HCW theme tokens"]
     Port --> Lab --> Pane
   end
-  Image["docker.io/hybridcloudworks/hcw-addon-network-assessment<br/>scanned, by digest"]
+  Image["docker.io/hybridcloudworks/img-ne-lab-addon<br/>scanned, by digest"]
   Host["lab host<br/>network-assessment.lab.hybridcloudworks.com (port 18082, loopback)"]
   Site["hybridcloudworks.com<br/>/tools/network-assessment (sandboxed pane)"]
   Core -. "publishes on every engine-v* tag" .-> Wheel
@@ -118,7 +118,7 @@ answer `503 turnstile_not_configured` (fail closed). Browser suite: `make e2e` (
 ## Releases and artifacts
 
 A `v*` tag builds the image, proves the edition boundary inside it, scans it (Trivy, HIGH/CRITICAL, fixed only), pushes
-`docker.io/hybridcloudworks/hcw-addon-network-assessment:<version>` with provenance and SBOM, attests it, and prints the
+`docker.io/hybridcloudworks/img-ne-lab-addon:v<version>` with provenance and SBOM, attests it, and prints the
 digest in the run summary. The website pins that digest in its lab-host `group_vars`; the digest is the only coupling.
 The push is skipped until the owner enables the Docker OIDC connection (`docs/deployment/lab-host.md`).
 

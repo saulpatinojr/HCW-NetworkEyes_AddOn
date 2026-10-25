@@ -10,8 +10,8 @@ as one `docker_container` named `hcw-addon-network-assessment` behind the host's
 | Field | Value |
 |---|---|
 | `id` | `network-assessment` |
-| `image` | `docker.io/hybridcloudworks/hcw-addon-network-assessment` |
-| `image_tag` | the release tag, for humans (for example `0.1.0`) |
+| `image` | `docker.io/hybridcloudworks/img-ne-lab-addon` |
+| `image_tag` | the release tag, for humans (for example `v0.1.0`) |
 | `image_digest` | the `sha256:…` printed by `publish-images.yml` in its run summary; the only coupling |
 | `port` | `18082` (published as `127.0.0.1:18082:8080`; the role asserts loopback and uniqueness) |
 | `memory` | `512m` |

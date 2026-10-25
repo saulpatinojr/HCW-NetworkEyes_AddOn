@@ -16,7 +16,7 @@ one page; nothing from this repository is installed into the site bundle.
 | Function App setting (status proxy) | `ADDON_NETWORK_ASSESSMENT_URL` = the origin, plain app setting (public value) |
 | Lab-host vault key | `vault_addon_network_assessment_turnstile_secret` |
 | Lab-host loopback port | 18082 |
-| Image | `docker.io/hybridcloudworks/hcw-addon-network-assessment`, pinned by digest in the website's `lab-host/ansible/group_vars/all.yml` `addons[]` |
+| Image | `docker.io/hybridcloudworks/img-ne-lab-addon`, pinned by digest in the website's `lab-host/ansible/group_vars/all.yml` `addons[]` |
 
 ## Catalogue row (`frontend/src/data/addons/catalogue.js`)
 
