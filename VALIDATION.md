@@ -41,6 +41,13 @@ pin at authoring, CONTRACT-DECISIONS item 20; `python:3.14.8-slim-trixie` with t
 
 ## Limitations recorded
 
+- When it is not inert, `core-update.yml` opens the pull request with a GitHub App token (the `admin-ops` environment's
+  App credential), not `GITHUB_TOKEN`, so the required checks run on the pull request itself. That path is covered by
+  `tests/security/test_core_update_app_token.py` (static) and was linted with actionlint and zizmor; it has not yet opened
+  a real bump pull request here. To prove the credential while the workflow is inert:
+  `gh workflow run core-update.yml -R saulpatinojr/HCW-NetworkEyes_AddOn --ref main -f probe=true`. Auto-merge of a
+  compatible bump needs the repository setting "Allow auto-merge" (on 2026-10-26 UTC); with it off, `core-update` warns
+  and leaves the pull request for a person to merge.
 - An export shows configuration only: metrics, diagnostic settings, attacks in progress, BGP state, effective routes
   and NSG rules, private DNS resolution, Defender assessments and cost are `unknown` by design (11 live-only rules
   reported in `unknowns[]`; the panel and `report.md` say so).
