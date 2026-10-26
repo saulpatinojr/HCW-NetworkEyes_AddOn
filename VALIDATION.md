@@ -42,11 +42,16 @@ on 2026-10-26 to the website's newer digest `sha256:fbecd461...`).
 
 ## Limitations recorded
 
-- When it is not inert, `core-update.yml` opens the pull request with a GitHub App token (the `admin-ops` environment's
-  App credential), not `GITHUB_TOKEN`, so the required checks run on the pull request itself. That path is covered by
+- When it is not inert, `core-update.yml` opens the pull request with a GitHub App token (the HCW Main Admin App: its client ID is the repository variable
+  `HCW_MAIN_ADMIN_CLIENT_ID`, its private key the repository secret `HCW_MAIN_ADMIN_PRIVATE_KEY`), not `GITHUB_TOKEN`, so the required checks run on the pull request itself. That path is covered by
   `tests/security/test_core_update_app_token.py` (static) and was linted with actionlint and zizmor; it has not yet opened
   a real bump pull request here. To prove the credential while the workflow is inert:
-  `gh workflow run core-update.yml -R saulpatinojr/HCW-NetworkEyes_AddOn --ref main -f probe=true`. Auto-merge of a
+  `gh workflow run core-update.yml -R saulpatinojr/HCW-NetworkEyes_AddOn --ref main -f probe=true`.
+  The App key lives only as the repository secret `HCW_MAIN_ADMIN_PRIVATE_KEY` and is never printed. To rotate it,
+  generate a new private key on the settings page of the App (https://github.com/settings/apps), replace the secret
+  on this repository's secrets page
+  (https://github.com/saulpatinojr/HCW-NetworkEyes_AddOn/settings/secrets/actions), then delete the old key on the
+  settings page of the App. Auto-merge of a
   compatible bump needs the repository setting "Allow auto-merge" (on 2026-10-26 UTC); with it off, `core-update` warns
   and leaves the pull request for a person to merge.
 - An export shows configuration only: metrics, diagnostic settings, attacks in progress, BGP state, effective routes
