@@ -27,6 +27,11 @@ All notable changes to this repository are recorded here. The format follows Kee
   no docker Dependabot entry: the base follows the website, and the uv image follows `UV_VERSION`. CI builds the
   image on every pull request, resolves the uv digest for `UV_VERSION` rather than trusting any digest, and a weekly
   job flags the base drifting from the website's pin.
+- The base image digest follows the website's current pin again (`python:3.14.8-slim-trixie@sha256:fbecd461...`, same
+  tag, newer build; `versions.env` and both `FROM` lines). The website rebuilt on it on 2026-10-21; `security.yml`'s
+  `base-follows-website` job, which runs on `main` and weekly only, had been red on `main` since its first run after
+  that (2026-10-24). An image built from the next tag uses the current base; a tag already published keeps the base
+  it was built on.
 - Repository hygiene: `.github/dependabot.yml` groups GitHub Actions updates under `all-actions` and removes the unused `/tests/e2e` npm entry; `infrastructure/docker/Dockerfile`, `README.md`, and `CLAUDE.md` updated to match `HCW-NetworkEyes_App` and `ADR-0005`.
 - README: a "where to try it" paragraph for new visitors; the diagram says the engine wheel is attached to each `engine-v*` release of the App. `core-update.yml`'s checkout no longer persists credentials (two Authorization headers made GitHub answer `400` to `create-pull-request`'s push in the Migrate App's `rules-refresh`).
 - **Upstream is `saulpatinojr/HCW-NetworkEyes_App`** (owner decision 2026-10-10: the Core lineage was merged back into the App, which now holds the engine package and its `engine-v*` releases). `core-update.yml` watches that repository and pins the engine as the GitHub Release wheel asset by URL, so `uv lock` records its sha256 and the image's `pip install --require-hashes` keeps verifying it (a git+https pin cannot be hash-checked); no PyPI step is needed for adoption. Provenance headers, `PROVENANCE.md`, the governance files and the docs name the App; ADR-0001 and ADR-0004 carry an amendment note.

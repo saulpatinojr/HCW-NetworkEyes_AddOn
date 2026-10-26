@@ -14,7 +14,8 @@ ruff 0.17.0, httpx 0.28.1, pip-audit 2.10.1; build hatchling 1.32.4. `uv.lock` a
 default) are committed (since 2026-10-16 only `uv.lock`: the image build runs the export, and CI checks
 `uv lock --check`); 14 third-party runtime packages, none Azure. Base image
 `python:3.14.7-slim-trixie@sha256:51dafde81dbdb6ebde285137a295cf18a47ca95234fe388a343719cb97305b3d` (the website's
-pin at authoring, CONTRACT-DECISIONS item 20; `python:3.14.8-slim-trixie` with the website since 2026-10-16).
+pin at authoring, CONTRACT-DECISIONS item 20; `python:3.14.8-slim-trixie` with the website since 2026-10-16, moved
+on 2026-10-26 to the website's newer digest `sha256:fbecd461...`).
 
 | Check | Executed here | Result |
 |---|---|---|
