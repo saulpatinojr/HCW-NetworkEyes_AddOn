@@ -3,8 +3,8 @@
 Owner decision 2026-10-09: the lab edition ports the Core's Azure network engine with provenance under MIT
 (`[REVIEW REQUIRED]` relicensing, see `NOTICE`), as an **interim** measure (ADR-0001) until
 `saulpatinojr/HCW-NetworkEyes_App` (the App; it was the Core until the owner's 2026-10-10 decision merged that lineage
-back) publishes the `cna-azure-network-engine` wheel (published as `engine-v0.1.0` on 2026-10-12, **not adopted yet**: see `docs/whats-new-upstream.md`) (its `REFACTOR_APP.md` change sets A, B, C and E produce the same
-symbols under `cna_azure_network_engine`; change set J attaches the wheel to the GitHub Release of each `engine-v*` tag). Every ported file starts with
+back) publishes the `network-assessment-azure-engine` wheel (the first release, `engine-v0.1.0`, was published on 2026-10-12 under the package's earlier name; **not adopted yet**: see `docs/whats-new-upstream.md`) (its `REFACTOR_APP.md` change sets A, B, C and E produce the same
+symbols under `network_assessment_azure_engine`; change set J attaches the wheel to the GitHub Release of each `engine-v*` tag). Every ported file starts with
 `# Ported from saulpatinojr/HCW-NetworkEyes_App <path> at 5d3b914; changes: …`, and
 `tests/end_to_end/test_repository_manifest.py` asserts the header and this table agree. Source paths and line numbers
 are those of commit `5d3b914` in `HCW-NetworkEyes_App` (the split point of 2026-09-18; the same commit in its history today).
