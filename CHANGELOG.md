@@ -55,7 +55,7 @@ and is not part of this change.
   stops being MIT, and the pre-publish check in `publish-images.yml` fails when the image about to be pushed lacks it.
   The `labels:` input of `publish-images.yml` must not set this label: it would override the Dockerfile's. The image
   tags on Docker Hub on 2026-10-26 (`0.1.0`, `v0.1.0` and `v0.1.1-rc.1`) were built without the
-  label and are not changed; the label reaches Docker Hub with the next tagged release.
+  label and are not changed; the label reaches Docker Hub with the next tagged release, which is `v0.1.1`.
 - Dependencies moved to newer releases through Dependabot (between 2026-10-16 and 2026-10-24). In the image: fastapi
   0.143.0 to 0.156.8 ([34](https://github.com/saulpatinojr/HCW-NetworkEyes_AddOn/pull/34)), starlette 1.7.0 to 1.9.0 ([24](https://github.com/saulpatinojr/HCW-NetworkEyes_AddOn/pull/24), [29](https://github.com/saulpatinojr/HCW-NetworkEyes_AddOn/pull/29)), pydantic 2.14.0 to 2.14.1 with
   pydantic-core 2.50.0 to 2.50.1 ([25](https://github.com/saulpatinojr/HCW-NetworkEyes_AddOn/pull/25)); uvicorn stays at 0.54.0. Development only, not in the image: ruff 0.17.1
