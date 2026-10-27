@@ -1,6 +1,6 @@
 {
   "name": "hcw-networkeyes-addon",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "archive": "hcw-networkeyes-addon.zip",
   "archiveLayout": "repository files at archive root (no nested parent directory)",
   "requiredFiles": [
