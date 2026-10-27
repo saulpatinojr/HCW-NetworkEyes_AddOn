@@ -19,8 +19,8 @@ the export carried, never what is assumed (the observed-state enforcer gates eve
 metrics, diagnostic settings, BGP state or cost are reported as `unknowns`, in data, not only in prose. It is not for
 production.
 
-**Where to try it.** The pane will appear at [hybridcloudworks.com/tools/network-assessment](https://hybridcloudworks.com/tools/network-assessment)
-once the first image is published; until then, run it on your own machine with the Quick start below and open
+**Where to try it.** The pane is on the website at [hybridcloudworks.com/tools/network-assessment](https://hybridcloudworks.com/tools/network-assessment).
+You can also run it on your own machine with the Quick start below and open
 `http://127.0.0.1:8080`. There is no account and nothing to install in Azure: you export, you upload, you read.
 
 > **Status:** lab edition, not production. Limitations are recorded in [`VALIDATION.md`](VALIDATION.md). The engine is
@@ -120,7 +120,7 @@ answer `503 turnstile_not_configured` (fail closed). Browser suite: `make e2e` (
 A `v*` tag builds the image, proves the edition boundary inside it, scans it (Trivy, HIGH/CRITICAL, fixed only), pushes
 `docker.io/hybridcloudworks/img-ne-lab-addon:v<version>` with provenance and SBOM, attests it, and prints the
 digest in the run summary. The website pins that digest in its lab-host `group_vars`; the digest is the only coupling.
-The push is skipped until the owner enables the Docker OIDC connection (`docs/deployment/lab-host.md`).
+Pushing needs the repository variables `DOCKERHUB_ENABLED` and `DOCKERHUB_CONNECTION` (`docs/deployment/lab-host.md`); both are set, and `v0.1.0` and `v0.1.1-rc.1` were pushed that way.
 
 ## What the export cannot show
 
