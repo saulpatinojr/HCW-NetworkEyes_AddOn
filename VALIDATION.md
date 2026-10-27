@@ -91,3 +91,27 @@ on 2026-10-26 to the website's newer digest `sha256:fbecd461...`).
   lives under `src/network_assessment/{model,rules,classify}` and is deleted, not handed upstream, once the Core's
   wheel exists (ADR-0001); the brief's validation command `import network_assessment.api.app` is therefore
   `import network_assessment.app` here (the sibling's module layout, ADR-0002).
+- `base-update.yml` moves the base image pin to the website's pin by opening a pull request, with the same HCW Main Admin App credential as
+  `core-update.yml` (so `core-update.yml`'s probe run also proves the credential here). The workflow, `scripts/follow_website_base.py` and the three
+  test files (`tests/unit/test_follow_website_base.py`, `tests/unit/test_base_image_pin.py`, `tests/security/test_base_update_workflow.py`)
+  were copied byte for byte from the Cloud Assessor add-on (merged there in
+  [pull request 49](https://github.com/saulpatinojr/HCW-CloudAssessor_AddOn/pull/49)). That version was proved live there on 2026-10-27:
+  [run 40488729010](https://github.com/saulpatinojr/HCW-CloudAssessor_AddOn/actions/runs/40488729010) opened the pull request and its checks ran,
+  [run 40490178354](https://github.com/saulpatinojr/HCW-CloudAssessor_AddOn/actions/runs/40490178354) left a person's commit alone, and
+  [run 40493622020](https://github.com/saulpatinojr/HCW-CloudAssessor_AddOn/actions/runs/40493622020) closed a pull request that was no longer needed
+  (recorded in Cloud Assessor's [pull request 59](https://github.com/saulpatinojr/HCW-CloudAssessor_AddOn/pull/59)).
+  **Verified here, on 2026-10-27, on a workstation:** the five files are identical to Cloud Assessor `main` (checked by hash); the three test files pass
+  here (167 passed) and so does the whole suite (413 passed, coverage 97.99 percent, gate 85); `ruff check`, `ruff format --check`,
+  `uv lock --check` and `scripts/rules-doc.py --check` pass; `tests/unit/test_base_image_pin.py` was seen to fail when the digest in `versions.env`
+  was changed, and again when one `FROM` line was changed, and to pass once both were put back; `actionlint` 1.7.12 is clean on the workflow once the
+  runner label `ubuntu-26.04` is declared in a temporary config file (it does not know that label); the runbook's PowerShell blocks parse in
+  Windows PowerShell 5.1.
+  **Not verified in this repository until its own proof has run** (the steps are in `docs/operations/runbook.md`, "Keeping the base image on the
+  website's pin"; the workflow cannot be started before it is on `main`): a first run of the workflow here; the scheduled trigger (07:37 UTC); the
+  token step and `create-pull-request` pushing and opening the pull request here; the registry check on the runner's own `docker buildx`; the
+  commit identity (`<id>+<slug>[bot]@users.noreply.github.com`); the closing of an obsolete pull request; the runner's own `python3` version (the
+  script is written for Python 3.9 and later and a test guards that); and whether the ruleset "Protect main" option "require extra approval for
+  unattributed changes" asks for an extra approval on a pull request into `main` (the pull requests of the Cloud Assessor proof went into a
+  throwaway branch, not into `main`; this ruleset asks for no approvals otherwise, so no extra approval is expected, but that is an expectation,
+  not something seen). Scheduled workflows in a public repository are switched off by GitHub after 60 days without repository activity; the weekly
+  `base-follows-website` job is the second check if that ever happens.

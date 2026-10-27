@@ -21,5 +21,6 @@ updates:
     schedule: { interval: weekly }
     groups: { all-actions: { patterns: ["*"] } }
   # No docker entry. The base image follows the website's pin (CONTRACT-DECISIONS item 20; infrastructure/docker/
-  # versions.env), and the uv image used to export follows UV_VERSION in ci.yml, which CI checks against the Dockerfile.
+  # versions.env; .github/workflows/base-update.yml opens the pull request that moves it), and the uv image used to
+  # export follows UV_VERSION in ci.yml, which CI checks against the Dockerfile.
   # A Dependabot bump of either would move one of a pair and fail CI by design.
