@@ -34,6 +34,6 @@ Not ported (and why): `azure_discovery.py` (live ARM discovery; its field-mappin
 escalation engine, `EngagementStore`, the report/diagram/AI/portal/review engines, `cna-web`, the `cna-api` shell, the
 worker, everything AWS, the NVA/BGP/observability/metrics checks of both engines (live reads).
 
-Deletion plan (REFACTOR_APP.md section 21): when `cna-azure-network-engine` is on PyPI, `core-update.yml` pins it in
+Deletion plan (REFACTOR_APP.md section 21): when `network-assessment-azure-engine` is on PyPI, `core-update.yml` pins it in
 `pyproject.toml` (`ENGINE_REF`), `src/network_assessment/{model,rules,classify}` is deleted, the rows above for those
 files are removed, and `ingestion/`, `report/`, `store.py`, `routes/`, `security/`, `web/` stay.
