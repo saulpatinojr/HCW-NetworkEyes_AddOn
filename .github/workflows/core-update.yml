@@ -1,9 +1,9 @@
 # Actions are pinned to full commit SHAs (version in the trailing comment); Dependabot (github-actions ecosystem) proposes updates.
 # Upstream -> downstream flow (ADR-0001, ADR-0004; ADR-0028 by analogy). The App (saulpatinojr/HCW-NetworkEyes_App,
-# REFACTOR_APP.md change sets C and J) builds the engine wheel cna-azure-network-engine on every `engine-v*` tag and
+# REFACTOR_APP.md change sets C and J) builds the engine wheel network-assessment-azure-engine on every `engine-v*` tag and
 # attaches it to the GitHub Release (320-release-engine.yml); PyPI publishing there is optional and not needed here.
 # This repository then pins the release asset by URL in pyproject.toml, on one line, as
-#   "cna-azure-network-engine @ https://github.com/saulpatinojr/HCW-NetworkEyes_App/releases/download/engine-v<version>/cna_azure_network_engine-<version>-py3-none-any.whl",  # ENGINE_REF <version>
+#   "network-assessment-azure-engine @ https://github.com/saulpatinojr/HCW-NetworkEyes_App/releases/download/engine-v<version>/network_assessment_azure_engine-<version>-py3-none-any.whl",  # ENGINE_REF <version>
 # `uv lock` records the wheel's sha256 and the image build's `uv export --frozen` carries it, so the image's
 # `pip install --require-hashes` keeps verifying every third-party file (a git+https pin cannot be hash-checked and would
 # break that build). Adopting the wheel deletes the ported copy under src/network_assessment/{model,rules,classify} and
@@ -44,7 +44,7 @@ on:
 permissions: {}
 env:
   UPSTREAM: saulpatinojr/HCW-NetworkEyes_App
-  PACKAGE: cna-azure-network-engine
+  PACKAGE: network-assessment-azure-engine
 jobs:
   check-and-bump:
     runs-on: ubuntu-26.04
@@ -86,7 +86,7 @@ jobs:
         run: |
           set -euo pipefail
           # One line carries the release tag, the wheel file name and the ENGINE_REF marker; all three move together.
-          sed -i -E "s|releases/download/engine-v${CURRENT}/cna_azure_network_engine-${CURRENT}-py3-none-any\.whl(\",?[[:space:]]*#[[:space:]]*ENGINE_REF[[:space:]]+)${CURRENT}|releases/download/engine-v${LATEST}/cna_azure_network_engine-${LATEST}-py3-none-any.whl\1${LATEST}|" pyproject.toml
+          sed -i -E "s|releases/download/engine-v${CURRENT}/network_assessment_azure_engine-${CURRENT}-py3-none-any\.whl(\",?[[:space:]]*#[[:space:]]*ENGINE_REF[[:space:]]+)${CURRENT}|releases/download/engine-v${LATEST}/network_assessment_azure_engine-${LATEST}-py3-none-any.whl\1${LATEST}|" pyproject.toml
           grep -q "ENGINE_REF ${LATEST}" pyproject.toml
           uv lock --upgrade-package "${PACKAGE}"
           git --no-pager diff --stat
@@ -131,7 +131,7 @@ jobs:
           token: ${{ steps.app-token.outputs.token }}
           branch: core-update/engine-v${{ steps.refs.outputs.latest }}
           title: "core: adopt engine ${{ steps.refs.outputs.latest }} (${{ steps.compat.outcome == 'success' && 'compatible' || 'needs adaptation' }})"
-          commit-message: "core: bump cna-azure-network-engine ${{ steps.refs.outputs.current }} -> ${{ steps.refs.outputs.latest }}"
+          commit-message: "core: bump network-assessment-azure-engine ${{ steps.refs.outputs.current }} -> ${{ steps.refs.outputs.latest }}"
           labels: core-update,${{ steps.compat.outcome == 'success' && 'compatible' || 'needs-adaptation' }}
           add-paths: |
             pyproject.toml

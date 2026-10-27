@@ -33,7 +33,7 @@ You can also run it on your own machine with the Quick start below and open
 ```mermaid
 flowchart LR
   Core["HCW-NetworkEyes_App<br/>upstream: the engine, the appliance edition on Azure"]
-  Wheel["cna-azure-network-engine<br/>wheel attached to each engine-v* release of the App"]
+  Wheel["network-assessment-azure-engine<br/>wheel attached to each engine-v* release of the App"]
   subgraph AddOn["HCW-NetworkEyes_AddOn (this repository)"]
     Port["src/network_assessment/{model,rules,classify}<br/>interim ported engine (PROVENANCE.md)"]
     Lab["src/network_assessment<br/>lab edition: ingestion, FastAPI, upload-only, in-memory"]
