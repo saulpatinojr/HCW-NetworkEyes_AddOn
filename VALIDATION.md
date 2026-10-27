@@ -74,7 +74,19 @@ except for `__version__`. "Here" is the owner's Windows workstation: Python 3.14
   https://github.com/saulpatinojr/HCW-NetworkEyes_AddOn/settings/secrets/actions; the App is installed on the four
   add-on repositories, so check the other three), then delete the old key on the settings page of the App.
   The settings page can hold several keys, so a separate key per repository lets you revoke one without
-  touching the others. Auto-merge of a
+  touching the others.
+  **Accepted risk, so nobody has to rediscover it.** A repository secret can be read by any workflow that runs from a branch
+  someone with write access can push, so `base-update.yml` is a second reader of the key beside `core-update.yml` (both can
+  be started by hand with `workflow_dispatch`), and the base-update proof depends on that: it runs the workflow from a
+  throwaway branch. Today only the owner can push here. The App is installed on the four add-on repositories, and both
+  workflows ask the token action for this repository only (`repositories: ${{ github.repository }}`) with Contents and Pull
+  requests write; a token lasts one hour. A modified workflow on another branch could ask for more: the limit is then whatever
+  the App was granted when it was installed (that list is on the App's settings page, https://github.com/settings/apps, and is
+  not repeated here because a session cannot read it), which is why the key is a risk. The owner decided on 2026-10-26 to leave
+  the key as a repository secret ([HCW-HybridCloudWorks#1410](https://github.com/saulpatinojr/HCW-HybridCloudWorks/issues/1410));
+  the stronger options (an environment limited to `main`, one key per repository) can be reopened if the key is ever suspected
+  leaked. An environment limited to `main` would also stop the base-update proof, which needs a run from a branch.
+  Auto-merge of a
   compatible bump needs the repository setting "Allow auto-merge" (on 2026-10-26 UTC); with it off, `core-update` warns
   and leaves the pull request for a person to merge.
 - An export shows configuration only: metrics, diagnostic settings, attacks in progress, BGP state, effective routes
@@ -113,3 +125,31 @@ except for `__version__`. "Here" is the owner's Windows workstation: Python 3.14
   lives under `src/network_assessment/{model,rules,classify}` and is deleted, not handed upstream, once the Core's
   wheel exists (ADR-0001); the brief's validation command `import network_assessment.api.app` is therefore
   `import network_assessment.app` here (the sibling's module layout, ADR-0002).
+- `base-update.yml` moves the base image pin to the website's pin by opening a pull request, with the same HCW Main Admin App credential as
+  `core-update.yml` (so `core-update.yml`'s probe run also proves the credential here). The workflow, `scripts/follow_website_base.py` and the three
+  test files (`tests/unit/test_follow_website_base.py`, `tests/unit/test_base_image_pin.py`, `tests/security/test_base_update_workflow.py`)
+  were copied byte for byte from the Cloud Assessor add-on (merged there in
+  [pull request 49](https://github.com/saulpatinojr/HCW-CloudAssessor_AddOn/pull/49)). That version was proved live there on 2026-10-27:
+  [run 40488729010](https://github.com/saulpatinojr/HCW-CloudAssessor_AddOn/actions/runs/40488729010) opened the pull request and its checks ran,
+  [run 40490178354](https://github.com/saulpatinojr/HCW-CloudAssessor_AddOn/actions/runs/40490178354) left a person's commit alone, and
+  [run 40493622020](https://github.com/saulpatinojr/HCW-CloudAssessor_AddOn/actions/runs/40493622020) closed a pull request that was no longer needed
+  (recorded in Cloud Assessor's [pull request 59](https://github.com/saulpatinojr/HCW-CloudAssessor_AddOn/pull/59)).
+  **Verified here, on 2026-10-27, on a workstation:** the five files are identical to Cloud Assessor `main` (checked by hash); the three test files pass
+  here (167 passed) and so does the whole suite (413 passed, coverage 97.99 percent, gate 85); `ruff check`, `ruff format --check`,
+  `uv lock --check` and `scripts/rules-doc.py --check` pass; `tests/unit/test_base_image_pin.py` was seen to fail when the digest in `versions.env`
+  was changed, and again when one `FROM` line was changed, and to pass once both were put back; `actionlint` 1.7.12 is clean on the workflow once the
+  runner label `ubuntu-26.04` is declared in a temporary config file (it does not know that label); the runbook's PowerShell blocks parse in
+  Windows PowerShell 5.1.
+  **Not verified in this repository until its own proof has run** (the steps are in `docs/operations/runbook.md`, "Keeping the base image on the
+  website's pin"; the workflow cannot be started before it is on `main`): a first run of the workflow here; the scheduled trigger (07:37 UTC); the
+  token step and `create-pull-request` pushing and opening the pull request here; the registry check on the runner's own `docker buildx`; the
+  commit identity (`<id>+<slug>[bot]@users.noreply.github.com`); the closing of an obsolete pull request; the runner's own `python3` version (the
+  script is written for Python 3.9 and later and a test guards that); and whether the ruleset "Protect main" option "require extra approval for
+  unattributed changes" asks for an extra approval on a pull request into `main` (the pull requests of the Cloud Assessor proof went into a
+  throwaway branch, not into `main`; this ruleset asks for no approvals otherwise, so no extra approval is expected, but that is an expectation,
+  not something seen). Scheduled workflows in a public repository are switched off by GitHub after 60 days without repository activity. That
+  switches off `base-update` and the weekly `base-follows-website` job together, so after a quiet spell the weekly job is not an independent
+  second check. It is also not a full second check at any time: it compares only the image and its digest, so if the website changes only
+  `BASE_PYTHON_VERSION` to another minor line, `base-update` refuses and goes red while the weekly job stays green. How to see whether either
+  workflow has been switched off, and how to switch them back on, is in `docs/operations/runbook.md`, "If the daily run goes quiet"; failed
+  `base-update` runs should be watched on their own ("When the run is red").

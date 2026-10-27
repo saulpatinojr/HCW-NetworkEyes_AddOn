@@ -3,7 +3,7 @@
 | Path | What |
 |---|---|
 | `docker/Dockerfile` | The lab image (`docker.io/hybridcloudworks/img-ne-lab-addon`): two stages on one digest-pinned base, hash-pinned dependencies, no pip at runtime, uid 10001, `HEALTHCHECK`, `CMD python -m network_assessment`. `ARG EDITION=lab` is asserted in both stages. |
-| `docker/versions.env` | `BASE_IMAGE`, `BASE_DIGEST`, `BASE_PYTHON_VERSION`; CI fails when any `FROM` differs from `BASE_IMAGE@BASE_DIGEST`. |
+| `docker/versions.env` | `BASE_IMAGE`, `BASE_DIGEST`, `BASE_PYTHON_VERSION`; CI fails when any `FROM` differs from `BASE_IMAGE@BASE_DIGEST` (the `lint` job in `ci.yml`, and `tests/unit/test_base_image_pin.py` in the regular test run). It follows the website's pin automatically: once a day `.github/workflows/base-update.yml` compares it with the website's `lab-image/versions.env` and, when they differ, opens the pull request that moves it and every `FROM` together (`scripts/follow_website_base.py`); a person only reviews and merges that pull request. `security.yml`'s `base-follows-website` job stays as the second check, on `main` and weekly. |
 | `coder/template/main.tf` | Guided workspace template (`na-guided-lab`) on `docker.io/hybridcloudworks/hcw-lab:latest`: pulls the assessment `bundle.zip` once via `x-bundle-token` and opens `code-server` (ADR-0005). |
 | `../docker-compose.yml` | Local development only, hardened like the lab host's `docker_container` (read-only root, tmpfs `/tmp`, `cap_drop ALL`, `no-new-privileges`, 512m, 256 pids, one CPU, bridge network, no mounts). |
 
