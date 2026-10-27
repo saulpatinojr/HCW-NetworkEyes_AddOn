@@ -40,6 +40,27 @@ on 2026-10-26 to the website's newer digest `sha256:fbecd461...`).
 | `core-update.yml` against a Core release | **no** | inert: the App published `cna-azure-network-engine` as `engine-v0.1.0` on 2026-10-12, but `pyproject.toml` has no `ENGINE_REF` line yet, so the comparison step exits cleanly (adoption steps: `docs/whats-new-upstream.md`) |
 | CodeQL, gitleaks, dependency-review | **no**, CI only | `security.yml` |
 
+## Run 2026-10-27 (release 0.1.1 prepared)
+
+This run prepares the version bump only and publishes nothing; the lab application's code is unchanged since 0.1.0
+except for `__version__`. "Here" is the owner's Windows workstation: Python 3.14.6 (`.python-version`), uv 0.12.0 (CI uses
+0.11.32, which was not run), Docker Desktop with engine 29.9.2 on the local `desktop-linux` context.
+
+| Check | Executed here | Result |
+| --- | --- | --- |
+| The version in every place that says it: `pyproject.toml`, `uv.lock` (the `hcw-addon-network-assessment` entry), `__version__`, `repository.manifest.json` and the sample output in `docs/operations/runbook.md`; `uv lock --check` | yes | all `0.1.1`; `uv lock --check` exits 0; the lock differs from `main` in that one version line (uv 0.12.0 also rewrote the file's `revision = 5` to `3`; that line was put back by hand) |
+| `docs/api/openapi.yaml` `info.version` | not changed | stays `0.1.0`: it versions the API document, no route, field or error code changed, and no test ties it to `__version__` |
+| `uv run ruff check . && uv run ruff format --check .` and `uv run python scripts/rules-doc.py --check` | yes | clean (86 files); `docs/rules/catalog.md` in sync (422 lines) |
+| `uv run pytest -q --cov=src --cov-report=term-missing --cov-fail-under=85` | yes | 246 passed, coverage 97.99% (gate 85). It includes `test_manifest_version_matches_pyproject` (`pyproject.toml`, `repository.manifest.json` and `__version__` agree) and `test_health_is_flat_and_complete` (the body's `version` and the `X-Addon-Version` header equal `__version__`) |
+| Live server on a local port (`NA_ALLOW_NO_TURNSTILE=1`), `GET /api/health`, and the runbook's `curl -sI` | yes | body `"version":"0.1.1"` and header `X-Addon-Version: 0.1.1`; `curl -sI` (a HEAD request) answers `405 Method Not Allowed` but still carries `x-addon-version: 0.1.1`, so the runbook command shows the version |
+| `IDENTITY_ENDPOINT=http://169.254.169.254 uv run python -c "import network_assessment.app"` | yes | exit 1, `EditionBoundaryError: refusing to start: identity environment present (IDENTITY_ENDPOINT)` |
+| Local image build (`docker build -f infrastructure/docker/Dockerfile --build-arg EDITION=lab -t img-ne-lab-addon:ne50-0.1.1 .`, tag removed afterwards) | yes, local only | exit 0; label `org.opencontainers.image.licenses` = `MIT`; `network_assessment.__version__` in the image = `0.1.1`; `import azure` fails; uid 10001; a read-only container with `--cap-drop ALL` and `no-new-privileges` answered `/api/health` with version `0.1.1` and header `X-Addon-Version: 0.1.1`. This is a local linux image on Docker Desktop, not the CI build: it was not scanned, signed or pushed |
+| The website's guide-drift script (`scripts/addons/check-guide-drift.mjs` at the commit `guide-drift.yml` pins, run locally against this guide and the website's `main` at `df91043`) | yes | `in step: 13 fields compared`, exit 0. The guide is not touched by this change (it names no version) |
+| `pwsh scripts/package-repository.ps1` | yes | wrote the archive (142 files, 0.28 MB); deleted afterwards. `bash scripts/package-repository.sh` was not run here: `zip` is not installed on this workstation (exit 127) |
+| Publish dry run on the merged commit (`gh workflow run publish-images.yml --ref main`) | **no** | the second line of "Done when" in issue [50](https://github.com/saulpatinojr/HCW-NetworkEyes_AddOn/issues/50); it is run after this change merges |
+| Trivy scan, push, provenance, SBOM, attestation, digest | **no**, CI on a `v*` tag only | `publish-images.yml`; only a `v*` tag pushes, and `v0.1.1` is the owner's call |
+| Playwright e2e, CodeQL, gitleaks, dependency-review, `ci.yml` on the pull request | **no**, CI only | not run here (Playwright is not installed here and no tool was installed); the pull request's own checks cover them |
+
 ## Limitations recorded
 
 - When it is not inert, `core-update.yml` opens the pull request with a GitHub App token (the HCW Main Admin App: its client ID is the repository variable

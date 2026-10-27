@@ -5,8 +5,8 @@ commands below are bash on the host unless stated. Nothing here touches a cloud.
 
 | Task | How | What success looks like |
 |---|---|---|
-| Health | `curl -s http://127.0.0.1:18082/api/health` | `{"ok":true,"id":"network-assessment","version":"0.1.0","edition":"lab",…,"azureConnectivity":"disabled-by-design","rules":{"version":"2026.10.0","count":45,"liveOnly":11},"model":{"version":"lab-1.0.0"},…}` within a second |
-| Which version is live | `curl -sI http://127.0.0.1:18082/api/health \| grep -i x-addon-version` | `x-addon-version: 0.1.0` |
+| Health | `curl -s http://127.0.0.1:18082/api/health` | `{"ok":true,"id":"network-assessment","version":"0.1.1","edition":"lab",…,"azureConnectivity":"disabled-by-design","rules":{"version":"2026.10.0","count":45,"liveOnly":11},"model":{"version":"lab-1.0.0"},…}` within a second |
+| Which version is live | `curl -sI http://127.0.0.1:18082/api/health \| grep -i x-addon-version` | `x-addon-version: 0.1.1` |
 | Logs | `docker logs --since 1h hcw-addon-network-assessment` | JSON lines on stderr: `startup` (rule count), `assessment_created` (rows, resources, findings, unknowns, warnings, duration), `assessment_read`, `assessment_rejected` (a code), `assessment_deleted`, `rate_limited`, `overloaded`, `turnstile_rejected` (a count of codes), `sweep`, `shutdown`. Never ids, names, tokens, file names, prefixes or cell content. |
 | Restart | `docker restart hcw-addon-network-assessment` | Health answers again within the `HEALTHCHECK` start period (10 s). Every in-memory assessment is gone by design. |
 | Upgrade / rollback | Move `image_tag` and `image_digest` in the website's `group_vars/all.yml`; run `bootstrap.sh` | The role pulls by digest, recreates the container and waits for health. Rollback is the previous digest. |
