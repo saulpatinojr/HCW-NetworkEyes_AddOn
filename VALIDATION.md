@@ -96,14 +96,17 @@ except for `__version__`. "Here" is the owner's Windows workstation: Python 3.14
   **Accepted risk, so nobody has to rediscover it.** A repository secret can be read by any workflow that runs from a branch
   someone with write access can push, so `base-update.yml` is a second reader of the key beside `core-update.yml` (both can
   be started by hand with `workflow_dispatch`), and the base-update proof depends on that: it runs the workflow from a
-  throwaway branch. Today only the owner can push here. The App is installed on the four add-on repositories, and both
+  throwaway branch. As of 2026-10-27, only the owner can push here. The App is installed on the four add-on repositories, and both
   workflows ask the token action for this repository only (`repositories: ${{ github.repository }}`) with Contents and Pull
   requests write; a token lasts one hour. A modified workflow on another branch could ask for more: the limit is then whatever
   the App was granted when it was installed (that list is on the App's settings page, https://github.com/settings/apps, and is
   not repeated here because a session cannot read it), which is why the key is a risk. The owner decided on 2026-10-26 to leave
   the key as a repository secret ([HCW-HybridCloudWorks#1410](https://github.com/saulpatinojr/HCW-HybridCloudWorks/issues/1410));
-  the stronger options (an environment limited to `main`, one key per repository) can be reopened if the key is ever suspected
-  leaked. An environment limited to `main` would also stop the base-update proof, which needs a run from a branch.
+  the stronger options (an environment limited to `main`, or a separate App installation for each repository) can be reopened
+  if the key is ever suspected leaked. A separate key for each repository on the same App is not one of them: it helps rotation
+  (one key can be revoked without touching the others) but it does not shrink what a stolen key can reach, because every key
+  authenticates the same App, and that App is installed on all four add-on repositories. An environment limited to `main` would
+  also stop the base-update proof, which needs a run from a branch.
   Auto-merge of a
   compatible bump needs the repository setting "Allow auto-merge" (on 2026-10-26 UTC); with it off, `core-update` warns
   and leaves the pull request for a person to merge.
