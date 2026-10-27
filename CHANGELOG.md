@@ -21,8 +21,9 @@ kept up to date, the workflows around it, the Coder template and the documents, 
 `0.1.0` to `0.1.1` in `pyproject.toml`, in `uv.lock` (the `hcw-addon-network-assessment` entry only), in `__version__`, in
 `repository.manifest.json` and in the sample output of `docs/operations/runbook.md`; `/api/health` and the
 `X-Addon-Version` header read `__version__`, so they say `0.1.1`. `docs/api/openapi.yaml` keeps its document version
-`0.1.0`, because no route, field or error code changed. Publishing the image is the tag `v0.1.1`, which is the owner's call
-and is not part of this change.
+`0.1.0`, because no route, field or error code changed. The image was published on 2026-10-27 by the tag `v0.1.1` (digest
+`sha256:338e0e035d053b918f6840bab6eb5871eb739f4d132a076d9497fec54a162635`;
+[release](https://github.com/saulpatinojr/HCW-NetworkEyes_AddOn/releases/tag/v0.1.1)).
 
 ### Changed
 - A manual run of the publish workflow (`publish-images.yml`) is now a true dry run: it builds, checks and scans the image but never pushes, because only a `v*` tag does. Before, the gate step looked only at the repository variables, so a manual run on `main` went on to the Docker login ([pull request 51](https://github.com/saulpatinojr/HCW-NetworkEyes_AddOn/pull/51)).

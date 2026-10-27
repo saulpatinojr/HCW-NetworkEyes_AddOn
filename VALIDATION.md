@@ -40,6 +40,24 @@ on 2026-10-26 to the website's newer digest `sha256:fbecd461...`).
 | `core-update.yml` against a Core release | **no** | inert: the App published `cna-azure-network-engine` as `engine-v0.1.0` on 2026-10-12, but `pyproject.toml` has no `ENGINE_REF` line yet, so the comparison step exits cleanly (adoption steps: `docs/whats-new-upstream.md`) |
 | CodeQL, gitleaks, dependency-review | **no**, CI only | `security.yml` |
 
+## Run 2026-10-27 (release 0.1.1 published)
+
+Run on GitHub after the owner said yes to the tag ([issue 50](https://github.com/saulpatinojr/HCW-NetworkEyes_AddOn/issues/50)).
+Nothing in the application changed; this records the dry run, the tag and what the registry shows.
+
+| Check | Result |
+| --- | --- |
+| The gate step of `publish-images.yml` for a manual run, its own shell run with the repository variables set as they are | **Before** [pull request 51](https://github.com/saulpatinojr/HCW-NetworkEyes_AddOn/pull/51): `push=true` for a manual run on `main`, so a "dry run" could have reached the Docker login. **After**: `push=false` with a notice for anything that is not a `v*` tag; a tag gives `push=true`; a tag with publishing switched off gives `push=false` |
+| Publish dry run on `main` at `f2276fcd` (the guard and the release both merged), [run 40501557330](https://github.com/saulpatinojr/HCW-NetworkEyes_AddOn/actions/runs/40501557330) | success. The build, the in-image boundary check (which asserts the licence label) and the Trivy scan passed; the gate step passed; the Docker login, the push, the attestation and the digest record were skipped |
+| Tag `v0.1.1` on that same commit, [publish run 40502052247](https://github.com/saulpatinojr/HCW-NetworkEyes_AddOn/actions/runs/40502052247) | success: login, push with provenance and SBOM, attestation, digest record |
+| Digest in the registry | `sha256:338e0e035d053b918f6840bab6eb5871eb739f4d132a076d9497fec54a162635` for `docker.io/hybridcloudworks/img-ne-lab-addon:v0.1.1` |
+| Labels on the published image (`docker buildx imagetools inspect <image> --format '{{json .Image.Config.Labels}}'`) | `org.opencontainers.image.licenses=MIT`, `org.opencontainers.image.version=0.1.1`, `org.opencontainers.image.revision=f2276fcd0ce1d1160807566fc1622bc3e2744e55` |
+| `gh attestation verify oci://docker.io/hybridcloudworks/img-ne-lab-addon:v0.1.1 --repo saulpatinojr/HCW-NetworkEyes_AddOn` | passes (exit 0). With `--format json`: the attested subject digest equals the registry digest above, the predicate is SLSA provenance v1, the signer is `.github/workflows/publish-images.yml@refs/tags/v0.1.1` of this repository, and the source commit is the tagged commit. Without a terminal the command prints nothing, so read its exit code or use `--format json` |
+| GitHub Release | [v0.1.1](https://github.com/saulpatinojr/HCW-NetworkEyes_AddOn/releases/tag/v0.1.1) |
+| The live lab host | **not changed**: it keeps running the `v0.1.0` image until a website change pins the new digest (the owner said nothing changes on the website for this release) |
+
+The section below records the state when the release was prepared, before the guard, the dry run and the tag.
+
 ## Run 2026-10-27 (release 0.1.1 prepared)
 
 This run prepares the version bump only and publishes nothing; the lab application's code is unchanged since 0.1.0
@@ -78,14 +96,17 @@ except for `__version__`. "Here" is the owner's Windows workstation: Python 3.14
   **Accepted risk, so nobody has to rediscover it.** A repository secret can be read by any workflow that runs from a branch
   someone with write access can push, so `base-update.yml` is a second reader of the key beside `core-update.yml` (both can
   be started by hand with `workflow_dispatch`), and the base-update proof depends on that: it runs the workflow from a
-  throwaway branch. Today only the owner can push here. The App is installed on the four add-on repositories, and both
+  throwaway branch. As of 2026-10-27, only the owner can push here. The App is installed on the four add-on repositories, and both
   workflows ask the token action for this repository only (`repositories: ${{ github.repository }}`) with Contents and Pull
   requests write; a token lasts one hour. A modified workflow on another branch could ask for more: the limit is then whatever
   the App was granted when it was installed (that list is on the App's settings page, https://github.com/settings/apps, and is
   not repeated here because a session cannot read it), which is why the key is a risk. The owner decided on 2026-10-26 to leave
   the key as a repository secret ([HCW-HybridCloudWorks#1410](https://github.com/saulpatinojr/HCW-HybridCloudWorks/issues/1410));
-  the stronger options (an environment limited to `main`, one key per repository) can be reopened if the key is ever suspected
-  leaked. An environment limited to `main` would also stop the base-update proof, which needs a run from a branch.
+  the stronger options (an environment limited to `main`, or a separate App installation for each repository) can be reopened
+  if the key is ever suspected leaked. A separate key for each repository on the same App is not one of them: it helps rotation
+  (one key can be revoked without touching the others) but it does not shrink what a stolen key can reach, because every key
+  authenticates the same App, and that App is installed on all four add-on repositories. An environment limited to `main` would
+  also stop the base-update proof, which needs a run from a branch.
   Auto-merge of a
   compatible bump needs the repository setting "Allow auto-merge" (on 2026-10-26 UTC); with it off, `core-update` warns
   and leaves the pull request for a person to merge.
