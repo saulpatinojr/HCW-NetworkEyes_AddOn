@@ -67,6 +67,10 @@ and is not part of this change.
   [15](https://github.com/saulpatinojr/HCW-NetworkEyes_AddOn/pull/15): the parameter values reach the workspace start-up script as agent environment variables instead of being pasted
   into the script text, the bundle download runs only when a token and a real assessment id are present, and the template's
   one `local.default_image` replaces a second copy of the workspace image digest.
+- README: the "Where to try it" paragraph no longer says the pane will appear once the first image is published (the website
+  lists the tool as available and its status route answers), and "Releases and artifacts" no longer says the push is
+  skipped until the Docker connection is enabled (both repository variables are set, and `v0.1.0` and `v0.1.1-rc.1` were
+  pushed).
 
 ### Added
 - `.github/workflows/guide-drift.yml` switches on the website's check that this repository's integration guide still says what the website says (website issue saulpatinojr/HCW-HybridCloudWorks#1356). It calls a reusable workflow (a workflow that another repository can call, like a function) from the website repository, pinned to a full commit, and compares the catalogue row pasted into `docs/website-integration/integration-guide.md` with the website's row for `network-assessment`, field by field. It runs on pull requests that touch the guide or this workflow, every Monday at 06:35 UTC and on demand. It holds no secret and has `contents: read` only. To switch it off, delete the file. How to read a failure: https://github.com/saulpatinojr/HCW-HybridCloudWorks/blob/main/docs/runbooks/addon-guide-drift.md
