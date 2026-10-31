@@ -52,9 +52,12 @@ flowchart LR
 
 The engine is ported **here** from the App (`HCW-NetworkEyes_App`) at `5d3b914` so the lab can ship now
 ([`docs/adr/ADR-0001-interim-ported-engine.md`](docs/adr/ADR-0001-interim-ported-engine.md)). The App has published
-`cna-azure-network-engine` 0.1.0 (`engine-v0.1.0`, 2026-10-12) but it is not adopted yet; what is new upstream, and what
-to do about it, is in [`docs/whats-new-upstream.md`](docs/whats-new-upstream.md). Once the wheel is adopted,
-`.github/workflows/core-update.yml` pins it, this repository deletes the ported copy, and later releases arrive as compatible / needs-adaptation pull requests. Nothing here can reach Azure:
+`cna-azure-network-engine` 0.1.0 (`engine-v0.1.0`, 2026-10-12). It is not adopted yet: `pyproject.toml` carries the
+marker `# ENGINE_REF none`, so `.github/workflows/core-update.yml` opens the pull request that pins it, and
+`src/network_assessment/engine.py` runs the wheel as soon as it is installed. That release needs fixes upstream first;
+what is new upstream, and what to do about it, is in [`docs/whats-new-upstream.md`](docs/whats-new-upstream.md). After
+the first green bump is merged this repository deletes the ported copy, and later releases arrive as compatible /
+needs-adaptation pull requests. Nothing here can reach Azure:
 `tests/security/test_edition_boundary.py` fails the build if anything could, and `publish-images.yml` proves
 `import azure` fails inside the built image.
 

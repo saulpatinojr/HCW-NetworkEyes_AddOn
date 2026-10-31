@@ -171,7 +171,7 @@ components:
         expiresAt: { type: string, format: date-time }
     Health:
       type: object
-      required: [ok, id, version, edition, capabilities, asOf, siteOrigins, turnstile, workspace, azureConnectivity, rules, model, limits]
+      required: [ok, id, version, edition, capabilities, asOf, siteOrigins, turnstile, workspace, azureConnectivity, rules, model, engine, limits]
       properties:
         ok: { type: boolean }
         id: { const: network-assessment }

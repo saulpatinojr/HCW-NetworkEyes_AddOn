@@ -1,6 +1,7 @@
 """The lab edition is technically unable to reach Azure (AddOn Integration Standard, section 19)."""
 
 import ast
+import csv
 import importlib.metadata
 import importlib.util
 import json
@@ -8,9 +9,10 @@ import re
 import subprocess
 import sys
 import tomllib
-from pathlib import Path
+from pathlib import Path, PurePosixPath, PureWindowsPath
 
 import pytest
+from packaging.markers import Marker
 
 from ..conftest import ROOT
 
@@ -27,6 +29,13 @@ def _py_files():
 
 CLOUD_SDK_PREFIXES = ("azure-", "msal", "msrest", "boto3", "botocore", "adal")
 CLOUD_SDK_NAMES = ("azure",)  # the exact distribution name (the old Azure SDK meta-package)
+EXTRA_ONLY = re.compile(r"""extra == ['"][A-Za-z0-9][A-Za-z0-9._-]*['"]""")
+NO_EXTRA_ENVIRONMENTS = (
+    {"sys_platform": "linux", "platform_system": "Linux", "os_name": "posix", "platform_machine": "x86_64"},
+    {"sys_platform": "linux", "platform_system": "Linux", "os_name": "posix", "platform_machine": "aarch64"},
+    {"sys_platform": "darwin", "platform_system": "Darwin", "os_name": "posix", "platform_machine": "arm64"},
+    {"sys_platform": "win32", "platform_system": "Windows", "os_name": "nt", "platform_machine": "AMD64"},
+)
 
 
 def _is_cloud_sdk(name: str) -> bool:
@@ -60,10 +69,16 @@ def test_no_cloud_sdk_in_dependency_manifests():
             for entry in entries:
                 assert not _is_cloud_sdk(entry["name"]), f"uv.lock: {package['name']} pulls in {entry['name']}"
         # A dependency's own metadata may name cloud SDKs only behind an extra (the engine wheel's [azure] live
-        # discovery), and the checks above prove no extra is requested and nothing of it is locked.
+        # discovery), and the checks above prove no extra is requested and nothing of it is locked. The marker must be
+        # the extra and nothing else: `extra == 'x' or sys_platform == 'linux'` would install it everywhere on Linux.
+        # It is also evaluated for an install that asks for no extra, on every platform this edition runs on.
         for req in package.get("metadata", {}).get("requires-dist", []):
             if _is_cloud_sdk(req["name"]):
-                assert "extra ==" in req.get("marker", ""), f"uv.lock: {package['name']} requires {req['name']}"
+                marker = req.get("marker", "")
+                where = f"uv.lock: {package['name']} requires {req['name']} ({marker or 'unconditionally'})"
+                assert EXTRA_ONLY.fullmatch(marker), where
+                for platform in NO_EXTRA_ENVIRONMENTS:
+                    assert not Marker(marker).evaluate({**platform, "extra": ""}), where
 
 
 def test_no_cloud_sdk_imports_anywhere():
@@ -143,13 +158,24 @@ def test_the_engine_wheel_names_no_azure_endpoint_or_credential_outside_its_disc
 @needs_wheel
 def test_the_engine_wheel_installs_only_its_own_package():
     module, distribution, _ = _engine_wheel()
-    files = importlib.metadata.distribution(distribution).files or []
-    assert files, f"{distribution} has no RECORD"
-    for f in files:
-        parts = f.parts
-        assert f.suffix != ".pth", f"{distribution} installs a .pth file ({f}), which runs code at every start"
-        assert parts[0].split("-")[0].lower() not in FORBIDDEN_MODULES, f"{distribution} installs {f}"
-        assert parts[0] == module or parts[0].endswith(".dist-info") or parts[0] == "..", f"{distribution} installs {f}"
+    dist = importlib.metadata.distribution(distribution)
+    # The RECORD text itself: `Distribution.files` leaves out entries whose file is missing, which would hide a line
+    # pointing outside site-packages.
+    record = dist.read_text("RECORD")
+    assert record, f"{distribution} has no RECORD"
+    paths = [row[0] for row in csv.reader(record.splitlines()) if row]
+    assert paths
+    allowed = {module, f"{module}-{dist.version}.dist-info"}
+    for path in paths:
+        parts = path.replace("\\", "/").split("/")
+        assert not path.endswith(".pth"), (
+            f"{distribution} installs a .pth file ({path}), which runs code at every start"
+        )
+        # Only the package itself and its own .dist-info directory; no absolute path, no `..` anywhere (a console
+        # script or data file outside site-packages would land elsewhere on the system).
+        assert not PurePosixPath(path).is_absolute() and not PureWindowsPath(path).is_absolute(), path
+        assert ".." not in parts and "" not in parts, f"{distribution} installs {path} outside site-packages"
+        assert parts[0] in allowed, f"{distribution} installs {path}; only {sorted(allowed)} are allowed"
 
 
 def test_an_assessment_through_the_api_loads_no_cloud_sdk_and_no_discovery_module():

@@ -250,8 +250,10 @@ jobs:
           [ -z "$(find "$dir" -mindepth 1 ! -type f ! -type d)" ] || fail "it holds something that is not a plain file"
           [ "$(cd "$dir" && find . -mindepth 1 -type d -printf '%P\n' | LC_ALL=C sort | paste -sd,)" = "docs,docs/rules" ] || fail "unexpected directories"
           [ "$(cd "$dir" && find . -type f -printf '%P\n' | LC_ALL=C sort | paste -sd,)" = "docs/rules/catalog.md,outcome,pyproject.toml,uv.lock" ] || fail "unexpected files"
-          outcome="$(head -c 16 "$dir/outcome" | tr -d '\n')"
-          case "$outcome" in success|failure) ;; *) fail "outcome is neither success nor failure" ;; esac
+          # The whole file, byte for byte: one word and one newline, as the bump job writes it. Nothing truncated or padded.
+          if printf 'success\n' | cmp -s - "$dir/outcome"; then outcome=success
+          elif printf 'failure\n' | cmp -s - "$dir/outcome"; then outcome=failure
+          else fail "outcome is not exactly one line reading success or failure"; fi
           # The bump job ran upstream code, so its copies are not used: this job regenerated both files (step regen).
           # A difference means that job's files were changed, which is refused rather than merged.
           cmp -s pyproject.toml "$dir/pyproject.toml" || { diff pyproject.toml "$dir/pyproject.toml" || true; fail "pyproject.toml differs from the one regenerated here"; }
