@@ -9,8 +9,8 @@ All notable changes to this repository are recorded here. The format follows Kee
   two High findings from a review of the same two-job workflow in the MigrateOrchestrator add-on
   ([its pull request 57](https://github.com/saulpatinojr/HCW-MigrateOrchestrator_AddOn/pull/57#discussion_r4430793870)),
   and they apply here as merged in pull requests 66 and 67.
-  - Main only. A person with write access could start the workflow by hand on another branch (`gh workflow run
-    core-update.yml --ref` with any branch name other than `main`). The checkouts already took the default branch, but
+  - Main only. A person with write access could start the workflow by hand on another branch (a manual run of
+    `core-update.yml` with `--ref` set to any branch other than `main`). The checkouts already took the default branch, but
     the `pull-request` job still ran that branch's copy of the workflow's own shell before minting the App token. Now
     the first step of each job stops the run with an error that names the branch unless it was started on
     `refs/heads/main`, the `pull-request` job's `if:` also requires `main`, and both checkouts take the exact commit the
