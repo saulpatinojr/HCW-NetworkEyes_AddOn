@@ -52,3 +52,34 @@ def test_spec_health_matches_the_standard():
         "azureConnectivity: { const: disabled-by-design }" in SPEC
         and "turnstileAction: { const: network-assessment-upload }" in SPEC
     )
+
+
+def _schema(name: str) -> str:
+    """The text of one schema under components.schemas (indented four spaces)."""
+    found = re.search(rf"(?ms)^    {name}:\n(.*?)(?=^    [A-Za-z]+:\n|\Z)", SPEC)
+    assert found, f"schema {name} is not in the spec"
+    return found.group(1)
+
+
+def _list(schema: str, key: str) -> set[str]:
+    found = re.search(rf"(?m)^      {key}: \[([^\]]*)\]", schema)
+    assert found, f"{key} is missing"
+    return {x.strip() for x in found.group(1).split(",") if x.strip()}
+
+
+def _properties(schema: str) -> set[str]:
+    return set(re.findall(r"(?m)^        ([A-Za-z]+):", schema))
+
+
+def test_the_health_schema_requires_exactly_what_the_live_response_carries(client):
+    body = client.get("/api/health").json()
+    health = _schema("Health")
+    assert _list(health, "required") == set(body), "Health.required and GET /api/health disagree"
+    assert set(body) <= _properties(health), "a health field is not documented"
+    engine = _schema("Engine")
+    assert _list(engine, "required") == set(body["engine"]) == _properties(engine)
+
+
+def test_the_rules_schema_documents_every_field_the_live_response_carries(client):
+    body = client.get("/api/rules").json()
+    assert set(body) <= _properties(_schema("RulesResponse")), "a rules field is not documented"
