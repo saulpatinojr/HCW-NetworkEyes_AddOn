@@ -8,8 +8,7 @@ from typing import Any
 from pydantic import BaseModel, ConfigDict, Field
 from pydantic.alias_generators import to_camel
 
-from network_assessment.classify.topology import TopologyClassification
-from network_assessment.model.findings import Finding, Unknown
+from network_assessment.engine import Finding, TopologyClassification, Unknown
 
 SEVERITIES = ("critical", "high", "medium", "low", "informational")
 

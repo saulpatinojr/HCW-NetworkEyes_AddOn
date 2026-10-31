@@ -5,12 +5,12 @@ import zipfile
 import pytest
 
 from network_assessment.assess import assess
-from network_assessment.ingestion import normalize, parse_json
-from network_assessment.model.enforcer import ObservedStateEnforcer
+from network_assessment.engine import ObservedStateEnforcer, normalize
+from network_assessment.ingestion import parse_json
 from network_assessment.report import BUNDLE_FILES, NOT_FOR_PRODUCTION, make_bundle, render_markdown, zip_bytes
 from network_assessment.report.markdown import CANNOT_SHOW
 
-from ..conftest import SAMPLE_JSON
+from ..conftest import EXPECTED_MODEL_VERSION, SAMPLE_JSON
 
 
 @pytest.fixture(scope="module")
@@ -45,7 +45,7 @@ def test_bundle_entries_and_zip(built):
     assert tuple(sorted(files)) == tuple(sorted(BUNDLE_FILES))
     findings = json.loads(files["findings.json"])
     assert len(findings["findings"]) == 45 and len(findings["unknowns"]) == 11
-    assert json.loads(files["topology.json"])["model_version"] == "lab-1.0.0"
+    assert json.loads(files["topology.json"])["model_version"] == EXPECTED_MODEL_VERSION
     assert json.loads(files["summary.json"])["rulesVersion"] == "2026.10.0"
     rules = json.loads(files["rules.json"])
     assert rules["rulesVersion"] == "2026.10.0" and len(rules["rules"]) == 45

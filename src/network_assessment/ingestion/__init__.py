@@ -1,7 +1,10 @@
-"""Export parsers and the Resource Graph normalizer (lab-edition code; the reference for the Core's normalizer)."""
+"""Export parsers (lab-edition code).
+
+The normalizer the API runs is the active engine's (`network_assessment.engine.normalize`). This edition's own
+`ingestion/normalize.py` is the one the interim port runs, and the reference the wheel's normalizer was ported from.
+"""
 
 from network_assessment.ingestion.arg_row import ArgRow
-from network_assessment.ingestion.normalize import normalize
 from network_assessment.ingestion.parse import (
     InvalidExport,
     ParsedRows,
@@ -17,7 +20,6 @@ __all__ = [
     "InvalidExport",
     "ParsedRows",
     "TooManyRows",
-    "normalize",
     "parse_csv",
     "parse_document",
     "parse_json",

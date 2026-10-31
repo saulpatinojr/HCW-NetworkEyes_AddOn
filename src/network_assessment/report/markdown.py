@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from network_assessment.model.findings import Finding
+from network_assessment.engine import Finding
 from network_assessment.report.summary import Assessment
 
 SEVERITY_ORDER = {"critical": 0, "high": 1, "medium": 2, "low": 3, "informational": 4}

@@ -2,9 +2,10 @@ import json
 
 import pytest
 
-from network_assessment.ingestion import normalize, parse_document, parse_json
+from network_assessment.engine import normalize, topology_document
+from network_assessment.ingestion import parse_document, parse_json
 
-from ..conftest import SAMPLE_JSON, SUB_HUB, SUB_SPOKE
+from ..conftest import EXPECTED_MODEL_VERSION, SAMPLE_JSON, SUB_HUB, SUB_SPOKE
 
 
 def _rows(*rows):
@@ -185,5 +186,5 @@ def test_flow_log_targets_vnet_and_subnet():
 
 def test_topology_document_round_trips():
     n = normalize(parse_json(SAMPLE_JSON.read_text(encoding="utf-8")))
-    doc = n.topology.model_dump(mode="json")
-    assert doc["model_version"] == "lab-1.0.0" and json.dumps(doc)
+    doc = topology_document(n.topology)
+    assert doc["model_version"] == EXPECTED_MODEL_VERSION and json.dumps(doc)

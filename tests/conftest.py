@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
+from network_assessment import engine
 from network_assessment.app import create_app
 from network_assessment.config import Settings
 
@@ -15,6 +16,12 @@ SAMPLE_CSV = ROOT / "samples" / "sample-resource-graph.csv"
 SAMPLE_PORTAL_CSV = ROOT / "samples" / "sample-all-resources-export.csv"
 SUB_HUB = "00000000-0000-0000-0000-000000000001"
 SUB_SPOKE = "00000000-0000-0000-0000-000000000002"
+
+# The topology model marker each engine must report (a shared contract, ADR-0004). The interim port declares
+# `lab-1.0.0` (equivalent to the App's 1.3.0 Azure subset); the wheel reports its own model version. A new engine
+# release that is not in this table fails tests/unit/test_engine.py, which is the "needs adaptation" signal.
+MODEL_VERSIONS = {engine.PORT_SOURCE: "lab-1.0.0", "cna-azure-network-engine 0.1.0": "1.4.0"}
+EXPECTED_MODEL_VERSION = MODEL_VERSIONS.get(engine.SOURCE)
 
 
 def make_settings(**overrides) -> Settings:

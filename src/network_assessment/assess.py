@@ -7,15 +7,19 @@ from collections import Counter
 from datetime import UTC, datetime
 from typing import Any
 
-from network_assessment.classify.topology import classify_topology
-from network_assessment.ingestion.normalize import NormalizedExport
-from network_assessment.model.findings import Finding
-from network_assessment.model.topology import TOPOLOGY_MODEL_VERSION
+from network_assessment.engine import (
+    RULES_VERSION,
+    TOPOLOGY_MODEL_VERSION,
+    Finding,
+    classify_topology,
+    evaluate,
+    rule_count,
+    topology_document,
+)
 from network_assessment.report.summary import SEVERITIES, Assessment, ResourceView, Summary, TopologySummary
-from network_assessment.rules.registry import RULES, RULES_VERSION, evaluate
 
 
-def _resource_views(normalized: NormalizedExport, findings: list[Finding]) -> list[ResourceView]:
+def _resource_views(normalized: Any, findings: list[Finding]) -> list[ResourceView]:
     """One view per network row; a finding belongs to the row whose id is the longest prefix of its resource id."""
     rows = [r for r in normalized.rows if r.type.startswith("microsoft.network/")]
     by_prefix = sorted(((r.id.lower(), r.id) for r in rows), key=lambda x: -len(x[0]))
@@ -42,7 +46,7 @@ def _resource_views(normalized: NormalizedExport, findings: list[Finding]) -> li
 
 
 def assess(
-    normalized: NormalizedExport,
+    normalized: Any,
     *,
     source_format: str,
     file_name: str | None = None,
@@ -64,7 +68,7 @@ def assess(
         findings_count=len(result.findings),
         findings_by_severity={sev: by_severity.get(sev, 0) for sev in SEVERITIES},
         unknown_rules=len(result.unknowns),
-        rules_evaluated=len(RULES) - len(result.unknowns),
+        rules_evaluated=rule_count() - len(result.unknowns),
         warnings=list(topology.warnings),
         rules_version=RULES_VERSION,
         model_version=TOPOLOGY_MODEL_VERSION,
@@ -83,4 +87,4 @@ def assess(
         unknowns=result.unknowns,
         warnings=list(topology.warnings),
     )
-    return assessment, topology.model_dump(mode="json")
+    return assessment, topology_document(topology)

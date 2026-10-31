@@ -16,13 +16,29 @@ ROOT = Path(__file__).resolve().parents[1]
 DOC = ROOT / "docs" / "rules" / "catalog.md"
 sys.path.insert(0, str(ROOT / "src"))
 
-from network_assessment.model.enforcer import assert_text_is_hedge_free  # noqa: E402
-from network_assessment.model.topology import TOPOLOGY_MODEL_VERSION  # noqa: E402
-from network_assessment.rules import RULES_VERSION, iter_rules  # noqa: E402
+from network_assessment import engine  # noqa: E402
+from network_assessment.engine import RULES_VERSION, TOPOLOGY_MODEL_VERSION, assert_text_is_hedge_free  # noqa: E402
+
+PORT_PROVENANCE = (
+    "Provenance: the rules are ported from `saulpatinojr/HCW-NetworkEyes_App` at `5d3b914` (Engine A "
+    "`cna/ai_engine/analysis_engine.py`, Engine B `apps/cna-api/main.py`, `bcdr_signals.py`, "
+    "`finops_signals.py`); `PROVENANCE.md` lists every change. Titles, facts and remediation are hedge-free "
+    "(the observed-state enforcer gates them)."
+)
+
+
+def _provenance() -> str:
+    if not engine.is_wheel():
+        return PORT_PROVENANCE
+    return (
+        f"Provenance: the rules come from the engine wheel `{engine.SOURCE}`, released by "
+        "`saulpatinojr/HCW-NetworkEyes_App` and pinned in `pyproject.toml` (the `ENGINE_REF` line). Titles, facts "
+        "and remediation are hedge-free (the observed-state enforcer gates them)."
+    )
 
 
 def doc() -> str:
-    rules = list(iter_rules())
+    rules = engine.rule_list()
     for r in rules:
         for label in ("title", "remediation", "description"):
             assert_text_is_hedge_free(f"{r.id}.{label}", getattr(r, label))
@@ -36,10 +52,7 @@ def doc() -> str:
         f"{len(rules) - len(live)} evaluated over an export, {len(live)} registered as live-only (reported in "
         "`unknowns[]`, never dropped).",
         "",
-        "Provenance: the rules are ported from `saulpatinojr/HCW-NetworkEyes_App` at `5d3b914` (Engine A "
-        "`cna/ai_engine/analysis_engine.py`, Engine B `apps/cna-api/main.py`, `bcdr_signals.py`, "
-        "`finops_signals.py`); `PROVENANCE.md` lists every change. Titles, facts and remediation are hedge-free "
-        "(the observed-state enforcer gates them).",
+        _provenance(),
         "",
         "**[VERIFY]** every `Learn` link is the most plausible page on learn.microsoft.com as of 2026-10-10 and awaits "
         "the owner's confirmation. **[VERIFY] [REVIEW REQUIRED]** every framework control reference is a compliance "
