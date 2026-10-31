@@ -15,6 +15,7 @@ import re
 from ..conftest import ROOT
 
 TEXT = (ROOT / ".github" / "workflows" / "core-update.yml").read_text(encoding="utf-8")
+DOCKERFILE = (ROOT / "infrastructure" / "docker" / "Dockerfile").read_text(encoding="utf-8")
 _PARTS = re.split(r"(?m)^  ([a-z-]+):\n", TEXT.split("\njobs:\n", 1)[1])[1:]
 JOBS = dict(zip(_PARTS[::2], _PARTS[1::2], strict=True))  # job id -> its text
 BUMP = re.split(r"(?m)^ {6}- ", JOBS["bump"].split("\n    steps:\n", 1)[1])[1:]
@@ -80,9 +81,19 @@ def test_no_step_that_runs_project_code_is_given_a_token():
     assert all(BUMP.index(s) < first_code for s in with_token)
 
 
+# The pull-request job may run uv for one thing only: `lock --no-build`, with the binary taken from the image the
+# Dockerfile pins by digest. Anything else that installs, builds or runs code is refused, as in PROJECT_CODE.
+PR_FORBIDDEN = re.compile(
+    r"\buv\s+(?:run|sync|pip|tool|build|export|add|venv)\b|\buvx\b|uv==|\bpip\s|pytest|\bnpm\b|\bnpx\b|playwright"
+    r"|\bmake\b|ruff|scripts/|python -m|setup-python"
+)
+
+
 def test_the_pull_request_job_runs_no_project_code():
     for step in PR:
-        assert not PROJECT_CODE.search(step), _field(step, "name") or _field(step, "uses")
+        assert not PR_FORBIDDEN.search(step), _field(step, "name") or _field(step, "uses")
+    uv_calls = re.findall(r"(?m)^.*uv-bin\"?\s+\S.*$", JOBS["pull-request"])
+    assert len(uv_calls) == 1 and ' lock --no-build --upgrade-package "$DIST"' in uv_calls[0], uv_calls
     # Its one interpreter call is this file's own inline script, isolated from the checkout and the environment.
     calls = re.findall(r"\bpython3?\b[^\n]*", JOBS["pull-request"])
     assert calls and all(c.startswith("python3 -I - ") for c in calls), calls
@@ -95,6 +106,24 @@ def test_the_bump_job_hands_over_exactly_one_artifact_and_the_other_job_download
     assert PR.index(down) < PR.index(_by_id(PR, "verify"))
 
 
+def test_the_pull_request_job_regenerates_pyproject_and_the_lock_itself():
+    regen = _by_id(PR, "regen")
+    assert PR.index(_by_id(PR, "expect")) < PR.index(regen) < PR.index(_only(PR, "actions/download-artifact"))
+    # The uv binary comes from the digest-pinned image of the Dockerfile; Docker verifies the content.
+    assert (
+        "grep -oE 'ghcr\\.io/astral-sh/uv:[0-9][0-9.]*@sha256:[0-9a-f]{64}' infrastructure/docker/Dockerfile" in regen
+    )
+    assert re.search(r"(?m)^COPY --from=ghcr\.io/astral-sh/uv:[0-9.]+@sha256:[0-9a-f]{64} ", DOCKERFILE)
+    assert "GH_TOKEN" not in regen and "secrets." not in regen
+    verify = _by_id(PR, "verify")
+    for name in ("pyproject.toml", "uv.lock"):
+        assert f'cmp -s {name} "$dir/{name}"' in verify, f"the artifact's {name} must equal the regenerated one"
+    # Only the catalog is taken from the artifact, and only as plain Markdown.
+    take = next(s for s in PR if "bump/docs/rules/catalog.md" in s and "cp " in s)
+    assert "bump/pyproject.toml" not in take and "bump/uv.lock" not in take
+    assert "<[A-Za-z!/?]" in verify
+
+
 def test_the_artifact_is_verified_before_the_token_is_minted():
     verify = _by_id(PR, "verify")
     app = _only(PR, "actions/create-github-app-token")
@@ -103,7 +132,8 @@ def test_the_artifact_is_verified_before_the_token_is_minted():
     assert "steps.verify.outcome == 'success'" in _field(app, "if")
     for check in (
         "docs/rules/catalog.md,outcome,pyproject.toml,uv.lock",
-        "cmp -s",
+        "cmp -s pyproject.toml",
+        "cmp -s uv.lock",
         "success|failure",
         "only the engine moves in a bump",
         "sha256:[0-9a-f]{64}",

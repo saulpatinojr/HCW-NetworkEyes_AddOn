@@ -23,14 +23,18 @@
 #                 wheel, pins it, re-locks, regenerates the catalog and runs the compatibility check. The token is given
 #                 only to the two steps that read the App's public releases API, before any project code runs. It
 #                 uploads one artifact: pyproject.toml, uv.lock, docs/rules/catalog.md and `outcome`.
-#   pull-request  A fresh runner that runs no project code (no uv, no pip, no tests, nothing from the checkout is
-#                 executed). It checks out the default branch, works out the expected pin line itself from that branch
-#                 and the App's release, downloads the artifact and verifies it: exactly those four files; pyproject.toml
-#                 equal, byte for byte, to the default branch's with the marked line replaced by the expected line;
-#                 uv.lock different only in the engine's own entry (pinned URL, one wheel with a sha256, dependencies
-#                 that are already locked) and the project's reference to it; the catalog a bounded UTF-8 text file;
-#                 `outcome` exactly `success` or `failure`. Only then does it copy the three files in, mint the App
-#                 token and open the pull request.
+#   pull-request  A fresh runner that runs no project code (no tests, no scripts, no install, no build backend).
+#                 It checks out the default branch and works out the expected pin line itself from that branch and
+#                 the App's release. It does not trust the bump job's files: code running there could have rewritten
+#                 them. It regenerates pyproject.toml (the marked line replaced) and uv.lock (`uv lock --no-build`,
+#                 with the uv binary from the image the Dockerfile pins by digest; resolving the wheel reads its
+#                 metadata and never imports it), checks that the new lock differs from the default branch's only in
+#                 the engine's own entry (pinned URL, one wheel with a sha256, dependencies already locked) and the
+#                 project's reference to it, and refuses the artifact unless its two copies are byte-identical to the
+#                 regenerated ones. The catalog needs the engine to generate, so it is the one file taken from the
+#                 artifact, and only as bounded plain Markdown with no HTML; the pull request's own drift check proves
+#                 it. `outcome` must be exactly `success` or `failure`. Only then does it mint the App token and open
+#                 the pull request.
 # The outcome comes from the job that ran upstream code, so it is untrusted: it chooses the label and the body text, and
 # it is never enough on its own to merge. Auto-merge is asked for only when this job's own verification passed, the
 # outcome says success and the repository variable CORE_AUTOMERGE is `true`; GitHub then merges only after the
@@ -205,13 +209,36 @@ jobs:
           url="https://github.com/${UPSTREAM}/releases/download/engine-v${latest}/${wheel}"
           { echo "current=$current"; echo "latest=$latest"; echo "dist=$dist"; echo "url=$url"; } >> "$GITHUB_OUTPUT"
       - if: ${{ !inputs.probe }}
+        id: regen
+        name: Regenerate pyproject.toml and uv.lock here, from the default branch, with the digest-pinned uv
+        env:
+          LATEST: ${{ steps.expect.outputs.latest }}
+          DIST: ${{ steps.expect.outputs.dist }}
+          URL: ${{ steps.expect.outputs.url }}
+        run: |
+          set -euo pipefail
+          git show HEAD:uv.lock > "${RUNNER_TEMP}/main-uv.lock"
+          # The uv binary comes from the image the Dockerfile pins by digest (ci.yml checks that digest is uv's tag),
+          # so Docker verifies its content. It only locks: --no-build runs no build backend, and resolving the wheel
+          # reads its metadata without importing it.
+          image="$(grep -oE 'ghcr\.io/astral-sh/uv:[0-9][0-9.]*@sha256:[0-9a-f]{64}' infrastructure/docker/Dockerfile | head -1)"
+          [ -n "$image" ] || { echo "::error::no digest-pinned uv image in infrastructure/docker/Dockerfile"; exit 1; }
+          docker pull --quiet "$image" > /dev/null
+          cid="$(docker create "$image")"; docker cp "${cid}:/uv" "${RUNNER_TEMP}/uv-bin"; docker rm "$cid" > /dev/null
+          line="  \"${DIST} @ ${URL}\",  # ENGINE_REF ${LATEST}"
+          test "$(grep -cE '#[[:space:]]*ENGINE_REF[[:space:]]' pyproject.toml)" = 1
+          awk -v line="$line" '/#[[:space:]]*ENGINE_REF[[:space:]]/ { print line; next } { print }' pyproject.toml > "${RUNNER_TEMP}/pyproject.toml"
+          cp "${RUNNER_TEMP}/pyproject.toml" pyproject.toml
+          UV_CACHE_DIR="${RUNNER_TEMP}/uv-cache" UV_PYTHON_DOWNLOADS=never "${RUNNER_TEMP}/uv-bin" lock --no-build --upgrade-package "$DIST"
+          git --no-pager diff --stat
+      - if: ${{ !inputs.probe }}
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: ${{ env.ARTIFACT }}
           path: ${{ runner.temp }}/bump
       - if: ${{ !inputs.probe }}
         id: verify
-        name: Verify the artifact changes only the ENGINE_REF line, the engine's lock entry and the catalog
+        name: Verify the artifact matches what this job regenerated, and accept the catalog only as plain text
         env:
           LATEST: ${{ steps.expect.outputs.latest }}
           DIST: ${{ steps.expect.outputs.dist }}
@@ -225,18 +252,23 @@ jobs:
           [ "$(cd "$dir" && find . -type f -printf '%P\n' | LC_ALL=C sort | paste -sd,)" = "docs/rules/catalog.md,outcome,pyproject.toml,uv.lock" ] || fail "unexpected files"
           outcome="$(head -c 16 "$dir/outcome" | tr -d '\n')"
           case "$outcome" in success|failure) ;; *) fail "outcome is neither success nor failure" ;; esac
-          line="  \"${DIST} @ ${URL}\",  # ENGINE_REF ${LATEST}"
-          awk -v line="$line" '/#[[:space:]]*ENGINE_REF[[:space:]]/ { print line; next } { print }' pyproject.toml > "${RUNNER_TEMP}/expected-pyproject.toml"
-          cmp -s "${RUNNER_TEMP}/expected-pyproject.toml" "$dir/pyproject.toml" || { diff "${RUNNER_TEMP}/expected-pyproject.toml" "$dir/pyproject.toml" || true; fail "pyproject.toml differs from the default branch by more than the ENGINE_REF line"; }
+          # The bump job ran upstream code, so its copies are not used: this job regenerated both files (step regen).
+          # A difference means that job's files were changed, which is refused rather than merged.
+          cmp -s pyproject.toml "$dir/pyproject.toml" || { diff pyproject.toml "$dir/pyproject.toml" || true; fail "pyproject.toml differs from the one regenerated here"; }
+          cmp -s uv.lock "$dir/uv.lock" || { diff uv.lock "$dir/uv.lock" | head -40 || true; fail "uv.lock differs from the one regenerated here"; }
           catalog="$dir/docs/rules/catalog.md"
           [ "$(stat -c %s "$catalog")" -le 524288 ] || fail "the catalog is larger than 512 KiB"
           iconv -f UTF-8 -t UTF-8 "$catalog" > /dev/null || fail "the catalog is not UTF-8"
           [ "$(tr -d '\t\n\r' < "$catalog" | LC_ALL=C grep -c '[[:cntrl:]]' || true)" = 0 ] || fail "the catalog holds control characters"
           [ "$(head -n 1 "$catalog")" = "# Rule catalog" ] || fail "the catalog does not start with its heading"
-          # uv.lock: only the engine's own entry and the project's reference to it may change. Run from RUNNER_TEMP in
-          # isolated mode (-I), so nothing from the checkout or the environment is imported.
+          # Generating the catalog needs the engine, so it is the one file taken from the bump job: plain Markdown, no
+          # HTML of any kind. The bump pull request's own drift check (rules-doc.py --check, no secrets) proves it.
+          [ "$(LC_ALL=C grep -cE '<[A-Za-z!/?]' "$catalog" || true)" = 0 ] || fail "the catalog holds HTML (a tag, comment or script)"
+          # And the regenerated uv.lock itself: only the engine's own entry and the project's reference to it may change
+          # from the default branch. Run from RUNNER_TEMP in isolated mode (-I), so nothing from the checkout or the
+          # environment is imported.
           cd "${RUNNER_TEMP}"
-          python3 -I - "$dir/uv.lock" "${GITHUB_WORKSPACE}/uv.lock" "$DIST" "$URL" <<'PY'
+          python3 -I - "${GITHUB_WORKSPACE}/uv.lock" "${RUNNER_TEMP}/main-uv.lock" "$DIST" "$URL" <<'PY'
           import re, sys, tomllib
 
           new_path, old_path, dist, url = sys.argv[1:5]
@@ -303,10 +335,9 @@ jobs:
           PY
           echo "outcome=$outcome" >> "$GITHUB_OUTPUT"
       - if: ${{ !inputs.probe }}
-        name: Apply the verified files to the checkout
+        name: Take the verified catalog (pyproject.toml and uv.lock are the regenerated ones already in place)
         run: |
           set -euo pipefail
-          cp "${RUNNER_TEMP}/bump/pyproject.toml" "${RUNNER_TEMP}/bump/uv.lock" .
           cp "${RUNNER_TEMP}/bump/docs/rules/catalog.md" docs/rules/catalog.md
           git --no-pager diff --stat
       - if: inputs.probe || steps.verify.outcome == 'success'
