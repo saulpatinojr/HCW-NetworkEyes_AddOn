@@ -2,7 +2,7 @@
 
 This is `saulpatinojr/HCW-NetworkEyes_AddOn`: the lab edition of the Network Assessment (upload-only, in-memory, no
 cloud connectivity by design) carrying an interim port of the Core's engine (`PROVENANCE.md`, ADR-0001) that is
-replaced by the `network-assessment-azure-engine` wheel from `saulpatinojr/HCW-NetworkEyes_App` (the App; a GitHub Release asset of each `engine-v*` tag) once it is adopted: the first release, `engine-v0.1.0`, has been published since 2026-10-12 under the package's earlier name, so adoption waits for the first release under the new name. Read `docs/whats-new-upstream.md` first.
+replaced by the `network-assessment-azure-engine` wheel from `saulpatinojr/HCW-NetworkEyes_App` (the App; a GitHub Release asset of each `engine-v*` tag) once it is adopted: the first release, `engine-v0.1.0`, has been published since 2026-10-12 under the package's earlier name, and `core-update.yml` pins it under that name (the `# ENGINE_REF none` marker arms it). Read `docs/whats-new-upstream.md` first.
 
 Build/test: `uv sync`, then `uv run ruff check . && uv run ruff format --check .`,
 `uv run python scripts/rules-doc.py --check`, `uv run pytest -q --cov=src`; browser suite `make e2e`.

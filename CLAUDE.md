@@ -7,7 +7,8 @@ against typed network rules, a vanilla pane the website frames, fictional sample
 SHA-pinned workflows. The engine under `src/network_assessment/{model,rules,classify}` is an **interim port** of the
 App's engine (`saulpatinojr/HCW-NetworkEyes_App` at `5d3b914`, ADR-0001, `PROVENANCE.md`); it is deleted, not handed
 upstream, once the wheel is adopted. The App published `cna-azure-network-engine` 0.1.0 as the `engine-v0.1.0` GitHub
-Release on 2026-10-12; it is **not adopted yet** (no `ENGINE_REF` line, so `core-update.yml` is inert). The wheel is a
+Release on 2026-10-12; it is **not adopted yet**: `pyproject.toml` carries `# ENGINE_REF none`, so `core-update.yml`
+opens the bump pull request, and `src/network_assessment/engine.py` runs the wheel once it is installed. The wheel is a
 GitHub Release asset of every `engine-v*` tag, pinned here by URL and sha256 through `core-update.yml`.
 **Read `docs/whats-new-upstream.md` before changing behaviour here, and update it when you adopt an upstream change.**
 
