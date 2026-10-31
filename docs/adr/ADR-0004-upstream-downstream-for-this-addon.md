@@ -40,8 +40,11 @@ repository's `REFACTOR_APP.md` addressed to Core paths.
    above stands; how it is enforced changed. The label comes from the bump job, which runs the new engine, so it is not
    trusted and no longer turns auto-merge on. With `CORE_AUTOMERGE` set to `true`, auto-merge is turned on for every
    bump pull request, and GitHub merges only a bump whose required checks pass on that pull request; auto-merge waits
-   for them. The required checks run the same suites as the compatibility check, so a `needs-adaptation` bump fails
-   them and does not merge until it is fixed.
+   for them. The required checks are that independent gate: they cover the compatibility check's suites and the
+   repository's other required checks, and they run again on the pull request itself. A bump that really breaks this
+   edition fails them and does not merge until it is fixed. The label can also say `needs-adaptation` after a one-off
+   failure in the bump job (its compatibility step is allowed to fail), and such a bump merges once its own checks pass;
+   select **Disable auto-merge** on the pull request to hold one.
 3. **Shared contracts the Core must keep.** Rule ids, severities and `applies_to` (hash-pinned in
    `tests/unit/test_registry.py`), `TOPOLOGY_MODEL_VERSION` (the lab's `lab-1.0.0` is declared equivalent to the Core's
    1.3.0 Azure subset), the flat `/api/health` envelope and the `hcw-addon` pane protocol, so one pane bundle serves
