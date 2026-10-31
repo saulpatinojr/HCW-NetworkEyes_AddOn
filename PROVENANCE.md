@@ -44,8 +44,11 @@ Deletion plan (REFACTOR_APP.md section 21, amended 2026-10-31; PyPI is not neede
 1. `core-update.yml` pins the wheel on the `ENGINE_REF` line of `pyproject.toml` (the marker is `# ENGINE_REF none`
    until then), re-locks and regenerates `docs/rules/catalog.md` in its bump pull request. That pull request changes no
    code: `engine.py` runs the wheel because it is installed, so the bump's checks test the lab against it.
-2. The bump is merged only when its checks are green (`compatible`). A `needs-adaptation` bump caused by the engine is
-   fixed upstream and arrives as the next release; it is not patched here.
+2. The bump is merged only when its required checks pass on the bump pull request; auto-merge (when the repository
+   variable `CORE_AUTOMERGE` is `true`) waits for them, and the `compatible` label is a hint, not the gate. A bump that
+   really breaks the lab fails those checks, so it does not merge (a `needs-adaptation` label alone does not stop it:
+   the label can also follow a one-off failure in the compatibility step); when the engine causes it, it is fixed
+   upstream and arrives as the next release; it is not patched here.
 3. After that merge, one pull request deletes `src/network_assessment/{model,rules,classify}`, the ported tests and the
    rows above, deletes `ingestion/normalize.py` (the wheel's normalizer replaced it; `tests/unit/test_engine.py` proves
    they agree), reduces `engine.py` to the wheel, and updates `CLAUDE.md`, `AGENTS.md`, `README.md`, ADR-0001 and

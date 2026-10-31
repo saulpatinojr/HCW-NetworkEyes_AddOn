@@ -141,6 +141,6 @@ engine that only a new App release can fix.
 |---|---|---|
 | Protect `engine-v*` tags | App `TODO.md` T-730 | Until done, a moved tag could change what your pinned URL serves. The sha256 pin still protects you. |
 | Turn on PyPI publishing for the engine | App `TODO.md` T-728, first bullet | Not needed for this repository (it pins the GitHub Release), but it changes how others install the engine. |
-| A release that fixes the five differences of 2026-10-31 (entry above) | **Not tracked in the App yet**: no issue was opened there from this repository | Until it exists, every bump here says `needs-adaptation` and nothing auto-merges. |
+| A release that fixes the five differences of 2026-10-31 (entry above) | **Not tracked in the App yet**: no issue was opened there from this repository | Until it exists, every bump here says `needs-adaptation` and nothing merges: auto-merge may be turned on, but it waits for the required checks, which fail. |
 | Next engine release (a new version) | App `REFACTOR_APP.md` section 15, steps 3 and later | Change set B brings `RULES_VERSION` bumps and web findings ids; each arrives here as a `core-update.yml` pull request. |
 | Docker Hub sign-in for the App's own image builds | App `REVIEW.md` R-013 | Concerns the App's images, not this repository's image. |
