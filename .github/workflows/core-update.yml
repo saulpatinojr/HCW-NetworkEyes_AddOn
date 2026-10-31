@@ -3,12 +3,19 @@
 # REFACTOR_APP.md change sets C and J) builds the engine wheel network-assessment-azure-engine on every `engine-v*` tag and
 # attaches it to the GitHub Release (320-release-engine.yml); PyPI publishing there is optional and not needed here.
 # This repository then pins the release asset by URL in pyproject.toml, on one line, as
-#   "network-assessment-azure-engine @ https://github.com/saulpatinojr/HCW-NetworkEyes_App/releases/download/engine-v<version>/network_assessment_azure_engine-<version>-py3-none-any.whl",  # ENGINE_REF <version>
+#   "<distribution> @ https://github.com/saulpatinojr/HCW-NetworkEyes_App/releases/download/engine-v<version>/<wheel file>",  # ENGINE_REF <version>
+# The wheel file name is read from the release, because it names the distribution: engine-v0.1.0 carries the package's
+# earlier name (cna_azure_network_engine-0.1.0-py3-none-any.whl), later releases the new one
+# (network_assessment_azure_engine-<version>-py3-none-any.whl). Before the first adoption the line is only the marker
+# `# ENGINE_REF none` inside `dependencies`; the bump step replaces the whole marked line either way.
 # `uv lock` records the wheel's sha256 and the image build's `uv export --frozen` carries it, so the image's
 # `pip install --require-hashes` keeps verifying every third-party file (a git+https pin cannot be hash-checked and would
-# break that build). Adopting the wheel deletes the ported copy under src/network_assessment/{model,rules,classify} and
-# the PROVENANCE.md rows for it. This workflow compares the pinned ENGINE_REF with the App's latest `engine-v*` release on
-# every run. Until the ENGINE_REF line exists, the comparison below finds nothing and exits cleanly.
+# break that build). src/network_assessment/engine.py runs the wheel as soon as it is installed, so the checks below,
+# and this edition's CI on the pull request, test the lab against the new engine; the bump also regenerates
+# docs/rules/catalog.md, which is generated from the engine's rule texts. The ported copy under
+# src/network_assessment/{model,rules,classify} and its PROVENANCE.md rows are deleted by hand in the pull request after
+# the first green bump is merged (docs/whats-new-upstream.md). This workflow compares the pinned ENGINE_REF with the
+# App's latest `engine-v*` release on every run. Without an ENGINE_REF line it finds nothing to do and exits cleanly.
 #
 # The pull request is opened with a short-lived GitHub App token (actions/create-github-app-token), not with
 # GITHUB_TOKEN. A pull request opened with GITHUB_TOKEN starts no workflow, so the required checks of the
@@ -44,7 +51,6 @@ on:
 permissions: {}
 env:
   UPSTREAM: saulpatinojr/HCW-NetworkEyes_App
-  PACKAGE: network-assessment-azure-engine
 jobs:
   check-and-bump:
     runs-on: ubuntu-26.04
@@ -62,7 +68,8 @@ jobs:
         env: { GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}", REQUESTED: "${{ inputs.ref }}" }
         run: |
           set -euo pipefail
-          current="$(grep -oE "#[[:space:]]*ENGINE_REF[[:space:]]+[0-9][0-9A-Za-z.+-]*" pyproject.toml | head -1 | awk '{print $NF}' || true)"
+          # `none` is the marker before the first adoption (the interim port runs); otherwise the pinned version.
+          current="$(grep -oE "#[[:space:]]*ENGINE_REF[[:space:]]+[0-9A-Za-z][0-9A-Za-z.+-]*" pyproject.toml | head -1 | awk '{print $NF}' || true)"
           if [ -z "$current" ]; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
             echo "::notice::no ENGINE_REF in pyproject.toml: the engine is still the ported copy under src/network_assessment (ADR-0001); nothing to adopt yet"
@@ -73,6 +80,7 @@ jobs:
           fi
           if [ -z "$latest_tag" ] || [ "$latest_tag" = "null" ]; then echo "changed=false" >> "$GITHUB_OUTPUT"; echo "::notice::the App has no engine-v* release yet"; exit 0; fi
           latest="${latest_tag#engine-v}"
+          if ! [[ "$latest" =~ ^[0-9][0-9A-Za-z.+-]*$ ]]; then echo "::error::unexpected engine tag ${latest_tag}"; exit 1; fi
           echo "latest=$latest" >> "$GITHUB_OUTPUT"; echo "current=$current" >> "$GITHUB_OUTPUT"
           if [ "$latest" = "$current" ]; then echo "changed=false" >> "$GITHUB_OUTPUT"; echo "already at $current"; else echo "changed=true" >> "$GITHUB_OUTPUT"; echo "$current -> $latest"; fi
       - if: steps.refs.outputs.changed == 'true'
@@ -81,14 +89,27 @@ jobs:
       - if: steps.refs.outputs.changed == 'true'
         run: python -m pip install "uv==0.11.32"
       - if: steps.refs.outputs.changed == 'true'
-        name: Bump ENGINE_REF and re-lock
-        env: { LATEST: "${{ steps.refs.outputs.latest }}", CURRENT: "${{ steps.refs.outputs.current }}" }
+        id: bump
+        name: Pin the release's wheel on the ENGINE_REF line, re-lock and regenerate the rule catalog
+        env: { GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}", LATEST: "${{ steps.refs.outputs.latest }}" }
         run: |
           set -euo pipefail
-          # One line carries the release tag, the wheel file name and the ENGINE_REF marker; all three move together.
-          sed -i -E "s|releases/download/engine-v${CURRENT}/network_assessment_azure_engine-${CURRENT}-py3-none-any\.whl(\",?[[:space:]]*#[[:space:]]*ENGINE_REF[[:space:]]+)${CURRENT}|releases/download/engine-v${LATEST}/network_assessment_azure_engine-${LATEST}-py3-none-any.whl\1${LATEST}|" pyproject.toml
-          grep -q "ENGINE_REF ${LATEST}" pyproject.toml
-          uv lock --upgrade-package "${PACKAGE}"
+          wheel="$(gh api "repos/${UPSTREAM}/releases/tags/engine-v${LATEST}" --jq '[.assets[].name | select(endswith("-py3-none-any.whl"))] | first // ""')"
+          if ! [[ "$wheel" == *"-${LATEST}-py3-none-any.whl" && "$wheel" =~ ^[A-Za-z0-9_.]+-[0-9A-Za-z.+]+-py3-none-any\.whl$ ]]; then
+            echo "::error::release engine-v${LATEST} has no wheel for version ${LATEST} (found: ${wheel:-nothing})"; exit 1
+          fi
+          dist="${wheel%%-*}"; dist="${dist//_/-}"
+          line="  \"${dist} @ https://github.com/${UPSTREAM}/releases/download/engine-v${LATEST}/${wheel}\",  # ENGINE_REF ${LATEST}"
+          # One line carries the distribution, the release tag, the wheel file name and the marker; it is replaced whole.
+          test "$(grep -cE '#[[:space:]]*ENGINE_REF[[:space:]]' pyproject.toml)" = 1
+          awk -v line="$line" '/#[[:space:]]*ENGINE_REF[[:space:]]/ { print line; next } { print }' pyproject.toml > pyproject.toml.new
+          mv pyproject.toml.new pyproject.toml
+          grep -qF -- "$line" pyproject.toml
+          uv lock --upgrade-package "$dist"
+          # The catalog is generated from the engine's rule texts. When the generator refuses them (an empty or hedged
+          # text), the catalog stays as it was and the drift check in the next step reports it.
+          uv run python scripts/rules-doc.py --write || echo "::warning::scripts/rules-doc.py --write refused engine ${LATEST}; see the next step"
+          echo "dist=$dist" >> "$GITHUB_OUTPUT"
           git --no-pager diff --stat
       - if: steps.refs.outputs.changed == 'true'
         id: compat
@@ -131,19 +152,21 @@ jobs:
           token: ${{ steps.app-token.outputs.token }}
           branch: core-update/engine-v${{ steps.refs.outputs.latest }}
           title: "core: adopt engine ${{ steps.refs.outputs.latest }} (${{ steps.compat.outcome == 'success' && 'compatible' || 'needs adaptation' }})"
-          commit-message: "core: bump network-assessment-azure-engine ${{ steps.refs.outputs.current }} -> ${{ steps.refs.outputs.latest }}"
+          commit-message: "core: pin ${{ steps.bump.outputs.dist }} ${{ steps.refs.outputs.latest }} (was ${{ steps.refs.outputs.current }})"
           labels: core-update,${{ steps.compat.outcome == 'success' && 'compatible' || 'needs-adaptation' }}
           add-paths: |
             pyproject.toml
             uv.lock
+            docs/rules/catalog.md
           body: |
-            The App `saulpatinojr/HCW-NetworkEyes_App` released engine **${{ steps.refs.outputs.latest }}** (this edition pinned `${{ steps.refs.outputs.current }}`).
+            The App `saulpatinojr/HCW-NetworkEyes_App` released engine **${{ steps.refs.outputs.latest }}** (`${{ steps.bump.outputs.dist }}`; this edition pinned `${{ steps.refs.outputs.current }}`, where `none` means the interim ported engine was running).
 
             Compatibility check in this workflow run (lint, unit, contract, security, rule catalog drift, Playwright e2e): **${{ steps.compat.outcome }}**.
             Logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
             - compatible: merge (automatic if the repository variable `CORE_AUTOMERGE` is `true`).
-            - needs adaptation: fix this edition on this branch (`RULES_VERSION` digest, sample expectations, the OpenAPI spec), then merge.
+            - needs adaptation: fix this edition on this branch (`RULES_VERSION` digest, sample expectations, the OpenAPI spec), then merge. A difference in the engine itself is fixed upstream and arrives as the next release; it is never patched here.
+            - after the first green bump is merged: delete the interim port (`src/network_assessment/{model,rules,classify}`, its tests and its `PROVENANCE.md` rows) in its own pull request.
 
             ADR-0001 (interim ported engine), ADR-0004 (upstream/downstream for this AddOn), ADR-0028 (by analogy).
       - if: steps.refs.outputs.changed == 'true' && steps.compat.outcome == 'success' && vars.CORE_AUTOMERGE == 'true' && steps.pr.outputs.pull-request-number != '' && !inputs.probe

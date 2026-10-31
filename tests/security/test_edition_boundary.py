@@ -4,6 +4,7 @@ import ast
 import re
 import subprocess
 import sys
+import tomllib
 
 import pytest
 
@@ -20,12 +21,41 @@ def _py_files():
         yield from (p for p in base.rglob("*.py") if ".venv" not in p.parts)
 
 
+CLOUD_SDK_PREFIXES = ("azure-", "msal", "msrest", "boto3", "botocore")
+
+
+def _is_cloud_sdk(name: str) -> bool:
+    return name.lower().replace("_", "-").startswith(CLOUD_SDK_PREFIXES)
+
+
 def test_no_cloud_sdk_in_dependency_manifests():
     for name in ("pyproject.toml", "uv.lock"):
         text = (ROOT / name).read_text(encoding="utf-8")
-        for pkg in ("azure-", "msal", "msrest", "boto3", "botocore"):
-            assert not re.search(rf'name = "{pkg}', text), f"{name} depends on {pkg}"
+        for pkg in CLOUD_SDK_PREFIXES:
             assert not re.search(rf"^{pkg}[\w-]*==", text, re.MULTILINE), f"{name} pins {pkg}"
+    project = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+    requested = list(project["project"]["dependencies"])
+    for group in project.get("dependency-groups", {}).values():
+        requested += [d for d in group if isinstance(d, str)]
+    for dep in requested:
+        name = re.split(r"[\s\[<>=!~;@]", dep, maxsplit=1)[0]
+        assert not _is_cloud_sdk(name), f"pyproject.toml depends on {name}"
+        # No extra of any dependency: the engine wheel's [azure] extra is its live discovery.
+        assert "[" not in dep.split("@", 1)[0], f"pyproject.toml asks for an extra: {dep}"
+    lock = tomllib.loads((ROOT / "uv.lock").read_text(encoding="utf-8"))
+    for package in lock["package"]:
+        # Everything uv can install is a [[package]] entry.
+        assert not _is_cloud_sdk(package["name"]), f"uv.lock locks {package['name']}"
+        for table in ("dependencies", "optional-dependencies", "dev-dependencies"):
+            entries = package.get(table, [])
+            entries = [e for v in entries.values() for e in v] if isinstance(entries, dict) else entries
+            for entry in entries:
+                assert not _is_cloud_sdk(entry["name"]), f"uv.lock: {package['name']} pulls in {entry['name']}"
+        # A dependency's own metadata may name cloud SDKs only behind an extra (the engine wheel's [azure] live
+        # discovery), and the checks above prove no extra is requested and nothing of it is locked.
+        for req in package.get("metadata", {}).get("requires-dist", []):
+            if _is_cloud_sdk(req["name"]):
+                assert "extra ==" in req.get("marker", ""), f"uv.lock: {package['name']} requires {req['name']}"
 
 
 def test_no_cloud_sdk_imports_anywhere():
