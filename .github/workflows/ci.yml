@@ -63,8 +63,13 @@ jobs:
             echo '::error::azure is importable in the lab image'; exit 1
           fi
           docker run --rm --entrypoint python addon:ci -c 'import fastapi, pydantic, uvicorn'
-          # Which engine the image runs: the pinned wheel once ENGINE_REF names a version, the interim port before.
-          docker run --rm --entrypoint python addon:ci -c 'from network_assessment import engine; print("engine:", engine.SOURCE)'
+          # The image runs the engine pyproject.toml pins: the wheel's version once ENGINE_REF names one, the interim
+          # port (`none`) before.
+          test "$(grep -cE '#[[:space:]]*ENGINE_REF[[:space:]]' pyproject.toml)" = 1 || { echo '::error file=pyproject.toml::expected exactly one ENGINE_REF line'; exit 1; }
+          ref="$(grep -oE '#[[:space:]]*ENGINE_REF[[:space:]]+[0-9A-Za-z][0-9A-Za-z.+-]*' pyproject.toml | awk '{print $NF}')"
+          have="$(docker run --rm --entrypoint python addon:ci -c 'from network_assessment import engine; print(engine.VERSION or "none", engine.SOURCE)')"
+          [ "${have%% *}" = "$ref" ] || { echo "::error file=pyproject.toml::the image runs engine '${have}', but ENGINE_REF is ${ref}"; exit 1; }
+          echo "engine: ${have} (ENGINE_REF ${ref})"
       # The base digest is checked against every FROM in the lint job; this checks what that digest really contains.
       # versions.env moves BASE_IMAGE, BASE_DIGEST and BASE_PYTHON_VERSION together, so a digest that does not hold the
       # Python it claims fails here instead of in production.

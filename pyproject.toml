@@ -29,7 +29,7 @@ build-backend = "hatchling.build"
 packages = ["src/network_assessment"]
 
 [tool.hatch.metadata]
-# The engine wheel is pinned by its release URL (the ENGINE_REF dependency line); hatchling refuses a direct reference
+# The engine wheel is pinned by its release URL (the marked engine dependency line); hatchling refuses a direct reference
 # without this. uv.lock carries the wheel's sha256 and the image installs with --require-hashes.
 allow-direct-references = true
 

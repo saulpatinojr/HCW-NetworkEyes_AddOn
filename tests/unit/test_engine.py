@@ -9,6 +9,7 @@ normalised export as this edition's own normalizer.
 """
 
 import hashlib
+import re
 from pathlib import Path
 from urllib.parse import urlsplit
 
@@ -18,7 +19,7 @@ from network_assessment import engine
 from network_assessment.assess import assess
 from network_assessment.ingestion import parse_csv, parse_json
 
-from ..conftest import EXPECTED_MODEL_VERSION, MODEL_VERSIONS, SAMPLE_CSV, SAMPLE_JSON, SAMPLE_PORTAL_CSV
+from ..conftest import EXPECTED_MODEL_VERSION, MODEL_VERSIONS, ROOT, SAMPLE_CSV, SAMPLE_JSON, SAMPLE_PORTAL_CSV
 
 # Same digest and formula as tests/unit/test_registry.py (which tests the port itself): id|version|severity|applies_to.
 REGISTRY_DIGEST = "7424a4a3ffb04be3328629889924bc31d88afbe2d576bd71f389f8d242b71339"
@@ -37,6 +38,37 @@ LIVE_ONLY = {
     "AZ-COST-005",
 }
 SAMPLES = (SAMPLE_JSON, SAMPLE_CSV, SAMPLE_PORTAL_CSV)
+# The hedge words this edition refuses in every rule text and finding fact. Owned here, not by the engine: an engine
+# release whose enforcer stops flagging one of them fails test_the_enforcer_refuses_every_hedge_word_this_edition_needs.
+EDITION_HEDGE_WORDS = (
+    "may",
+    "might",
+    "could",
+    "should",
+    "possibly",
+    "probably",
+    "likely",
+    "appears",
+    "seems",
+    "suggest",
+    "suggests",
+    "indicates",
+    "potentially",
+    "expected",
+    "typically",
+    "usually",
+    "generally",
+)
+
+
+def _engine_ref() -> tuple[str, str]:
+    """The ENGINE_REF value (`none` or a version) and its whole line in pyproject.toml."""
+    text = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    lines = [x for x in text.splitlines() if re.search(r"#\s*ENGINE_REF\s", x)]  # the marker core-update.yml reads
+    assert len(lines) == 1, "pyproject.toml must carry exactly one ENGINE_REF line"
+    found = re.search(r"#\s*ENGINE_REF\s+([0-9A-Za-z][0-9A-Za-z.+-]*)", lines[0])
+    assert found, lines[0]
+    return found.group(1), lines[0]
 
 
 def _parse(path: Path):
@@ -48,6 +80,29 @@ def test_the_engine_is_one_this_edition_knows():
     assert engine.SOURCE in MODEL_VERSIONS, f"{engine.SOURCE}: add its model version to tests/conftest.py"
     assert engine.TOPOLOGY_MODEL_VERSION == EXPECTED_MODEL_VERSION
     assert engine.is_wheel() == (engine.SOURCE != engine.PORT_SOURCE)
+
+
+def test_the_engine_that_runs_is_the_one_pyproject_pins():
+    ref, line = _engine_ref()
+    assert engine.is_wheel() == (ref != "none"), f"ENGINE_REF {ref}, but {engine.SOURCE} runs"
+    if ref == "none":
+        assert engine.VERSION is None and engine.DISTRIBUTION is None
+        assert line.strip().startswith("#"), "before the first adoption the line is only the marker"
+    else:
+        assert ref == engine.VERSION
+        assert line.strip().startswith(f'"{engine.DISTRIBUTION} @ https://github.com/'), line
+        assert f"/engine-v{ref}/" in line and line.rstrip().endswith(f"ENGINE_REF {ref}"), line
+    assert engine.describe() == {"source": engine.DISTRIBUTION or "interim-port", "version": engine.VERSION}
+
+
+@pytest.mark.parametrize("word", EDITION_HEDGE_WORDS)
+def test_the_enforcer_refuses_every_hedge_word_this_edition_needs(word):
+    enforcer = engine.ObservedStateEnforcer()
+    for text in (f"The gateway {word} be exposed.", f"{word.capitalize()} the subnet is open."):
+        assert enforcer.scan_text(text), f"the active enforcer does not flag {word!r} in {text!r}"
+        with pytest.raises(engine.ObservedStateViolation):
+            engine.assert_text_is_hedge_free("test", text)
+    assert not enforcer.scan_text("The gateway is exposed."), "a plain statement must pass"
 
 
 def test_rule_ids_versions_severities_and_applies_to_are_pinned():

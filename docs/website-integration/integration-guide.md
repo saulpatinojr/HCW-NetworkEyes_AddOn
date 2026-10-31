@@ -48,7 +48,13 @@ The row became `available` on 2026-10-12 (website #1089), when the digest was pi
 `GET /api/public/addons/network-assessment/status` (anonymous, registered in `functions/src/lib/addons/registry.js`
 with `setting: 'ADDON_NETWORK_ASSESSMENT_URL', healthPath: '/api/health'`) reads this AddOn's `/api/health` with a 5 s
 timeout and projects exactly `configured, reachable, version, edition, capabilities, asOf`. Every other health field
-(`rules`, `model`, `limits`, `turnstile`, `siteOrigins`, `azureConnectivity`) is for the pane and is never forwarded.
+(`rules`, `model`, `engine`, `limits`, `turnstile`, `siteOrigins`, `azureConnectivity`) is for the pane and is never
+forwarded.
+
+`engine` (also on `GET /api/rules`) says which assessment engine answers: `{"source": "interim-port", "version": null}`
+while this edition runs its port of the App's engine, and `{"source": "<distribution>", "version": "<version>"}` once it
+runs the released engine wheel pinned in `pyproject.toml` (for example `cna-azure-network-engine` and `0.1.0`). It is an
+additive field: the envelope stays flat, and nothing the status proxy reads changes.
 The pane mounts only when the proxy answers `configured: true, reachable: true`; otherwise the page shows
 "This tool isn't available right now."
 

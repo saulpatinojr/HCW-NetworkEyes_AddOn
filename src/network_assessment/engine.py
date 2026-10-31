@@ -98,6 +98,12 @@ def is_wheel() -> bool:
     return _wheel is not None
 
 
+def describe() -> dict[str, str | None]:
+    """The `engine` block of GET /api/health and GET /api/rules: which engine answers. `source` is the wheel's
+    distribution name, or `interim-port` (the port of the App at 5d3b914); `version` is the wheel's version, or null."""
+    return {"source": DISTRIBUTION or "interim-port", "version": VERSION}
+
+
 def rule_count() -> int:
     return len(rule_list())
 

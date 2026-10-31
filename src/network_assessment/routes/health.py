@@ -8,7 +8,7 @@ from fastapi import APIRouter, Request
 
 from network_assessment import ADDON_ID, __version__
 from network_assessment.edition import AZURE_CONNECTIVITY, CAPABILITIES, EDITION
-from network_assessment.engine import RULES_VERSION, TOPOLOGY_MODEL_VERSION, live_only_count, rule_count
+from network_assessment.engine import RULES_VERSION, TOPOLOGY_MODEL_VERSION, describe, live_only_count, rule_count
 from network_assessment.workspace import WORKSPACE_PROVIDER
 
 router = APIRouter()
@@ -30,6 +30,7 @@ def health_body(request: Request) -> dict:
         "azureConnectivity": AZURE_CONNECTIVITY,
         "rules": {"version": RULES_VERSION, "count": rule_count(), "liveOnly": live_only},
         "model": {"version": TOPOLOGY_MODEL_VERSION},
+        "engine": describe(),
         "limits": {
             "maxUploadBytes": settings.max_upload_bytes,
             "maxRows": settings.max_rows,

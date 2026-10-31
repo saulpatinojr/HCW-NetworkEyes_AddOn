@@ -73,6 +73,12 @@ engine that only a new App release can fix.
   pin (it reads the wheel's file name from the release, so `engine-v0.1.0` is pinned under its own name), regenerates
   `docs/rules/catalog.md` in the bump and commits it; `pyproject.toml` allows the URL pin (`allow-direct-references`),
   without which the bump could not build at all.
+- **Trust.** Merging an engine bump means running the App's code, and that code runs inside this edition's own tests,
+  so it can make them pass. `core-update.yml` keeps the App key out of the job that runs it (two jobs, see the
+  workflow's header), but auto-merge still trusts the release. `CORE_AUTOMERGE` was `true` on 2026-10-31. The
+  recommendation is to set it to `false` until the two-job workflow has opened one real bump pull request; the
+  variable is the owner's to change, on the repository's
+  [Actions variables page](https://github.com/saulpatinojr/HCW-NetworkEyes_AddOn/settings/variables/actions).
 - **Action.** Ask the App for a release that fixes items 1 to 4 (item 5 is worth fixing in the same release). Until
   then the bump pull request for `engine-v0.1.0` stays open and labelled `needs-adaptation`; do not merge it, and do not
   patch the engine here. When the fixed release is tagged, `core-update.yml` opens a new bump pull request for it (a new
