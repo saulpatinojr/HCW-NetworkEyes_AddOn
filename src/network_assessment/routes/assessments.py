@@ -12,12 +12,12 @@ from fastapi import APIRouter, Request, Response
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from network_assessment.assess import assess
+from network_assessment.engine import normalize
 from network_assessment.errors import ApiError
 from network_assessment.ingestion import (
     InvalidExport,
     ParsedRows,
     TooManyRows,
-    normalize,
     parse_csv,
     parse_document,
     parse_json,

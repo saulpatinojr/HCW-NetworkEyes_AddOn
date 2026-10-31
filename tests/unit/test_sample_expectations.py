@@ -5,10 +5,10 @@ from collections import Counter
 import pytest
 
 from network_assessment.assess import assess
-from network_assessment.ingestion import normalize, parse_json
-from network_assessment.rules import RULES
+from network_assessment.engine import normalize, rule_list
+from network_assessment.ingestion import parse_json
 
-from ..conftest import SAMPLE_JSON, SUB_HUB, SUB_SPOKE
+from ..conftest import EXPECTED_MODEL_VERSION, SAMPLE_JSON, SUB_HUB, SUB_SPOKE
 
 EXPECTED_COUNTS = {
     "AZ-BCDR-001": 1,
@@ -59,9 +59,9 @@ def test_every_portable_rule_fires_and_counts_are_pinned(assessment):
     a, _ = assessment
     counts = Counter(f.rule_id for f in a.findings)
     assert dict(sorted(counts.items())) == EXPECTED_COUNTS
-    portable = {k for k, r in RULES.items() if r.applies_to == "export"}
+    portable = {r.id for r in rule_list() if r.applies_to == "export"}
     assert portable == set(EXPECTED_COUNTS)
-    assert {u.rule_id for u in a.unknowns} == {k for k, r in RULES.items() if r.applies_to == "live-only"}
+    assert {u.rule_id for u in a.unknowns} == {r.id for r in rule_list() if r.applies_to == "live-only"}
 
 
 def test_summary_is_pinned(assessment):
@@ -79,7 +79,11 @@ def test_summary_is_pinned(assessment):
     assert (
         s.topology.pattern == "hub_spoke" and len(s.topology.hub_vnet_ids) == 2 and len(s.topology.spoke_vnet_ids) == 2
     )
-    assert s.rules_version == "2026.10.0" and s.model_version == "lab-1.0.0" and doc["model_version"] == "lab-1.0.0"
+    assert (
+        s.rules_version == "2026.10.0"
+        and s.model_version == EXPECTED_MODEL_VERSION
+        and doc["model_version"] == EXPECTED_MODEL_VERSION
+    )
     assert len(s.warnings) == 2 and s.by_type["microsoft.network/publicipaddresses"] == 8
 
 

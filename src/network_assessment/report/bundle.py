@@ -6,9 +6,9 @@ import io
 import json
 import zipfile
 
+from network_assessment.engine import rules_table
 from network_assessment.report.markdown import NOT_FOR_PRODUCTION, render_markdown
 from network_assessment.report.summary import Assessment
-from network_assessment.rules.registry import rules_table
 
 BUNDLE_FILES = (
     "README.md",

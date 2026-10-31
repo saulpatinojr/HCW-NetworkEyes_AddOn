@@ -1,32 +1,59 @@
 # Actions are pinned to full commit SHAs (version in the trailing comment); Dependabot (github-actions ecosystem) proposes updates.
 # Upstream -> downstream flow (ADR-0001, ADR-0004; ADR-0028 by analogy). The App (saulpatinojr/HCW-NetworkEyes_App,
-# REFACTOR_APP.md change sets C and J) builds the engine wheel network-assessment-azure-engine on every `engine-v*` tag and
-# attaches it to the GitHub Release (320-release-engine.yml); PyPI publishing there is optional and not needed here.
-# This repository then pins the release asset by URL in pyproject.toml, on one line, as
-#   "network-assessment-azure-engine @ https://github.com/saulpatinojr/HCW-NetworkEyes_App/releases/download/engine-v<version>/network_assessment_azure_engine-<version>-py3-none-any.whl",  # ENGINE_REF <version>
-# `uv lock` records the wheel's sha256 and the image build's `uv export --frozen` carries it, so the image's
-# `pip install --require-hashes` keeps verifying every third-party file (a git+https pin cannot be hash-checked and would
-# break that build). Adopting the wheel deletes the ported copy under src/network_assessment/{model,rules,classify} and
-# the PROVENANCE.md rows for it. This workflow compares the pinned ENGINE_REF with the App's latest `engine-v*` release on
-# every run. Until the ENGINE_REF line exists, the comparison below finds nothing and exits cleanly.
+# REFACTOR_APP.md change sets C and J) builds the engine wheel on every `engine-v*` tag and attaches it to the GitHub
+# Release (320-release-engine.yml); PyPI publishing there is optional and not needed here.
+# This repository pins the release asset by URL in pyproject.toml, on one line, as
+#   "<distribution> @ https://github.com/saulpatinojr/HCW-NetworkEyes_App/releases/download/engine-v<version>/<wheel file>",  # ENGINE_REF <version>
+# The distribution is one of two known names: cna-azure-network-engine (engine-v0.1.0, the package's earlier name) and
+# network-assessment-azure-engine (later releases). The wheel is chosen by its exact file name,
+# <distribution with underscores>-<version>-py3-none-any.whl, and exactly one of the two must exist on the release.
+# Before the first adoption the line is only the marker `# ENGINE_REF none` inside `dependencies`; the bump replaces the
+# whole marked line either way. `uv lock` records the wheel's sha256 and the image build's `uv export --frozen` carries
+# it, so the image's `pip install --require-hashes` verifies every third-party file. src/network_assessment/engine.py
+# runs the wheel as soon as it is installed, so the bump's checks test the lab against the new engine; the bump also
+# regenerates docs/rules/catalog.md, which is generated from the engine's rule texts. The ported copy under
+# src/network_assessment/{model,rules,classify} is deleted by hand after the first green bump is merged
+# (PROVENANCE.md, "Deletion plan"). Without an ENGINE_REF line the workflow finds nothing to do and exits cleanly.
+#
+# Two jobs, because the bump runs upstream code (the new wheel, through this edition's tests and scripts) and the pull
+# request needs a credential that reaches four repositories. Code that runs in a step can reach later steps of the same
+# job (it can append to $GITHUB_ENV, for example NODE_OPTIONS, or rewrite the downloaded actions under _actions), so the
+# key must never be in a job that ran upstream code:
+#   bump          Read-only GITHUB_TOKEN, no secret. Compares ENGINE_REF with the App's latest engine release, finds the
+#                 wheel, pins it, re-locks, regenerates the catalog and runs the compatibility check. The token is given
+#                 only to the two steps that read the App's public releases API, before any project code runs. It
+#                 uploads one artifact: pyproject.toml, uv.lock, docs/rules/catalog.md and `outcome`.
+#   pull-request  A fresh runner that runs no project code (no tests, no scripts, no install, no build backend).
+#                 It checks out the default branch and works out the expected pin line itself from that branch and
+#                 the App's release. It does not trust the bump job's files: code running there could have rewritten
+#                 them. It regenerates pyproject.toml (the marked line replaced) and uv.lock (`uv lock --no-build`,
+#                 with the uv binary from the image the Dockerfile pins by digest; resolving the wheel reads its
+#                 metadata and never imports it), checks that the new lock differs from the default branch's only in
+#                 the engine's own entry (pinned URL, one wheel with a sha256, dependencies already locked) and the
+#                 project's reference to it, and refuses the artifact unless its two copies are byte-identical to the
+#                 regenerated ones. The catalog needs the engine to generate, so it is the one file taken from the
+#                 artifact, and only as bounded plain Markdown with no HTML; the pull request's own drift check proves
+#                 it. `outcome` must be exactly `success` or `failure`. Only then does it mint the App token and open
+#                 the pull request.
+# The outcome comes from the job that ran upstream code, so it is untrusted: it chooses the label and the body text, and
+# it is never enough on its own to merge. Auto-merge is asked for only when this job's own verification passed, the
+# outcome says success and the repository variable CORE_AUTOMERGE is `true`; GitHub then merges only after the
+# repository's required checks pass on the pull request. Those checks run the same upstream code, so turning
+# CORE_AUTOMERGE on means trusting the App's releases (docs/whats-new-upstream.md).
 #
 # The pull request is opened with a short-lived GitHub App token (actions/create-github-app-token), not with
 # GITHUB_TOKEN. A pull request opened with GITHUB_TOKEN starts no workflow, so the required checks of the
-# "Protect main" ruleset never ran on it and it could never merge. One opened with the App token does start
-# them, so this edition's own CI (ci, security) also runs on the bump pull request; the compatibility check
-# below still runs first, in this run, and decides the compatible / needs-adaptation label and whether
-# auto-merge is asked for.
-# The credential is the HCW Main Admin App (a GitHub App owned by the repository owner, installed on this
-# repository). Its client ID is the repository variable HCW_MAIN_ADMIN_CLIENT_ID (not a secret) and its private
+# "Protect main" ruleset never ran on it and it could never merge. One opened with the App token does start them.
+# The credential is the HCW Main Admin App (a GitHub App owned by the repository owner, installed on the four add-on
+# repositories). Its client ID is the repository variable HCW_MAIN_ADMIN_CLIENT_ID (not a secret) and its private
 # key is the repository secret HCW_MAIN_ADMIN_PRIVATE_KEY. The key lives only as that secret and is never printed.
 # To rotate it: generate a new key on the App's settings page (https://github.com/settings/apps), replace the
 # secret in every repository that holds the key (the App is installed on the four add-on
-# repositories), then delete the old key there. Only the token step is given the key. That step comes late (after uv and
-# the tests have run), mints a token for this repository only with Contents and Pull requests write, and the
-# action revokes the token when the job ends.
-# GITHUB_TOKEN is read-only here.
-# A manual run with probe=true mints the token and makes two read-only API calls (the repository, and the list of
-# repositories the token covers, which must be this one only) and nothing else that writes,
+# repositories), then delete the old key there. Only the token step is given the key. It mints a token for this
+# repository only with Contents and Pull requests write, and the action revokes the token when the job ends.
+# GITHUB_TOKEN is read-only in both jobs.
+# A manual run with probe=true runs only the pull-request job's token step and two read-only API calls (the
+# repository, and the list of repositories the token covers, which must be this one only) and nothing else that writes,
 # to prove the credential on a day when there is no release to adopt:
 #   gh workflow run core-update.yml --ref main -f probe=true
 name: core-update
@@ -44,25 +71,27 @@ on:
 permissions: {}
 env:
   UPSTREAM: saulpatinojr/HCW-NetworkEyes_App
-  PACKAGE: network-assessment-azure-engine
+  ARTIFACT: core-update-bump
 jobs:
-  check-and-bump:
+  bump:
     runs-on: ubuntu-26.04
-    # GITHUB_TOKEN may only read here (checkout, and the public releases API of the upstream repository).
-    # Everything that writes uses the App token.
+    # Runs upstream code. No secret reaches this job; GITHUB_TOKEN may only read.
     permissions:
       contents: read
+    outputs:
+      changed: ${{ steps.refs.outputs.changed }}
     steps:
-      # persist-credentials: false — create-pull-request sets its own Authorization header for the push; with the
-      # checkout's persisted header beside it, git sends two and GitHub answers 400 (seen in the upstream App's rules-refresh).
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        with: { persist-credentials: false }
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.repository.default_branch }}
       - id: refs
         name: Compare the pinned ENGINE_REF with the App's latest engine release
         env: { GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}", REQUESTED: "${{ inputs.ref }}" }
         run: |
           set -euo pipefail
-          current="$(grep -oE "#[[:space:]]*ENGINE_REF[[:space:]]+[0-9][0-9A-Za-z.+-]*" pyproject.toml | head -1 | awk '{print $NF}' || true)"
+          # `none` is the marker before the first adoption (the interim port runs); otherwise the pinned version.
+          current="$(grep -oE "#[[:space:]]*ENGINE_REF[[:space:]]+[0-9A-Za-z][0-9A-Za-z.+-]*" pyproject.toml | head -1 | awk '{print $NF}' || true)"
           if [ -z "$current" ]; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
             echo "::notice::no ENGINE_REF in pyproject.toml: the engine is still the ported copy under src/network_assessment (ADR-0001); nothing to adopt yet"
@@ -73,24 +102,52 @@ jobs:
           fi
           if [ -z "$latest_tag" ] || [ "$latest_tag" = "null" ]; then echo "changed=false" >> "$GITHUB_OUTPUT"; echo "::notice::the App has no engine-v* release yet"; exit 0; fi
           latest="${latest_tag#engine-v}"
+          if ! [[ "$latest" =~ ^[0-9][0-9A-Za-z.+-]*$ ]]; then echo "::error::unexpected engine tag ${latest_tag}"; exit 1; fi
           echo "latest=$latest" >> "$GITHUB_OUTPUT"; echo "current=$current" >> "$GITHUB_OUTPUT"
           if [ "$latest" = "$current" ]; then echo "changed=false" >> "$GITHUB_OUTPUT"; echo "already at $current"; else echo "changed=true" >> "$GITHUB_OUTPUT"; echo "$current -> $latest"; fi
-      - if: steps.refs.outputs.changed == 'true'
-        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
-        with: { python-version: "3.14" }
-      - if: steps.refs.outputs.changed == 'true'
-        run: python -m pip install "uv==0.11.32"
-      - if: steps.refs.outputs.changed == 'true'
-        name: Bump ENGINE_REF and re-lock
-        env: { LATEST: "${{ steps.refs.outputs.latest }}", CURRENT: "${{ steps.refs.outputs.current }}" }
+      - if: steps.refs.outputs.changed == 'true' && !inputs.probe
+        id: asset
+        name: Find the release's wheel by its exact file name (one of the two known distributions)
+        env: { GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}", LATEST: "${{ steps.refs.outputs.latest }}" }
         run: |
           set -euo pipefail
-          # One line carries the release tag, the wheel file name and the ENGINE_REF marker; all three move together.
-          sed -i -E "s|releases/download/engine-v${CURRENT}/network_assessment_azure_engine-${CURRENT}-py3-none-any\.whl(\",?[[:space:]]*#[[:space:]]*ENGINE_REF[[:space:]]+)${CURRENT}|releases/download/engine-v${LATEST}/network_assessment_azure_engine-${LATEST}-py3-none-any.whl\1${LATEST}|" pyproject.toml
-          grep -q "ENGINE_REF ${LATEST}" pyproject.toml
-          uv lock --upgrade-package "${PACKAGE}"
+          names="$(gh api "repos/${UPSTREAM}/releases/tags/engine-v${LATEST}" --jq '.assets[].name')"
+          found=(); for dist in network-assessment-azure-engine cna-azure-network-engine; do
+            case "$dist" in network-assessment-azure-engine|cna-azure-network-engine) ;; *) exit 1 ;; esac
+            wheel="${dist//-/_}-${LATEST}-py3-none-any.whl"
+            if grep -qxF -- "$wheel" <<<"$names"; then found+=("$dist $wheel"); fi
+          done
+          if [ "${#found[@]}" -ne 1 ]; then
+            echo "::error::release engine-v${LATEST} must carry exactly one wheel of a known distribution; found ${#found[@]}"; exit 1
+          fi
+          read -r dist wheel <<<"${found[0]}"
+          { echo "dist=$dist"; echo "wheel=$wheel"; } >> "$GITHUB_OUTPUT"
+      - if: steps.refs.outputs.changed == 'true' && !inputs.probe
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
+        with: { python-version: "3.14" }
+      - if: steps.refs.outputs.changed == 'true' && !inputs.probe
+        run: python -m pip install "uv==0.11.32"
+      # From here on the job runs project and upstream code; no step below is given a token.
+      - if: steps.refs.outputs.changed == 'true' && !inputs.probe
+        name: Pin the wheel on the ENGINE_REF line, re-lock and regenerate the rule catalog
+        env:
+          LATEST: ${{ steps.refs.outputs.latest }}
+          DIST: ${{ steps.asset.outputs.dist }}
+          WHEEL: ${{ steps.asset.outputs.wheel }}
+        run: |
+          set -euo pipefail
+          line="  \"${DIST} @ https://github.com/${UPSTREAM}/releases/download/engine-v${LATEST}/${WHEEL}\",  # ENGINE_REF ${LATEST}"
+          # One line carries the distribution, the release tag, the wheel file name and the marker; it is replaced whole.
+          test "$(grep -cE '#[[:space:]]*ENGINE_REF[[:space:]]' pyproject.toml)" = 1
+          awk -v line="$line" '/#[[:space:]]*ENGINE_REF[[:space:]]/ { print line; next } { print }' pyproject.toml > pyproject.toml.new
+          mv pyproject.toml.new pyproject.toml
+          grep -qF -- "$line" pyproject.toml
+          uv lock --upgrade-package "$DIST"
+          # The catalog is generated from the engine's rule texts. When the generator refuses them (an empty or hedged
+          # text), the catalog stays as it was and the drift check in the next step reports it.
+          uv run python scripts/rules-doc.py --write || echo "::warning::scripts/rules-doc.py --write refused engine ${LATEST}; see the next step"
           git --no-pager diff --stat
-      - if: steps.refs.outputs.changed == 'true'
+      - if: steps.refs.outputs.changed == 'true' && !inputs.probe
         id: compat
         name: Compatibility check (lint, tests, rule catalog drift, browser e2e)
         continue-on-error: true
@@ -100,7 +157,190 @@ jobs:
           uv run ruff check . && uv run python scripts/rules-doc.py --check && uv run pytest -q
           npm init -y >/dev/null && npm install --no-save --no-audit --no-fund "@playwright/test@1.63.0" && npx playwright install --with-deps chromium
           CI=1 npx playwright test -c tests/e2e/playwright.config.ts
-      - if: steps.refs.outputs.changed == 'true' || inputs.probe
+      - if: steps.refs.outputs.changed == 'true' && !inputs.probe
+        name: Stage the three files and the outcome for the pull-request job
+        env: { OUTCOME: "${{ steps.compat.outcome }}" }
+        run: |
+          set -euo pipefail
+          out="${RUNNER_TEMP}/bump"; mkdir -p "${out}/docs/rules"
+          cp pyproject.toml uv.lock "${out}/"; cp docs/rules/catalog.md "${out}/docs/rules/"
+          printf '%s\n' "$OUTCOME" > "${out}/outcome"
+      - if: steps.refs.outputs.changed == 'true' && !inputs.probe
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: ${{ env.ARTIFACT }}
+          path: ${{ runner.temp }}/bump
+          if-no-files-found: error
+          retention-days: 3
+  pull-request:
+    needs: bump
+    if: needs.bump.outputs.changed == 'true' || inputs.probe
+    runs-on: ubuntu-26.04
+    # Runs no project code: everything here is this file's own shell and the pinned actions.
+    permissions:
+      contents: read
+    steps:
+      # persist-credentials: false — create-pull-request sets its own Authorization header for the push; with the
+      # checkout's persisted header beside it, git sends two and GitHub answers 400 (seen in the upstream App's rules-refresh).
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.repository.default_branch }}
+      - if: ${{ !inputs.probe }}
+        id: expect
+        name: Work out the expected pin line from the default branch and the App's release (independently of the bump job)
+        env: { GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}", REQUESTED: "${{ inputs.ref }}" }
+        run: |
+          set -euo pipefail
+          current="$(grep -oE "#[[:space:]]*ENGINE_REF[[:space:]]+[0-9A-Za-z][0-9A-Za-z.+-]*" pyproject.toml | head -1 | awk '{print $NF}')"
+          if [ -n "$REQUESTED" ]; then latest_tag="$REQUESTED"; else
+            latest_tag="$(gh api "repos/${UPSTREAM}/releases?per_page=50" --jq '[.[] | select(.draft == false and .prerelease == false and (.tag_name | startswith("engine-v")))][0].tag_name')"
+          fi
+          latest="${latest_tag#engine-v}"
+          if ! [[ "$latest" =~ ^[0-9][0-9A-Za-z.+-]*$ ]] || [ "$latest" = "$current" ]; then echo "::error::nothing to adopt (${current} -> ${latest_tag})"; exit 1; fi
+          names="$(gh api "repos/${UPSTREAM}/releases/tags/engine-v${latest}" --jq '.assets[].name')"
+          found=(); for dist in network-assessment-azure-engine cna-azure-network-engine; do
+            wheel="${dist//-/_}-${latest}-py3-none-any.whl"
+            if grep -qxF -- "$wheel" <<<"$names"; then found+=("$dist $wheel"); fi
+          done
+          if [ "${#found[@]}" -ne 1 ]; then echo "::error::release engine-v${latest} must carry exactly one known wheel; found ${#found[@]}"; exit 1; fi
+          read -r dist wheel <<<"${found[0]}"
+          case "$dist" in network-assessment-azure-engine|cna-azure-network-engine) ;; *) exit 1 ;; esac
+          url="https://github.com/${UPSTREAM}/releases/download/engine-v${latest}/${wheel}"
+          { echo "current=$current"; echo "latest=$latest"; echo "dist=$dist"; echo "url=$url"; } >> "$GITHUB_OUTPUT"
+      - if: ${{ !inputs.probe }}
+        id: regen
+        name: Regenerate pyproject.toml and uv.lock here, from the default branch, with the digest-pinned uv
+        env:
+          LATEST: ${{ steps.expect.outputs.latest }}
+          DIST: ${{ steps.expect.outputs.dist }}
+          URL: ${{ steps.expect.outputs.url }}
+        run: |
+          set -euo pipefail
+          git show HEAD:uv.lock > "${RUNNER_TEMP}/main-uv.lock"
+          # The uv binary comes from the image the Dockerfile pins by digest (ci.yml checks that digest is uv's tag),
+          # so Docker verifies its content. It only locks: --no-build runs no build backend, and resolving the wheel
+          # reads its metadata without importing it.
+          image="$(grep -oE 'ghcr\.io/astral-sh/uv:[0-9][0-9.]*@sha256:[0-9a-f]{64}' infrastructure/docker/Dockerfile | head -1)"
+          [ -n "$image" ] || { echo "::error::no digest-pinned uv image in infrastructure/docker/Dockerfile"; exit 1; }
+          docker pull --quiet "$image" > /dev/null
+          cid="$(docker create "$image")"; docker cp "${cid}:/uv" "${RUNNER_TEMP}/uv-bin"; docker rm "$cid" > /dev/null
+          line="  \"${DIST} @ ${URL}\",  # ENGINE_REF ${LATEST}"
+          test "$(grep -cE '#[[:space:]]*ENGINE_REF[[:space:]]' pyproject.toml)" = 1
+          awk -v line="$line" '/#[[:space:]]*ENGINE_REF[[:space:]]/ { print line; next } { print }' pyproject.toml > "${RUNNER_TEMP}/pyproject.toml"
+          cp "${RUNNER_TEMP}/pyproject.toml" pyproject.toml
+          UV_CACHE_DIR="${RUNNER_TEMP}/uv-cache" UV_PYTHON_DOWNLOADS=never "${RUNNER_TEMP}/uv-bin" lock --no-build --upgrade-package "$DIST"
+          git --no-pager diff --stat
+      - if: ${{ !inputs.probe }}
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: ${{ env.ARTIFACT }}
+          path: ${{ runner.temp }}/bump
+      - if: ${{ !inputs.probe }}
+        id: verify
+        name: Verify the artifact matches what this job regenerated, and accept the catalog only as plain text
+        env:
+          LATEST: ${{ steps.expect.outputs.latest }}
+          DIST: ${{ steps.expect.outputs.dist }}
+          URL: ${{ steps.expect.outputs.url }}
+        run: |
+          set -euo pipefail
+          dir="${RUNNER_TEMP}/bump"
+          fail() { echo "::error::the bump artifact is refused: $1"; exit 1; }
+          [ -z "$(find "$dir" -mindepth 1 ! -type f ! -type d)" ] || fail "it holds something that is not a plain file"
+          [ "$(cd "$dir" && find . -mindepth 1 -type d -printf '%P\n' | LC_ALL=C sort | paste -sd,)" = "docs,docs/rules" ] || fail "unexpected directories"
+          [ "$(cd "$dir" && find . -type f -printf '%P\n' | LC_ALL=C sort | paste -sd,)" = "docs/rules/catalog.md,outcome,pyproject.toml,uv.lock" ] || fail "unexpected files"
+          outcome="$(head -c 16 "$dir/outcome" | tr -d '\n')"
+          case "$outcome" in success|failure) ;; *) fail "outcome is neither success nor failure" ;; esac
+          # The bump job ran upstream code, so its copies are not used: this job regenerated both files (step regen).
+          # A difference means that job's files were changed, which is refused rather than merged.
+          cmp -s pyproject.toml "$dir/pyproject.toml" || { diff pyproject.toml "$dir/pyproject.toml" || true; fail "pyproject.toml differs from the one regenerated here"; }
+          cmp -s uv.lock "$dir/uv.lock" || { diff uv.lock "$dir/uv.lock" | head -40 || true; fail "uv.lock differs from the one regenerated here"; }
+          catalog="$dir/docs/rules/catalog.md"
+          [ "$(stat -c %s "$catalog")" -le 524288 ] || fail "the catalog is larger than 512 KiB"
+          iconv -f UTF-8 -t UTF-8 "$catalog" > /dev/null || fail "the catalog is not UTF-8"
+          [ "$(tr -d '\t\n\r' < "$catalog" | LC_ALL=C grep -c '[[:cntrl:]]' || true)" = 0 ] || fail "the catalog holds control characters"
+          [ "$(head -n 1 "$catalog")" = "# Rule catalog" ] || fail "the catalog does not start with its heading"
+          # Generating the catalog needs the engine, so it is the one file taken from the bump job: plain Markdown, no
+          # HTML of any kind. The bump pull request's own drift check (rules-doc.py --check, no secrets) proves it.
+          [ "$(LC_ALL=C grep -cE '<[A-Za-z!/?]' "$catalog" || true)" = 0 ] || fail "the catalog holds HTML (a tag, comment or script)"
+          # And the regenerated uv.lock itself: only the engine's own entry and the project's reference to it may change
+          # from the default branch. Run from RUNNER_TEMP in isolated mode (-I), so nothing from the checkout or the
+          # environment is imported.
+          cd "${RUNNER_TEMP}"
+          python3 -I - "${GITHUB_WORKSPACE}/uv.lock" "${RUNNER_TEMP}/main-uv.lock" "$DIST" "$URL" <<'PY'
+          import re, sys, tomllib
+
+          new_path, old_path, dist, url = sys.argv[1:5]
+          ENGINES = {"network-assessment-azure-engine", "cna-azure-network-engine"}
+          PROJECT = "hcw-addon-network-assessment"
+
+
+          def fail(message):
+              print(f"::error::the bump artifact is refused: uv.lock: {message}")
+              sys.exit(1)
+
+
+          new, old = (tomllib.load(open(p, "rb")) for p in (new_path, old_path))
+          # `revision` is the lock format's own revision: the locking tool pinned in the bump job may write another one than
+          # the one that last locked the default branch. It carries no dependency, so it may differ; nothing else may.
+          header = lambda lock: {k: v for k, v in lock.items() if k not in ("package", "revision")}  # noqa: E731
+          if header(new) != header(old) or not isinstance(new.get("revision"), int):
+              fail("its header changed")
+
+
+          def by_name(lock):
+              out = {}
+              for package in lock.get("package", []):
+                  if package["name"] in out:
+                      fail(f"{package['name']} is locked twice")
+                  out[package["name"]] = package
+              return out
+
+
+          n, o = by_name(new), by_name(old)
+          for name in sorted(set(n) | set(o)):
+              if name not in ENGINES and name != PROJECT and n.get(name) != o.get(name):
+                  fail(f"{name} changed, appeared or disappeared; only the engine moves in a bump")
+          if sorted(ENGINES & set(n)) != [dist]:
+              fail(f"the locked engine is {sorted(ENGINES & set(n))}, expected [{dist}]")
+          engine = n[dist]
+          wheels = engine.get("wheels", [])
+          if engine.get("source") != {"url": url} or "sdist" in engine or len(wheels) != 1:
+              fail("the engine is not exactly one wheel from the pinned URL")
+          if wheels[0].get("url") != url or not re.fullmatch(r"sha256:[0-9a-f]{64}", wheels[0].get("hash", "")):
+              fail("the engine wheel has no sha256 or another URL")
+          for dep in engine.get("dependencies", []):
+              if dep["name"] not in o or dep["name"] in ENGINES or dep["name"] == PROJECT:
+                  fail(f"the engine depends on {dep['name']}, which was not locked before")
+
+
+          def without_engine(package):
+              package = dict(package)
+              package["dependencies"] = [d for d in package.get("dependencies", []) if d["name"] not in ENGINES]
+              metadata = dict(package.get("metadata", {}))
+              metadata["requires-dist"] = [d for d in metadata.get("requires-dist", []) if d["name"] not in ENGINES]
+              package["metadata"] = metadata
+              return package
+
+
+          if without_engine(n[PROJECT]) != without_engine(o[PROJECT]):
+              fail("the project entry changed beyond its engine dependency")
+          if [d for d in n[PROJECT].get("dependencies", []) if d["name"] in ENGINES] != [{"name": dist}]:
+              fail("the project does not depend on the engine exactly once")
+          requires = [d for d in n[PROJECT].get("metadata", {}).get("requires-dist", []) if d["name"] in ENGINES]
+          if requires != [{"name": dist, "url": url}]:
+              fail("the project does not require the engine from the pinned URL")
+          print(f"uv.lock: only {dist} changed, pinned to {url} with {wheels[0]['hash']}")
+          PY
+          echo "outcome=$outcome" >> "$GITHUB_OUTPUT"
+      - if: ${{ !inputs.probe }}
+        name: Take the verified catalog (pyproject.toml and uv.lock are the regenerated ones already in place)
+        run: |
+          set -euo pipefail
+          cp "${RUNNER_TEMP}/bump/docs/rules/catalog.md" docs/rules/catalog.md
+          git --no-pager diff --stat
+      - if: inputs.probe || steps.verify.outcome == 'success'
         id: app-token
         name: GitHub App token (this repository only; Contents and Pull requests write)
         uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
@@ -123,31 +363,35 @@ jobs:
           covered="$(gh api installation/repositories --jq '[.repositories[].full_name] | join(",")')"
           echo "The token covers these repositories: ${covered}"
           test "${covered}" = "${REPO}" || { echo "::error::The token must cover ${REPO} and nothing else"; exit 1; }
-      - if: steps.refs.outputs.changed == 'true' && !inputs.probe
+      - if: steps.verify.outcome == 'success' && !inputs.probe
         id: pr
         name: Open the bump pull request (ready for review)
         uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
         with:
           token: ${{ steps.app-token.outputs.token }}
-          branch: core-update/engine-v${{ steps.refs.outputs.latest }}
-          title: "core: adopt engine ${{ steps.refs.outputs.latest }} (${{ steps.compat.outcome == 'success' && 'compatible' || 'needs adaptation' }})"
-          commit-message: "core: bump network-assessment-azure-engine ${{ steps.refs.outputs.current }} -> ${{ steps.refs.outputs.latest }}"
-          labels: core-update,${{ steps.compat.outcome == 'success' && 'compatible' || 'needs-adaptation' }}
+          branch: core-update/engine-v${{ steps.expect.outputs.latest }}
+          title: "core: adopt engine ${{ steps.expect.outputs.latest }} (${{ steps.verify.outputs.outcome == 'success' && 'compatible' || 'needs adaptation' }})"
+          commit-message: "core: pin ${{ steps.expect.outputs.dist }} ${{ steps.expect.outputs.latest }} (was ${{ steps.expect.outputs.current }})"
+          labels: core-update,${{ steps.verify.outputs.outcome == 'success' && 'compatible' || 'needs-adaptation' }}
           add-paths: |
             pyproject.toml
             uv.lock
+            docs/rules/catalog.md
           body: |
-            The App `saulpatinojr/HCW-NetworkEyes_App` released engine **${{ steps.refs.outputs.latest }}** (this edition pinned `${{ steps.refs.outputs.current }}`).
+            The App `saulpatinojr/HCW-NetworkEyes_App` released engine **${{ steps.expect.outputs.latest }}** (`${{ steps.expect.outputs.dist }}`; this edition pinned `${{ steps.expect.outputs.current }}`, where `none` means the interim ported engine was running).
 
-            Compatibility check in this workflow run (lint, unit, contract, security, rule catalog drift, Playwright e2e): **${{ steps.compat.outcome }}**.
+            Compatibility check reported by the bump job (lint, unit, contract, security, rule catalog drift, Playwright e2e): **${{ steps.verify.outputs.outcome }}**. That job ran the new engine, so its report is a signal, not proof; this pull request's own checks are the gate.
             Logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
-            - compatible: merge (automatic if the repository variable `CORE_AUTOMERGE` is `true`).
-            - needs adaptation: fix this edition on this branch (`RULES_VERSION` digest, sample expectations, the OpenAPI spec), then merge.
+            The pull-request job checked, without running any project code, that only the `ENGINE_REF` line of `pyproject.toml`, the engine's entry in `uv.lock` and `docs/rules/catalog.md` change.
+
+            - compatible: merge (automatic if the repository variable `CORE_AUTOMERGE` is `true`, after the required checks pass).
+            - needs adaptation: fix this edition on this branch (`RULES_VERSION` digest, sample expectations, the OpenAPI spec), then merge. A difference in the engine itself is fixed upstream and arrives as the next release; it is never patched here.
+            - after the first green bump is merged: delete the interim port (`src/network_assessment/{model,rules,classify}`, its tests and its `PROVENANCE.md` rows) in its own pull request.
 
             ADR-0001 (interim ported engine), ADR-0004 (upstream/downstream for this AddOn), ADR-0028 (by analogy).
-      - if: steps.refs.outputs.changed == 'true' && steps.compat.outcome == 'success' && vars.CORE_AUTOMERGE == 'true' && steps.pr.outputs.pull-request-number != '' && !inputs.probe
-        name: Auto-merge the compatible bump
+      - if: steps.verify.outcome == 'success' && steps.verify.outputs.outcome == 'success' && vars.CORE_AUTOMERGE == 'true' && steps.pr.outputs.pull-request-number != '' && !inputs.probe
+        name: Auto-merge the compatible bump (after the required checks pass)
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           PR_NUMBER: ${{ steps.pr.outputs.pull-request-number }}
@@ -158,6 +402,6 @@ jobs:
             echo "::warning::Auto-merge was not turned on for pull request #${PR_NUMBER}; merge it by hand."
             echo "Auto-merge needs the repository setting Allow auto-merge to be on."
           fi
-      - if: steps.refs.outputs.changed == 'true' && steps.compat.outcome != 'success'
-        env: { LATEST: "${{ steps.refs.outputs.latest }}" }
+      - if: steps.verify.outcome == 'success' && steps.verify.outputs.outcome != 'success' && !inputs.probe
+        env: { LATEST: "${{ steps.expect.outputs.latest }}" }
         run: echo "::warning::Engine ${LATEST} is not compatible with this edition; see the pull request."

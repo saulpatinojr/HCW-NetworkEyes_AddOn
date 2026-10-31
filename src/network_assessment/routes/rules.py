@@ -5,8 +5,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter
 
-from network_assessment.model.topology import TOPOLOGY_MODEL_VERSION
-from network_assessment.rules.registry import RULES, RULES_VERSION, rules_table
+from network_assessment.engine import RULES_VERSION, TOPOLOGY_MODEL_VERSION, describe, rules_table
 
 router = APIRouter()
 
@@ -17,7 +16,8 @@ async def rules() -> dict:
     return {
         "version": RULES_VERSION,
         "modelVersion": TOPOLOGY_MODEL_VERSION,
-        "count": len(RULES),
+        "engine": describe(),
+        "count": len(table),
         "liveOnly": sum(1 for r in table if r["appliesTo"] == "live-only"),
         "verify": True,
         "rules": table,

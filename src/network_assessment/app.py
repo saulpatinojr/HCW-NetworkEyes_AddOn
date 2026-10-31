@@ -12,9 +12,9 @@ from fastapi.responses import JSONResponse
 from network_assessment import __version__
 from network_assessment.config import Settings
 from network_assessment.edition import assert_lab_cannot_reach_azure
+from network_assessment.engine import rule_count
 from network_assessment.errors import DEFAULT_CODES, DEFAULT_MESSAGES, ApiError
 from network_assessment.routes import assessments, config, health, rules, static
-from network_assessment.rules.registry import RULES
 from network_assessment.security import logging as logs
 from network_assessment.security.cors import ExactOriginCorsMiddleware
 from network_assessment.security.headers import SecurityHeadersMiddleware
@@ -42,7 +42,7 @@ def create_app(
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
-        logs.log_event("startup", rules=len(RULES), turnstileRequired=settings.turnstile_required)
+        logs.log_event("startup", rules=rule_count(), turnstileRequired=settings.turnstile_required)
         if not settings.turnstile_required and settings.allow_no_turnstile:
             logs.log_event("turnstile_disabled", warning=True)
         task = asyncio.create_task(_sweeper(app)) if sweep else None

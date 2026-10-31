@@ -185,6 +185,7 @@ components:
         azureConnectivity: { const: disabled-by-design }
         rules: { type: object, properties: { version: { type: string }, count: { type: integer }, liveOnly: { type: integer } } }
         model: { type: object, properties: { version: { type: string } } }
+        engine: { $ref: "#/components/schemas/Engine" }
         limits: { type: object, properties: { maxUploadBytes: { type: integer }, maxRows: { type: integer }, ttlMinutes: { type: integer } } }
     Config:
       type: object
@@ -211,11 +212,22 @@ components:
         remediation: { type: string }
         learnUrl: { type: string, format: uri, description: "[VERIFY] until the owner confirms it" }
         frameworks: { type: array, items: { $ref: "#/components/schemas/FrameworkMapping" }, description: "[VERIFY] compliance references" }
+    Engine:
+      type: object
+      description: >-
+        Which assessment engine answers (additive; not forwarded by the website's status proxy). `source` is the released
+        engine wheel's distribution name, or `interim-port` for the port of the App's engine at commit 5d3b914; `version`
+        is the wheel's version (it equals the ENGINE_REF line of pyproject.toml), or null for the port.
+      required: [source, version]
+      properties:
+        source: { type: string, examples: [interim-port, cna-azure-network-engine, network-assessment-azure-engine] }
+        version: { type: [string, "null"] }
     RulesResponse:
       type: object
       properties:
         version: { type: string }
         modelVersion: { type: string }
+        engine: { $ref: "#/components/schemas/Engine" }
         count: { type: integer }
         liveOnly: { type: integer }
         verify: { type: boolean, description: "true while learn links and framework references are marked [VERIFY]" }

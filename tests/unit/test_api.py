@@ -5,12 +5,12 @@ import zipfile
 import pytest
 from fastapi.testclient import TestClient
 
-from network_assessment import __version__
+from network_assessment import __version__, engine
 from network_assessment.app import api_routes, create_app
 from network_assessment.config import TURNSTILE_ACTION
 from network_assessment.security.headers import VERIFICATION_ORIGIN
 
-from ..conftest import SAMPLE_CSV, SAMPLE_PORTAL_CSV, make_settings
+from ..conftest import EXPECTED_MODEL_VERSION, SAMPLE_CSV, SAMPLE_PORTAL_CSV, make_settings
 
 JSON = {"content-type": "application/json"}
 
@@ -30,9 +30,11 @@ def test_health_is_flat_and_complete(client):
         "https://hybridcloudworks.com"
     ]
     assert body["rules"] == {"version": "2026.10.0", "count": 45, "liveOnly": 11} and body["model"] == {
-        "version": "lab-1.0.0"
+        "version": EXPECTED_MODEL_VERSION
     }
     assert body["limits"] == {"maxUploadBytes": 5242880, "maxRows": 5000, "ttlMinutes": 120}
+    # Additive: which engine answers (docs/website-integration/integration-guide.md, "Status proxy").
+    assert body["engine"] == {"source": engine.DISTRIBUTION or "interim-port", "version": engine.VERSION}
     assert body["workspace"] == "coder"
     assert body["capabilities"] == [
         "resource-graph-export",
@@ -56,6 +58,7 @@ def test_config_and_rules(client):
     assert c["workspace"] == "coder"
     assert c["siteOrigins"] == ["https://hybridcloudworks.com"] and c["limits"]["maxRows"] == 5000
     k = client.get("/api/rules").json()
+    assert k["engine"] == client.get("/api/health").json()["engine"]
     assert k["count"] == 45 and k["liveOnly"] == 11 and k["version"] == "2026.10.0" and k["verify"] is True
     assert k["rules"][0]["id"] == "AZ-BCDR-001" and k["rules"][-1]["id"] == "AZ-NET-033"
     assert all(r["learnUrl"].startswith("https://learn.microsoft.com/") for r in k["rules"])
@@ -122,7 +125,7 @@ def test_create_read_files_delete_lifecycle(client, created):
     ]
     a = full["assessment"]
     assert (
-        a["modelVersion"] == "lab-1.0.0"
+        a["modelVersion"] == EXPECTED_MODEL_VERSION
         and len(a["findings"]) == 45
         and len(a["unknowns"]) == 11
         and len(a["resources"]) == 48
