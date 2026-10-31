@@ -3,7 +3,7 @@
 Owner decision 2026-10-09: the lab edition ports the Core's Azure network engine with provenance under MIT
 (`[REVIEW REQUIRED]` relicensing, see `NOTICE`), as an **interim** measure (ADR-0001) until
 `saulpatinojr/HCW-NetworkEyes_App` (the App; it was the Core until the owner's 2026-10-10 decision merged that lineage
-back) publishes the `network-assessment-azure-engine` wheel (the first release, `engine-v0.1.0`, was published on 2026-10-12 under the package's earlier name; **not adopted yet**: see `docs/whats-new-upstream.md`) (its `REFACTOR_APP.md` change sets A, B, C and E produce the same
+back) publishes the `network-assessment-azure-engine` wheel (the first release, `engine-v0.1.0`, was published on 2026-10-12 under the package's earlier name, `cna-azure-network-engine`; **not adopted yet**: compared with this port on 2026-10-31 and found to need five fixes upstream, see `docs/whats-new-upstream.md`) (its `REFACTOR_APP.md` change sets A, B, C and E produce the same
 symbols under `network_assessment_azure_engine`; change set J attaches the wheel to the GitHub Release of each `engine-v*` tag). Every ported file starts with
 `# Ported from saulpatinojr/HCW-NetworkEyes_App <path> at 5d3b914; changes: …`, and
 `tests/end_to_end/test_repository_manifest.py` asserts the header and this table agree. Source paths and line numbers
@@ -34,6 +34,20 @@ Not ported (and why): `azure_discovery.py` (live ARM discovery; its field-mappin
 escalation engine, `EngagementStore`, the report/diagram/AI/portal/review engines, `cna-web`, the `cna-api` shell, the
 worker, everything AWS, the NVA/BGP/observability/metrics checks of both engines (live reads).
 
-Deletion plan (REFACTOR_APP.md section 21): when `network-assessment-azure-engine` is on PyPI, `core-update.yml` pins it in
-`pyproject.toml` (`ENGINE_REF`), `src/network_assessment/{model,rules,classify}` is deleted, the rows above for those
-files are removed, and `ingestion/`, `report/`, `store.py`, `routes/`, `security/`, `web/` stay.
+No file in the table changed on 2026-10-31. Lab code stopped importing these files directly: it goes through
+`src/network_assessment/engine.py` (lab-edition code, not ported), which runs the released wheel when it is installed and
+these files otherwise. The ported tests in the table keep testing these files; `tests/unit/test_engine.py` tests
+whichever engine runs.
+
+Deletion plan (REFACTOR_APP.md section 21, amended 2026-10-31; PyPI is not needed, the GitHub Release asset is pinned):
+
+1. `core-update.yml` pins the wheel on the `ENGINE_REF` line of `pyproject.toml` (the marker is `# ENGINE_REF none`
+   until then), re-locks and regenerates `docs/rules/catalog.md` in its bump pull request. That pull request changes no
+   code: `engine.py` runs the wheel because it is installed, so the bump's checks test the lab against it.
+2. The bump is merged only when its checks are green (`compatible`). A `needs-adaptation` bump caused by the engine is
+   fixed upstream and arrives as the next release; it is not patched here.
+3. After that merge, one pull request deletes `src/network_assessment/{model,rules,classify}`, the ported tests and the
+   rows above, deletes `ingestion/normalize.py` (the wheel's normalizer replaced it; `tests/unit/test_engine.py` proves
+   they agree), reduces `engine.py` to the wheel, and updates `CLAUDE.md`, `AGENTS.md`, `README.md`, ADR-0001 and
+   `docs/whats-new-upstream.md`. `ingestion/arg_row.py` and `ingestion/parse.py`, `report/`, `store.py`, `routes/`,
+   `security/` and `web/` stay.

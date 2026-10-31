@@ -12,7 +12,9 @@ have to rediscover it.
 
 ## Current upstream state
 
-Checked on 2026-10-24 against the App's `main` branch, its releases and its tags.
+Checked on 2026-10-24 against the App's `main` branch, its releases and its tags. On 2026-10-31 the tags were checked again
+(`git ls-remote`: `engine-v0.1.0` is still the only engine tag) and the `engine-v0.1.0` wheel was compared with the port
+(entry below); the App's `main` was not re-read that day, so the first row still says 2026-10-24.
 
 | Question | Answer |
 |---|---|
@@ -22,19 +24,67 @@ Checked on 2026-10-24 against the App's `main` branch, its releases and its tags
 | Engine package name | The App renamed the engine package on 2026-10-27, in a pull request that is not released yet: distribution `network-assessment-azure-engine`, import name `network_assessment_azure_engine`. `engine-v0.1.0` stays published under the old name, so the next release under the new name needs a version above 0.1.0 (the tag `engine-v0.1.0` exists). |
 | Other App tags | `v0.1.0` and `v0.8.0` (application releases from the App's earlier history, not the engine). There is no `v0.10.0` and no second engine release. |
 | Engine package changes since `engine-v0.1.0` | Four commits, all Dependabot version bumps inside `packages/cna-azure-network-engine/pyproject.toml` (eight changed lines). No source file changed. The package version is still `0.1.0`, so a new release needs a version bump first. |
-| What this repository runs | The **interim port** of the engine at App commit `5d3b914` (`PROVENANCE.md`, ADR-0001), under `src/network_assessment/{model,rules,classify}`. The wheel is **not adopted**. |
-| `core-update.yml` | Inert. It looks for an `ENGINE_REF` line in `pyproject.toml`; there is none, so it finds nothing to do and exits cleanly (`VALIDATION.md`). |
-| Version markers | `RULES_VERSION` is `2026.10.0` in both the wheel and this port. `TOPOLOGY_MODEL_VERSION` is `lab-1.0.0` here (declared equivalent to the App's 1.3.0 Azure subset) and `1.4.0` in the wheel. `FINDINGS_MODEL_VERSION` is `lab-1.0.0` here. **Whether the wheel's model and rules behave the same as this port has not been tested.** |
+| What this repository runs | The **interim port** of the engine at App commit `5d3b914` (`PROVENANCE.md`, ADR-0001), under `src/network_assessment/{model,rules,classify}`. Lab code reaches it only through `src/network_assessment/engine.py`, which runs the wheel instead as soon as the wheel is installed. The wheel is **not adopted** yet. |
+| `core-update.yml` | **Armed.** `pyproject.toml` has the marker line `# ENGINE_REF none`, so the next scheduled run (every six hours, at minute 41) sees `none` against `0.1.0`, pins the `engine-v0.1.0` wheel, re-locks, runs the compatibility check and opens the bump pull request with the HCW Main Admin App. |
+| Version markers | `RULES_VERSION` is `2026.10.0` in both. `TOPOLOGY_MODEL_VERSION` is `lab-1.0.0` in the port (declared equivalent to the App's 1.3.0 Azure subset) and `1.4.0` in the wheel; the wheel's model is a superset of the port's. `FINDINGS_MODEL_VERSION` is `lab-1.0.0` in the port, `FINDINGS_SCHEMA_VERSION` `1.1.0` in the wheel. |
+| Is `engine-v0.1.0` compatible? | **No, not yet.** Tested on 2026-10-31 (entry below): ids, versions, severities, `applies_to`, the live-only set, the classifier and the normalizer agree; five things in the engine do not, and they are fixed upstream, not here. |
 
-In short: the wheel this repository has been waiting for exists. Nobody has yet tried swapping it in.
+In short: the wheel this repository was waiting for exists, the lab can now run on it unchanged, and the bump pull
+request will open by itself. It will say **needs adaptation** for `engine-v0.1.0`, because of five differences in the
+engine that only a new App release can fix.
 
 ## Entries, newest first
+
+### 2026-10-31: adopting `engine-v0.1.0`, compared with the port
+
+- **What was done.** The wheel was installed from the `engine-v0.1.0` tag and, separately, downloaded from the release
+  (its sha256 is `a609b80059fca7b22057b464a0c41895b324e21dc3e28d569a6e0894e94bd1ba`, the value already recorded above).
+  Both engines were run over the three samples, and the bump that `core-update.yml` makes was rehearsed in a scratch
+  copy: the pin line, `uv lock`, the whole test suite, the browser suite and the lab image (`VALIDATION.md`, run of
+  2026-10-31).
+- **What agrees.** The rule ids, versions, severities and `applies_to` (the registry digest pinned in
+  `tests/unit/test_registry.py` is the same, `7424a4a3…71339`); `RULES_VERSION` `2026.10.0`; the 45 rules with the same
+  11 live-only ones, and the wheel still registers them, so an export reports all 11 in `unknowns[]` (the wheel lists a
+  live-only rule as unknown whenever its live inputs are absent, which an export never has); the topology classifier;
+  the Resource Graph normalizer (the wheel's is ported from this repository's `ingestion/normalize.py` and gives the same
+  topology, facts and warnings on every sample). The wheel's model is a superset of the port's: it adds fields and
+  classes for live data and renames `AzureTopology.model_version` to `schema_version`.
+- **What does not agree (upstream fixes, in the order they matter).**
+  1. **AZ-NET-007 version 2 and AZ-NET-025 ignore a linked WAF policy.** The port's version 2 reads the policy an
+     Application Gateway links to; the wheel's reads only the inline WAF setting. On the sample, the WAF_v2 gateway
+     `hcw-sample-agw-public`, protected by the policy `hcw-sample-wafpolicy` in Detection mode, gets a false HIGH
+     "WAF is disabled" (AZ-NET-007) and loses its MEDIUM "Detection mode" (AZ-NET-025). Same rule versions, different
+     behaviour, which the "a changed rule bumps its version" rule exists to prevent.
+  2. **Rule texts are missing.** 43 of the 45 rules have no rule-level description or remediation (the wheel writes
+     them on each finding instead), so the catalog and `GET /api/rules` would show empty texts; the findings of
+     AZ-NET-001 to 007, 011, 012, 014 and 018 carry none at all.
+  3. **Hedge words.** The remediation of AZ-COST-002 and of AZ-NET-031's findings says "expected", which the
+     observed-state enforcer refuses here (this edition gates remediation as well as titles and descriptions).
+  4. **Evidence references** start with `discovery:azure_<subscription>` instead of `export:<subscription>`, which
+     `docs/api/openapi.yaml` and the user guide promise.
+  5. Smaller: AZ-NET-031 keys its finding on the private-link connection (`…/privateLinkServiceConnections/<name>`)
+     rather than the private endpoint, so the finding id changes; AZ-NET-004's fact reads `NoneMbps` when the export
+     has no bandwidth; live-only `unknowns[]` reasons are field paths (`network_metrics.gateway_metrics[]…`) rather than
+     the sentence the pane shows today.
+- **Reaches this repository?** Yes. This repository's side is done in this change: `src/network_assessment/engine.py`
+  is the one place lab code imports the engine from, and it runs the wheel when installed; the normalizer hand-off,
+  the rule list, the model marker (`topology.json` keeps its `model_version` key) and the tests were adapted;
+  `tests/unit/test_engine.py` states what this edition needs from any engine; `core-update.yml` can now make the first
+  pin (it reads the wheel's file name from the release, so `engine-v0.1.0` is pinned under its own name), regenerates
+  `docs/rules/catalog.md` in the bump and commits it; `pyproject.toml` allows the URL pin (`allow-direct-references`),
+  without which the bump could not build at all.
+- **Action.** Ask the App for a release that fixes items 1 to 4 (item 5 is worth fixing in the same release). Until
+  then the bump pull request for `engine-v0.1.0` stays open and labelled `needs-adaptation`; do not merge it, and do not
+  patch the engine here. When the fixed release is tagged, `core-update.yml` opens a new bump pull request for it (a new
+  branch, `core-update/engine-v<version>`); close the `engine-v0.1.0` one then. After the first green bump is merged,
+  delete the port in its own pull request (the deletion plan in `PROVENANCE.md`).
+
 
 ### 2026-10-27: the engine package is renamed (not released yet)
 
 - **What changed.** In the App, the engine package `cna-azure-network-engine` becomes `network-assessment-azure-engine` (import name `network_assessment_azure_engine`, directory `packages/network-assessment-azure-engine`) as step 4 of the owner's rename of the App's short code name to "network assessment". The release workflow `320-release-engine.yml` builds the wheel and the sdist under the new names. The first release, `engine-v0.1.0`, was published under the old name and stays there.
 - **Reaches this repository?** Yes, in one place: `core-update.yml` looks for the engine wheel by name. It is inert today (there is no `ENGINE_REF` line), and this pull request moves its package name, its wheel file-name pattern and its commit message to the new names so that it still works on the first release under the new name. No code here imports the engine, so nothing else changes. This repository has its own package with the same import name as the App's application package (`network_assessment`, renamed there in step 1); the two are never installed together.
-- **Action.** When you adopt the wheel, pin the first release under the new name (its version is above 0.1.0): the `pyproject.toml` line is `"network-assessment-azure-engine @ https://github.com/saulpatinojr/HCW-NetworkEyes_App/releases/download/engine-v<version>/network_assessment_azure_engine-<version>-py3-none-any.whl",  # ENGINE_REF <version>`. Do not pin `engine-v0.1.0` under the new name: its files carry the old one. A pin that was written before this change (an `engine-v0.1.0` line with the old wheel file name) must be edited by hand: `core-update.yml` rewrites only a pin in the new form, and the step that checks the result fails the run, so the mismatch is visible instead of silent.
+- **Action.** ~~Pin the first release under the new name; edit an old-name pin by hand.~~ Superseded on 2026-10-31: `core-update.yml` now reads the wheel's file name from each release and rewrites the whole `ENGINE_REF` line, so `engine-v0.1.0` is pinned under its old name and a later release under the new one, with no hand edit. `src/network_assessment/engine.py` imports either name.
 
 ### 2026-10-24: pull request [#265](https://github.com/saulpatinojr/HCW-NetworkEyes_App/pull/265) (documents) and this file
 
@@ -70,8 +120,8 @@ In short: the wheel this repository has been waiting for exists. Nobody has yet 
 
 - **What changed.** `cna-azure-network-engine` 0.1.0 was published as a GitHub Release (Azure network topology model, typed rule registry, classifier, Resource Graph normalizer and report renderers). The App's `320-release-engine.yml` builds, tests and uploads it on every `engine-v*` tag; publishing to PyPI stays off until the App's `PYPI_PUBLISH_ENABLED` variable is `true` (App `TODO.md` T-728), which does not matter here because you pin the GitHub Release.
 - **Reaches this repository?** Yes. This is the release `PROVENANCE.md`, ADR-0001 and `core-update.yml` were written to wait for.
-- **Action: adopt it, as its own pull request (App `REFACTOR_APP.md` change set C).**
-  1. Add the pin line to `pyproject.toml` in the form `core-update.yml` reads (the release tag, the wheel file name and a `# ENGINE_REF 0.1.0` marker on one line; the workflow's header comment shows the exact shape).
+- **Action: adopt it, as its own pull request (App `REFACTOR_APP.md` change set C).** Done as far as this repository can go on 2026-10-31 (entry above): the steps below now happen through `core-update.yml`, and the comparison found five things to fix upstream first.
+  1. Add the pin line to `pyproject.toml` in the form `core-update.yml` reads (the release tag, the wheel file name and a `# ENGINE_REF 0.1.0` marker on one line; the workflow's header comment shows the exact shape). Now: the marker `# ENGINE_REF none` is in `pyproject.toml` and the workflow writes the pin line.
   2. Run `uv lock`, then `uv run pytest -q --cov=src`, `uv run python scripts/rules-doc.py --check` and `make e2e`.
   3. Compare the results with the port: `RULES_VERSION`, the rule ids in `docs/rules/catalog.md`, and `tests/unit/test_sample_expectations.py`. A difference is a "needs adaptation" item, not a reason to edit the wheel here.
   4. Only when those agree, delete `src/network_assessment/{model,rules,classify}`, remove their `PROVENANCE.md` rows, and update `CLAUDE.md`, `AGENTS.md`, `README.md` and this file.
@@ -83,5 +133,6 @@ In short: the wheel this repository has been waiting for exists. Nobody has yet 
 |---|---|---|
 | Protect `engine-v*` tags | App `TODO.md` T-730 | Until done, a moved tag could change what your pinned URL serves. The sha256 pin still protects you. |
 | Turn on PyPI publishing for the engine | App `TODO.md` T-728, first bullet | Not needed for this repository (it pins the GitHub Release), but it changes how others install the engine. |
+| A release that fixes the five differences of 2026-10-31 (entry above) | **Not tracked in the App yet**: no issue was opened there from this repository | Until it exists, every bump here says `needs-adaptation` and nothing auto-merges. |
 | Next engine release (a new version) | App `REFACTOR_APP.md` section 15, steps 3 and later | Change set B brings `RULES_VERSION` bumps and web findings ids; each arrives here as a `core-update.yml` pull request. |
 | Docker Hub sign-in for the App's own image builds | App `REVIEW.md` R-013 | Concerns the App's images, not this repository's image. |
