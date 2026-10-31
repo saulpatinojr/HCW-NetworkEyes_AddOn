@@ -35,6 +35,13 @@ repository's `REFACTOR_APP.md` addressed to Core paths.
    ready-for-review pull request labelled `compatible` or `needs-adaptation`. A compatible PR auto-merges only when the
    repository variable `CORE_AUTOMERGE` is `true`. Once the wheel is on PyPI, Dependabot's `uv` ecosystem proposes the
    same bumps and the interim workflow becomes redundant.
+
+   *Note, 2026-10-31 ([pull request 68](https://github.com/saulpatinojr/HCW-NetworkEyes_AddOn/pull/68)).* The decision
+   above stands; how it is enforced changed. The label comes from the bump job, which runs the new engine, so it is not
+   trusted and no longer turns auto-merge on. With `CORE_AUTOMERGE` set to `true`, auto-merge is turned on for every
+   bump pull request, and GitHub merges only a bump whose required checks pass on that pull request; auto-merge waits
+   for them. The required checks run the same suites as the compatibility check, so a `needs-adaptation` bump fails
+   them and does not merge until it is fixed.
 3. **Shared contracts the Core must keep.** Rule ids, severities and `applies_to` (hash-pinned in
    `tests/unit/test_registry.py`), `TOPOLOGY_MODEL_VERSION` (the lab's `lab-1.0.0` is declared equivalent to the Core's
    1.3.0 Azure subset), the flat `/api/health` envelope and the `hcw-addon` pane protocol, so one pane bundle serves

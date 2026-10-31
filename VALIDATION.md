@@ -91,7 +91,7 @@ copy (below), and the real run is the next scheduled one after this change merge
 | Full suite after the review round | yes | re-run after the follow-up to #66: port: ruff clean, catalog in sync, 495 passed, 6 skipped (the wheel-only tests), coverage 97.19%; wheel: 41 failed (the same engine differences), 460 passed, nothing skipped, so the new engine-package boundary scans, the runtime import check, the pin check and the hedge-word check pass on the wheel; Playwright 4 passed on each |
 | actionlint | **no** | downloading and running it was refused by this session's safety check; not worked around |
 | Follow-up to PR #66 (Copilot review 5721501497): `Health.required` names `engine`; the RECORD check reads the RECORD text and allows only the package and its own `.dist-info`; cloud-SDK markers must be exactly one `extra == '<name>'` and evaluate false with no extra on four platforms; the `outcome` file must be byte-exact | yes | the new contract test fails with `engine` removed from `Health.required`; on the wheel, the boundary tests pass (13) and fail for each tampered marker (`extra == 'azure' or sys_platform == 'linux'`, `sys_platform == 'win32'`, `extra != 'azure'`) and each tampered RECORD line (`../../../bin/evil`, `/etc/evil`, `C:\evil`, `other_pkg/x.py`, a foreign `.dist-info`, `cna_azure_network_engine/../../x.py`, a `.pth` file). The old check missed every RECORD case: `Distribution.files` leaves out entries whose file does not exist. The dry run refuses four more `outcome` files (padded, split, no newline, followed by more text); 21 of 21 dry-run cases behave as expected |
-| `core-update.yml` on GitHub (scheduled run, App token, bump pull request, its required checks, the auto-merge step) | **no** | cannot be started from this session. Expected on the first scheduled run after merge: a pull request `core: adopt engine 0.1.0 (needs adaptation)` from branch `core-update/engine-v0.1.0`, opened by the App, with this repository's checks starting on it, and no auto-merge (the compatibility check fails) |
+| `core-update.yml` on GitHub (scheduled run, App token, bump pull request, its required checks, the auto-merge step) | **no** | cannot be started from this session. Expected on the first scheduled run after merge: a pull request `core: adopt engine 0.1.0 (needs adaptation)` from branch `core-update/engine-v0.1.0`, opened by the App, with this repository's checks starting on it, and no merge: auto-merge is turned on if `CORE_AUTOMERGE` is `true`, but it waits for the required checks, which fail as the compatibility check did (wording updated 2026-10-31 for pull request 68) |
 | actionlint, zizmor, CodeQL, gitleaks, dependency-review | **no** | not installed here; the pull request's own checks run what CI runs |
 
 ## Run 2026-10-27 (release 0.1.1 published)
@@ -162,11 +162,12 @@ except for `__version__`. "Here" is the owner's Windows workstation: Python 3.14
   authenticates the same App, and that App is installed on all four add-on repositories. An environment limited to `main` would
   also stop the base-update proof, which needs a run from a branch.
   Auto-merge of a
-  compatible bump needs the repository setting "Allow auto-merge" (on 2026-10-26 UTC); with it off, `core-update` warns
+  bump (any bump since pull request 68; it then waits for the required checks) needs the repository setting "Allow auto-merge" (on 2026-10-26 UTC); with it off, `core-update` warns
   and leaves the pull request for a person to merge.
 - The engine wheel `engine-v0.1.0` is not compatible with this edition yet (five differences in the engine, listed in
   `docs/whats-new-upstream.md`). The bump pull request for it is expected to stay `needs-adaptation` until the App
-  releases a fix; it is not merged, and the engine is not patched here.
+  releases a fix; it is not merged (its required checks fail, so auto-merge, if turned on, keeps waiting), and the
+  engine is not patched here.
 - An export shows configuration only: metrics, diagnostic settings, attacks in progress, BGP state, effective routes
   and NSG rules, private DNS resolution, Defender assessments and cost are `unknown` by design (11 live-only rules
   reported in `unknowns[]`; the panel and `report.md` say so).
