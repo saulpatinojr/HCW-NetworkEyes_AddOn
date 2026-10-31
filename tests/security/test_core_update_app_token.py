@@ -155,11 +155,36 @@ def test_wheels_are_chosen_by_exact_file_name_from_two_known_distributions():
         assert "network-assessment-azure-engine|cna-azure-network-engine" in step
 
 
-def test_both_checkouts_take_the_default_branch_without_persisted_credentials():
+REFUSE_NAME = "name: Refuse a run that is not on main"
+
+
+def test_both_checkouts_take_the_commit_the_run_was_started_for_without_persisted_credentials():
     for steps in (BUMP, PR):
         checkout = _only(steps, "actions/checkout")
         assert _with(checkout, "persist-credentials") == "false"
-        assert _with(checkout, "ref") == "${{ github.event.repository.default_branch }}"
+        # github.sha: the commit on main the run was started for (the refusal below makes sure it is main).
+        assert _with(checkout, "ref") == "${{ github.sha }}"
+        assert steps.index(checkout) > 0 and steps[0].startswith(REFUSE_NAME), "the refusal comes before the checkout"
+    assert "default_branch" not in TEXT
+    # A checkout of a commit is a detached HEAD, where create-pull-request needs the base named.
+    assert _with(_only(PR, "peter-evans/create-pull-request"), "base") == "main"
+
+
+def test_both_jobs_refuse_a_run_that_is_not_on_main_first_and_visibly():
+    for name, steps in (("bump", BUMP), ("pull-request", PR)):
+        first = steps[0]
+        assert first.startswith(REFUSE_NAME), f"{name}: the first step must be the main-only refusal"
+        assert not _field(first, "if"), f"{name}: the refusal must always run"
+        assert re.search(r'(?m)^ {8}env: \{ RUN_REF: "\$\{\{ github\.ref \}\}" \}$', first), name
+        block = first.split("run: |\n", 1)[1]
+        assert 'if [ "$RUN_REF" != "refs/heads/main" ]; then' in block
+        assert re.search(r'echo "::error::[^"]*\$\{RUN_REF\}[^"]*"', block), f"{name}: the error must name the ref"
+        assert re.search(r"(?m)^\s*exit 1$", block)
+        assert "${{" not in block, f"{name}: no expression inside the shell"
+    # A job-level `if:` would skip the bump job in silence; the pull-request job is also gated by one.
+    assert not re.search(r"(?m)^    if:", JOBS["bump"]), "the bump job must refuse, not be skipped silently"
+    job_if = "if: github.ref == 'refs/heads/main' && (needs.bump.outputs.changed == 'true' || inputs.probe)"
+    assert re.search(rf"(?m)^    {re.escape(job_if)}$", JOBS["pull-request"])
 
 
 def test_pull_request_is_opened_with_the_app_token_never_github_token():
@@ -182,17 +207,28 @@ def test_every_step_that_runs_gh_pr_uses_the_app_token_after_it_was_minted():
         assert PR.index(app) < PR.index(step)
 
 
-def test_auto_merge_never_rests_on_the_bump_jobs_report_alone():
-    merge = next(s for s in PR if re.search(r"\bgh pr merge\b", s))
-    condition = _field(merge, "if")
+def test_auto_merge_never_reads_the_untrusted_outcome():
+    merge = [s for s in PR if re.search(r"\bgh pr merge\b", s)]
+    assert len(merge) == 1
+    condition = _field(merge[0], "if")
+    # The outcome comes from the job that ran upstream code, so it must not decide the merge. What does: the repository
+    # variable, this job's own verification, and GitHub's required checks on the pull request.
     for part in (
         "steps.verify.outcome == 'success'",
-        "steps.verify.outputs.outcome == 'success'",
         "vars.CORE_AUTOMERGE == 'true'",
+        "steps.pr.outputs.pull-request-number != ''",
         "!inputs.probe",
     ):
         assert part in condition, part
-    assert "--auto" in merge, "auto-merge waits for the required checks; never merge directly"
+    assert not re.search(r"outputs\.outcome|bump/outcome", merge[0]), "the auto-merge step must not read the outcome"
+    assert 'gh pr merge --squash --auto "$PR_NUMBER"' in merge[0], "auto-merge waits for the required checks"
+    assert "--admin" not in merge[0]
+    # The outcome reaches only the pull request's text (title, labels, body) and a warning that holds no token.
+    readers = [s for s in PR if "steps.verify.outputs.outcome" in s]
+    pr = _only(PR, "peter-evans/create-pull-request")
+    assert len(readers) == 2 and pr in readers
+    warning = next(s for s in readers if s != pr)
+    assert not re.search(r"GH_TOKEN|secrets\.|app-token|\bgh\b", warning), "the warning step must hold no token"
 
 
 def test_token_action_is_pinned_to_a_full_commit_sha():

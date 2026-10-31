@@ -40,6 +40,28 @@ on 2026-10-26 to the website's newer digest `sha256:fbecd461...`).
 | `core-update.yml` against a Core release | **no** | inert: the App published `cna-azure-network-engine` as `engine-v0.1.0` on 2026-10-12, but `pyproject.toml` has no `ENGINE_REF` line yet, so the comparison step exits cleanly (adoption steps: `docs/whats-new-upstream.md`) |
 | CodeQL, gitleaks, dependency-review | **no**, CI only | `security.yml` |
 
+## Run 2026-10-31 (`core-update.yml` runs from `main` only; auto-merge ignores the bump job's report)
+
+The first step of both jobs refuses a run whose `github.ref` is not `refs/heads/main`, the `pull-request` job's `if:`
+also requires it, both checkouts take `github.sha` (they took the default branch's tip before), and
+`create-pull-request` gets `base: main`. The auto-merge step's condition is now the verify step's success,
+`CORE_AUTOMERGE == 'true'`, a pull request number and not a probe; it no longer reads the untrusted outcome.
+
+| Check | Executed here | Result |
+| --- | --- | --- |
+| `uv sync`, `uv run ruff check .`, `uv run ruff format --check .`, `uv run python scripts/rules-doc.py --check` | yes | clean (92 files); catalog in sync |
+| `uv run pytest -q --cov=src` | yes | 496 passed, 6 skipped |
+| `tests/security/test_core_update_app_token.py` | yes | 24 passed, with three new or rewritten tests: the refusal is the first step of each job, has no `if:`, reads the ref through `env` and names it in an `::error::`; the `bump` job has no job-level `if:` and the `pull-request` job's requires `main`; both checkouts use `github.sha` and the pull request step names `base: main`; the auto-merge condition holds the variable, the verify step and `!inputs.probe` and nothing that reads the outcome, and only the pull request step and a token-free warning read it |
+| Mutation check: six breakages, one at a time | yes | each made at least one test fail: either job's refusal step removed, the `main` condition removed from the job's `if:`, the refusal's `exit 1` replaced with `true`, `ref: github.sha` removed from a checkout, `steps.verify.outputs.outcome == 'success'` added back to the auto-merge condition; the workflow was restored byte for byte |
+| `actionlint` 1.7.12 on `core-update.yml` (shellcheck off, not installed) | yes | no findings apart from `ubuntu-26.04` being unknown to this actionlint version (already so on `main`) |
+| Required checks on `main`, read-only (`gh api repos/saulpatinojr/HCW-NetworkEyes_AddOn/rules/branches/main`) | yes | the active "Protect main" ruleset (id 25825146) requires `lint`, `test`, `image`, `package`, `e2e`, `rules-doc`, `pip-audit`, `secret-scan`, `dependency-review`, which covers the bump job's compatibility check (lint, catalog drift, tests, e2e) |
+| `make e2e` | no | nothing here touches the pane or the API |
+| The workflow on GitHub, including a refused run from a branch | no | not run; the value of `CORE_AUTOMERGE` could not be read from this session |
+
+Known limitation: a manual run takes the workflow file itself from the branch it was started on, so a branch that also
+edits `core-update.yml` can delete these guards. Closing that needs the App key moved to an environment whose
+deployment branches are `main` only (a settings change, not made here).
+
 ## Run 2026-10-31 (adopting the engine wheel `engine-v0.1.0`)
 
 "Here" for this run is a Linux cloud session: Python 3.14.6, uv 0.11.32, Node 22.23.4, Playwright 1.63.0 with the
