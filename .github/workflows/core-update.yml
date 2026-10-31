@@ -24,8 +24,8 @@
 #                 only to the two steps that read the App's public releases API, before any project code runs. It
 #                 uploads one artifact: pyproject.toml, uv.lock, docs/rules/catalog.md and `outcome`.
 #   pull-request  A fresh runner that runs no project code (no tests, no scripts, no install, no build backend).
-#                 It checks out the default branch and works out the expected pin line itself from that branch and
-#                 the App's release. It does not trust the bump job's files: code running there could have rewritten
+#                 It checks out main (the commit the run was started for) and works out the expected pin line itself
+#                 from it and the App's release. It does not trust the bump job's files: code running there could have rewritten
 #                 them. It regenerates pyproject.toml (the marked line replaced) and uv.lock (`uv lock --no-build`,
 #                 with the uv binary from the image the Dockerfile pins by digest; resolving the wheel reads its
 #                 metadata and never imports it), checks that the new lock differs from the default branch's only in
@@ -35,11 +35,18 @@
 #                 artifact, and only as bounded plain Markdown with no HTML; the pull request's own drift check proves
 #                 it. `outcome` must be exactly `success` or `failure`. Only then does it mint the App token and open
 #                 the pull request.
-# The outcome comes from the job that ran upstream code, so it is untrusted: it chooses the label and the body text, and
-# it is never enough on its own to merge. Auto-merge is asked for only when this job's own verification passed, the
-# outcome says success and the repository variable CORE_AUTOMERGE is `true`; GitHub then merges only after the
-# repository's required checks pass on the pull request. Those checks run the same upstream code, so turning
-# CORE_AUTOMERGE on means trusting the App's releases (docs/whats-new-upstream.md).
+# The outcome comes from the job that ran upstream code, so it is untrusted: it chooses the label, the title and the
+# body text, and nothing else. Auto-merge never reads it: it is turned on when the repository variable CORE_AUTOMERGE
+# is `true` and this job's own verification passed, and GitHub then merges only after the "Protect main" ruleset's
+# required checks pass on the pull request itself (a fresh run on its own head). Those checks are the trusted signal.
+# They run the same upstream code, so turning CORE_AUTOMERGE on means trusting the App's releases
+# (docs/whats-new-upstream.md).
+#
+# Main only. The pull-request job runs this checkout's own shell (its regeneration and verification) before it mints
+# the App token, so the checkout must be main. A manual run started on any other branch (gh workflow run --ref
+# <branch>) is refused by the first step of each job with an error naming the branch, and the pull-request job's `if:`
+# skips it as well; both checkouts take the exact commit the run was started for (github.sha), so the two jobs read the
+# same main.
 #
 # The pull request is opened with a short-lived GitHub App token (actions/create-github-app-token), not with
 # GITHUB_TOKEN. A pull request opened with GITHUB_TOKEN starts no workflow, so the required checks of the
@@ -81,10 +88,19 @@ jobs:
     outputs:
       changed: ${{ steps.refs.outputs.changed }}
     steps:
+      # No job-level `if:` here on purpose: a run on another branch must fail visibly, not be skipped in silence.
+      - name: Refuse a run that is not on main
+        env: { RUN_REF: "${{ github.ref }}" }
+        run: |
+          if [ "$RUN_REF" != "refs/heads/main" ]; then
+            echo "::error::core-update runs only on main; this run was started on ${RUN_REF}. Start it again with --ref main."
+            exit 1
+          fi
+      # github.sha: the commit on main that this run was started for, the same one the pull-request job checks out.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
-          ref: ${{ github.event.repository.default_branch }}
+          ref: ${{ github.sha }}
       - id: refs
         name: Compare the pinned ENGINE_REF with the App's latest engine release
         env: { GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}", REQUESTED: "${{ inputs.ref }}" }
@@ -174,18 +190,27 @@ jobs:
           retention-days: 3
   pull-request:
     needs: bump
-    if: needs.bump.outputs.changed == 'true' || inputs.probe
+    if: github.ref == 'refs/heads/main' && (needs.bump.outputs.changed == 'true' || inputs.probe)
     runs-on: ubuntu-26.04
     # Runs no project code: everything here is this file's own shell and the pinned actions.
     permissions:
       contents: read
     steps:
+      # The same refusal as the bump job's first step, so this job holds even if its `if:` is ever loosened.
+      - name: Refuse a run that is not on main
+        env: { RUN_REF: "${{ github.ref }}" }
+        run: |
+          if [ "$RUN_REF" != "refs/heads/main" ]; then
+            echo "::error::core-update runs only on main; this run was started on ${RUN_REF}. Start it again with --ref main."
+            exit 1
+          fi
       # persist-credentials: false — create-pull-request sets its own Authorization header for the push; with the
       # checkout's persisted header beside it, git sends two and GitHub answers 400 (seen in the upstream App's rules-refresh).
+      # github.sha: the commit on main this run was started for, so every step below reads main.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
-          ref: ${{ github.event.repository.default_branch }}
+          ref: ${{ github.sha }}
       - if: ${{ !inputs.probe }}
         id: expect
         name: Work out the expected pin line from the default branch and the App's release (independently of the bump job)
@@ -371,6 +396,8 @@ jobs:
         uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
         with:
           token: ${{ steps.app-token.outputs.token }}
+          # The checkout is a commit (github.sha), not a branch, so the action is told the base.
+          base: main
           branch: core-update/engine-v${{ steps.expect.outputs.latest }}
           title: "core: adopt engine ${{ steps.expect.outputs.latest }} (${{ steps.verify.outputs.outcome == 'success' && 'compatible' || 'needs adaptation' }})"
           commit-message: "core: pin ${{ steps.expect.outputs.dist }} ${{ steps.expect.outputs.latest }} (was ${{ steps.expect.outputs.current }})"
@@ -387,13 +414,17 @@ jobs:
 
             The pull-request job checked, without running any project code, that only the `ENGINE_REF` line of `pyproject.toml`, the engine's entry in `uv.lock` and `docs/rules/catalog.md` change.
 
-            - compatible: merge (automatic if the repository variable `CORE_AUTOMERGE` is `true`, after the required checks pass).
+            - compatible: merge.
             - needs adaptation: fix this edition on this branch (`RULES_VERSION` digest, sample expectations, the OpenAPI spec), then merge. A difference in the engine itself is fixed upstream and arrives as the next release; it is never patched here.
             - after the first green bump is merged: delete the interim port (`src/network_assessment/{model,rules,classify}`, its tests and its `PROVENANCE.md` rows) in its own pull request.
 
+            When the repository variable `CORE_AUTOMERGE` is `true`, auto-merge is turned on for every bump, compatible or not, and GitHub merges only after this pull request's required checks pass. The label above comes from the `bump` job's report, which is not trusted, so it never decides the merge. To hold a bump, select **Disable auto-merge** at the bottom of this page.
+
             ADR-0001 (interim ported engine), ADR-0004 (upstream/downstream for this AddOn), ADR-0028 (by analogy).
-      - if: steps.verify.outcome == 'success' && steps.verify.outputs.outcome == 'success' && vars.CORE_AUTOMERGE == 'true' && steps.pr.outputs.pull-request-number != '' && !inputs.probe
-        name: Auto-merge the compatible bump (after the required checks pass)
+      # Never reads the outcome (untrusted, see the header). GitHub merges only once the ruleset's required checks pass
+      # on the pull request's own head: https://docs.github.com/en/pull-requests/how-tos/merge-and-close-pull-requests/automatically-merging-a-pull-request
+      - if: steps.verify.outcome == 'success' && vars.CORE_AUTOMERGE == 'true' && steps.pr.outputs.pull-request-number != '' && !inputs.probe
+        name: Turn on auto-merge (GitHub merges after the required checks pass on the pull request)
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           PR_NUMBER: ${{ steps.pr.outputs.pull-request-number }}

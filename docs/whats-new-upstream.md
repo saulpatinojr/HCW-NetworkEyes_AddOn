@@ -75,8 +75,10 @@ engine that only a new App release can fix.
   without which the bump could not build at all.
 - **Trust.** Merging an engine bump means running the App's code, and that code runs inside this edition's own tests,
   so it can make them pass. `core-update.yml` keeps the App key out of the job that runs it (two jobs, see the
-  workflow's header), but auto-merge still trusts the release. `CORE_AUTOMERGE` was `true` on 2026-10-31. The
-  recommendation is to set it to `false` until the two-job workflow has opened one real bump pull request; the
+  workflow's header), but auto-merge still trusts the release. Since the follow-up to pull request 67, auto-merge no
+  longer reads the bump job's report at all: with `CORE_AUTOMERGE` set to `true` it is turned on for every bump pull
+  request, `needs-adaptation` ones included, and only the pull request's own required checks stop the merge.
+  `CORE_AUTOMERGE` was `true` on 2026-10-31. The recommendation is to set it to `false` until the two-job workflow has opened one real bump pull request; the
   variable is the owner's to change, on the repository's
   [Actions variables page](https://github.com/saulpatinojr/HCW-NetworkEyes_AddOn/settings/variables/actions).
 - **Action.** Ask the App for a release that fixes items 1 to 4 (item 5 is worth fixing in the same release). Until

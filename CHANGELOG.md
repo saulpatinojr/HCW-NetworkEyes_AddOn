@@ -5,6 +5,27 @@ All notable changes to this repository are recorded here. The format follows Kee
 ## [Unreleased]
 
 ### Fixed
+- `core-update.yml` now runs from `main` only, and auto-merge no longer listens to the `bump` job's report. These are
+  two High findings from a review of the same two-job workflow in the MigrateOrchestrator add-on
+  ([its pull request 57](https://github.com/saulpatinojr/HCW-MigrateOrchestrator_AddOn/pull/57#discussion_r4430793870)),
+  and they apply here as merged in pull requests 66 and 67.
+  - Main only. A person with write access could start the workflow by hand on another branch
+    (`gh workflow run --ref <branch>`). The checkouts already took the default branch, but the `pull-request` job
+    still ran that branch's copy of the workflow's own shell before minting the App token. Now the first step of each
+    job stops the run with an error that names the branch unless it was started on `refs/heads/main`, the
+    `pull-request` job's `if:` also requires `main`, and both checkouts take the exact commit the run was started for
+    (`github.sha`, instead of the default branch's tip, so the two jobs cannot read two different commits).
+    `create-pull-request` is told `base: main`, which it needs when the checkout is a commit. The `bump` job has no
+    job-level `if:` on purpose, so a refused run shows as failed rather than skipped.
+  - Auto-merge. The outcome file comes from the job that ran upstream code, so a compromised release could rewrite it
+    to `success`. Auto-merge now needs the repository variable `CORE_AUTOMERGE` to be `true`, a run that is not a
+    probe, and the `pull-request` job's own verification; it never reads the outcome. GitHub merges only after the
+    "Protect main" ruleset's required checks (`lint`, `test`, `image`, `package`, `e2e`, `rules-doc`, `pip-audit`,
+    `secret-scan`, `dependency-review`) pass on the bump pull request itself. The outcome still picks the label, the
+    title and the body text, so when `CORE_AUTOMERGE` is `true` a `needs-adaptation` bump also has auto-merge turned on
+    and merges once its checks pass (normally after someone fixes it on its branch); select **Disable auto-merge** on
+    the pull request to hold one. `docs/whats-new-upstream.md` says so under "Trust".
+  - `tests/security/test_core_update_app_token.py` checks both guards. Not run on GitHub yet; see `VALIDATION.md`.
 - Follow-ups to the engine adoption pull request (#66), from its Copilot review: `docs/api/openapi.yaml` lists `engine` in `Health.required`, and a contract test holds the `Health`, `Engine` and `RulesResponse` schemas to the live responses. The edition-boundary test reads the engine wheel's RECORD text (`Distribution.files` silently leaves out entries whose file is missing) and allows only the package and its own `.dist-info` directory, with no `..`, absolute path or `.pth` file. A cloud SDK named in a dependency's metadata must sit behind exactly one `extra == '<name>'` marker that is false with no extra, so an `or sys_platform == …` marker can no longer slip one in. `core-update.yml` accepts the bump job's `outcome` file only when it is byte-exact. `README.md` and `VALIDATION.md` describe the armed workflow.
 
 ### Added
