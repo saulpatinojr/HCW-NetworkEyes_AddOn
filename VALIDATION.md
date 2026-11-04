@@ -40,6 +40,30 @@ on 2026-10-26 to the website's newer digest `sha256:fbecd461...`).
 | `core-update.yml` against a Core release | **no** | inert: the App published `cna-azure-network-engine` as `engine-v0.1.0` on 2026-10-12, but `pyproject.toml` has no `ENGINE_REF` line yet, so the comparison step exits cleanly (adoption steps: `docs/whats-new-upstream.md`) |
 | CodeQL, gitleaks, dependency-review | **no**, CI only | `security.yml` |
 
+## Run 2026-11-03 (the base and the Python line move to 3.15)
+
+This run moves the base image to the website's `python:3.15.2-slim-trixie` pin and every place that names the Python
+minor line with it (CHANGELOG, Unreleased, Changed). "Here" is the owner's Windows workstation: CPython 3.15.2 installed
+by uv into its managed directory (`uv python install 3.15.2`), uv 0.11.32 run through `uvx uv@0.11.32` (the version CI
+uses), Docker Desktop with engine 29.9.2 and Buildx 0.38.1 on the local `desktop-linux` context.
+
+| Check | Executed here | Result |
+| --- | --- | --- |
+| Every compiled package in `uv.lock` has a CPython 3.15 wheel on PyPI (pydantic-core 2.50.1, charset-normalizer 3.5.2, coverage 7.17.0, msgpack 1.2.4, tomli 2.5.0) | yes, PyPI's JSON API | 30, 32, 34, 23 and 18 `cp315` wheels; nothing is built from source |
+| `uv lock` (0.11.32) after `requires-python` moved, then `uv lock --check` | yes | 51 packages resolved; no package version changed, only wheel lists and markers; `--check` exit 0 |
+| `uv sync --frozen` on CPython 3.15.2 | yes | exit 0; `.venv` runs `Python 3.15.2` |
+| `uv run ruff check . && uv run ruff format --check .` and `uv run python scripts/rules-doc.py --check` | yes | clean (92 files); `docs/rules/catalog.md` in sync (422 lines) |
+| `uv run pytest -q --cov=src --cov-report=term-missing --cov-fail-under=85` | yes | 496 passed, 6 skipped (the engine wheel is not installed); coverage 97 percent |
+| Startup refusal under an identity endpoint (`IDENTITY_ENDPOINT=http://169.254.169.254`) | yes | exit 1, as the `test` job expects |
+| `docker build -f infrastructure/docker/Dockerfile --build-arg EDITION=lab` on the new base | yes | exit 0; the build stage prints `edition boundary: no cloud SDK in /install`; image 203 MB |
+| The `image` job's steps of `ci.yml`, by hand against that image | yes | `import azure` fails; `import fastapi, pydantic, uvicorn` succeeds; `engine: none interim port … (ENGINE_REF none)`; `Python 3.15.2` equals `BASE_PYTHON_VERSION=3.15.2`; licence label `MIT`; runs as uid 10001; `ensurepip` and the pip binaries are gone from the `python3.15` paths |
+| A disposable container (`--rm`, port on 127.0.0.1 only) answers `GET /api/health` and `POST /api/assessments` with the sample export | yes | `{"ok":true,…,"edition":"lab",…}` and HTTP 201 |
+| The `lint` job's `FROM` check and the `base-follows-website` comparison of `security.yml`, by hand against the website's `lab-image/versions.env` read from `main` on 2026-11-03 | yes | both `FROM` lines equal `BASE_IMAGE@BASE_DIGEST`; the pin equals the website's `python:3.15.2-slim-trixie@sha256:8c13a3f3…` |
+| `python scripts/follow_website_base.py --website-env <the website's file> --check` | yes | `changed=false`, exit 0 (the daily run has nothing to move once this merges) |
+| `npx playwright test -c tests/e2e/playwright.config.ts` | no | not run here; the `e2e` job runs it on the pull request |
+| `pip-audit` on the exported runtime set | no | not run here; the `pip-audit` job runs it on the pull request |
+| `base-follows-website` green on `main` | no | that job runs on `main` and weekly, not on pull requests; read its first run after the merge |
+
 ## Run 2026-10-31 (`core-update.yml` runs from `main` only; auto-merge ignores the bump job's report)
 
 The first step of both jobs refuses a run whose `github.ref` is not `refs/heads/main`, the `pull-request` job's `if:`

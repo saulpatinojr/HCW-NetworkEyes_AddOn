@@ -49,7 +49,7 @@ the table below print one; a network failure while the website's file is being r
 so read the log even when there is no such line. Do not rely on the weekly
 `base-follows-website` job to show it: that job compares only the image and its digest (`BASE_IMAGE` and `BASE_DIGEST`), not
 the Python version. It usually goes red as well when the website moves, but if the website changes only
-`BASE_PYTHON_VERSION` to another minor line (for example 3.14 to 3.15), `base-update` refuses and goes red while the weekly
+`BASE_PYTHON_VERSION` to another minor line (for example 3.15 to 3.16), `base-update` refuses and goes red while the weekly
 job stays green. So watch for failed `base-update` runs on their own (GitHub can notify the person who last changed the
 workflow's `cron` line, as their notification settings allow, so do not count on an email; the Actions tab lists every run). What the run left behind depends on where it stopped:
 
@@ -72,7 +72,7 @@ workflow's `cron` line, as their notification settings allow, so do not count on
 | The `::error::` line says | What it means | What to do |
 |---|---|---|
 | `the website's base image is X, not Y` | The website switched to a different image repository. | A decision for a person: change `versions.env` and the `FROM` lines by hand if the new image is wanted here. |
-| `the website moved Python from 3.14 to 3.15` | The website moved to a new Python minor line. The Dockerfile, `pyproject.toml` and `ci.yml` name the line (`python3.14`, `requires-python`, `PYTHON_VERSION`). | A decision for a person: adopt the new line by hand in one pull request, or wait. |
+| `the website moved Python from 3.15 to 3.16` | The website moved to a new Python minor line. The Dockerfile, `pyproject.toml` and `ci.yml` name the line (`python3.15`, `requires-python`, `PYTHON_VERSION`). | A decision for a person: adopt the new line by hand in one pull request, or wait. |
 | `Dockerfile line N: FROM ... is neither an earlier stage nor ...` or `still carries` | The Dockerfile has a `FROM` (or another line) the script cannot move. | Fix the Dockerfile so every `FROM` that is not an earlier stage is exactly `BASE_IMAGE@BASE_DIGEST`, or move the pin by hand. |
 | `expected exactly one BASE_... line`, `is not an image reference` or `is not sha256:` | A `versions.env` (the website's or this one) is malformed or repeats a key. | Read the file named in the message. If it is the website's file, tell the website's owner; do not edit this repository to match it. |
 | `the registry did not show ...` | The digest does not exist, or Docker Hub did not answer. | Run it again later: `gh workflow run base-update.yml --ref main`. If it keeps failing, the website's digest is wrong: tell the website's owner. |

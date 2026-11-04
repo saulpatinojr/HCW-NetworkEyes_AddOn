@@ -2,7 +2,7 @@
 
 This is `saulpatinojr/HCW-NetworkEyes_AddOn`, the **lab edition** of the Network Assessment (AddOn id
 `network-assessment`, site route `/tools/network-assessment`, origin `https://network-assessment.lab.hybridcloudworks.com`):
-a Python 3.14 FastAPI application that evaluates an uploaded Azure Resource Graph export of `microsoft.network/*` rows
+a Python 3.15 FastAPI application that evaluates an uploaded Azure Resource Graph export of `microsoft.network/*` rows
 against typed network rules, a vanilla pane the website frames, fictional samples, docs, a hardened Dockerfile and
 SHA-pinned workflows. The engine under `src/network_assessment/{model,rules,classify}` is an **interim port** of the
 App's engine (`saulpatinojr/HCW-NetworkEyes_App` at `5d3b914`, ADR-0001, `PROVENANCE.md`); it is deleted, not handed

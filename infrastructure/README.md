@@ -12,7 +12,7 @@ website repository (`lab-host/ansible`, role `addons`), and the Azure appliance 
 (`saulpatinojr/HCW-NetworkEyes_App`, its `REFACTOR_APP.md` change set G). Only the per-assessment Coder workspace template (`coder/template/main.tf`) lives here.
 
 The lab application (with the ported engine under `network_assessment/{model,rules,classify}`, ADR-0001) is copied
-into `/usr/local/lib/python3.14/site-packages` as a source tree rather than built as a wheel, so no build backend
+into `/usr/local/lib/python3.15/site-packages` as a source tree rather than built as a wheel, so no build backend
 enters the image. The build stage exports `uv.lock` with `uv export --frozen --format requirements-txt --no-dev
 --no-emit-project --no-emit-workspace --no-header` (hashes on by default), using the uv CI uses by digest; that
 export is the only input `pip install --require-hashes --no-deps` reads, and uv stays in the build stage. There is no
