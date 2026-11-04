@@ -2,7 +2,7 @@
 .PHONY: setup lint test run image e2e rules-doc package clean
 
 setup:
-	uv python pin 3.15.1
+	uv python pin 3.15
 	uv sync
 
 lint:
