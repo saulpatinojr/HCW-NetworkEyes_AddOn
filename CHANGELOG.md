@@ -43,6 +43,28 @@ All notable changes to this repository are recorded here. The format follows Kee
 - `core-update.yml` reads the wheel's file name from each engine release and rewrites the whole `ENGINE_REF` line, so the first release is pinned under its own (earlier) name and later releases under the new one; it accepts the marker `none` for the first adoption, regenerates `docs/rules/catalog.md` and commits it with `pyproject.toml` and `uv.lock`. `pyproject.toml` sets `[tool.hatch.metadata] allow-direct-references = true`: without it the build refuses the URL pin, so no bump could ever have built.
 - `tests/security/test_edition_boundary.py` reads `uv.lock` as data instead of matching text: it refuses any locked cloud SDK package, any dependency on one, any extra requested in `pyproject.toml`, and any cloud SDK named in a dependency's metadata other than behind an extra. The engine wheel names the Azure SDKs of its `[azure]` live-discovery extra in its metadata; this edition never asks for that extra and nothing of it is locked or installed (the image build checks the same).
 - `core-update.yml` follows the App's rename of its engine package (the App's pull request for step 4 of the rename of its short code name): the package is `network-assessment-azure-engine`, the wheel file name is `network_assessment_azure_engine-<version>-py3-none-any.whl`, and the bump commit message says so. It stays inert until an `ENGINE_REF` line exists. The README diagram, `PROVENANCE.md` and `docs/whats-new-upstream.md` say the same; statements about the published `engine-v0.1.0` keep the old name, because its files do. No code and no image changed.
+- The base image and the Python line move to the website's `python:3.15.2-slim-trixie` pin (Python 3.15), so the
+  `base-follows-website` job of `security.yml` is green on `main` again
+  ([saulpatinojr/HCW-HybridCloudWorks#1386](https://github.com/saulpatinojr/HCW-HybridCloudWorks/issues/1386)). The
+  website moved its `lab-image/versions.env` to Python 3.15 on 2026-10-31
+  ([its pull request 1468](https://github.com/saulpatinojr/HCW-HybridCloudWorks/pull/1468)); the daily `base-update.yml`
+  run refuses a move between Python minor lines by design ("a person must decide", `scripts/follow_website_base.py`), so
+  this is that decision, made by hand in one pull request as `docs/operations/runbook.md` says. Everything that names the
+  line moved together: `BASE_IMAGE`, `BASE_DIGEST` and `BASE_PYTHON_VERSION` in `infrastructure/docker/versions.env`
+  (`python:3.14.8-slim-trixie@sha256:fbecd461...`, 3.14.8, to `python:3.15.2-slim-trixie@sha256:8c13a3f3...`, 3.15.2);
+  both `FROM` lines and the four `python3.14` paths in `infrastructure/docker/Dockerfile`; `requires-python` in
+  `pyproject.toml` (`>=3.14.6,<3.15` to `>=3.15.2,<3.16`); `.python-version`, the `setup` target of the `Makefile` and
+  the README's quick start (`uv python pin 3.15.2`); `PYTHON_VERSION` in `ci.yml` and `python-version` in
+  `security.yml` and `core-update.yml` (`3.14` to `3.15`); and `uv.lock`, re-resolved for CPython 3.15 with the uv CI
+  uses (0.11.32): no package version changed, only the wheel lists, and every package with a compiled wheel
+  (pydantic-core, charset-normalizer, coverage, msgpack, tomli) has one for CPython 3.15 on PyPI, so nothing is built from
+  source. The runbook's table, the script's docstring and `base-update.yml`'s comment now give the next move (3.15 to
+  3.16) as their example. The `image` job of `ci.yml` already compares `python --version` in the built image with
+  `BASE_PYTHON_VERSION`, so a digest that is not the Python the line says fails there. Checked on the owner's Windows
+  workstation: the image builds on the new base, runs Python 3.15.2, keeps its edition boundary and licence label, answers
+  `/api/health` and accepts the sample export; 496 tests pass at 97 percent coverage; the `lint` job's `FROM` check, the
+  `base-follows-website` comparison and `scripts/follow_website_base.py --check` (`changed=false`) all pass against the
+  website's current file. Playwright was not run here; see `VALIDATION.md`.
 
 ## [0.1.1] - 2026-10-27
 
