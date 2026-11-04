@@ -53,8 +53,8 @@ All notable changes to this repository are recorded here. The format follows Kee
   line moved together: `BASE_IMAGE`, `BASE_DIGEST` and `BASE_PYTHON_VERSION` in `infrastructure/docker/versions.env`
   (`python:3.14.8-slim-trixie@sha256:fbecd461...`, 3.14.8, to `python:3.15.2-slim-trixie@sha256:8c13a3f3...`, 3.15.2);
   both `FROM` lines and the four `python3.14` paths in `infrastructure/docker/Dockerfile`; `requires-python` in
-  `pyproject.toml` (`>=3.14.6,<3.15` to `>=3.15.2,<3.16`); `.python-version`, the `setup` target of the `Makefile` and
-  the README's quick start (`uv python pin 3.15.2`); `PYTHON_VERSION` in `ci.yml` and `python-version` in
+  `pyproject.toml` (`>=3.14.6,<3.15` to `>=3.15.1,<3.16`; the floor is the 3.15 that GitHub's runners carry, below the base as before); `.python-version`, the `setup` target of the `Makefile` and
+  the README's quick start (`uv python pin 3.15.1`); `PYTHON_VERSION` in `ci.yml` and `python-version` in
   `security.yml` and `core-update.yml` (`3.14` to `3.15`); and `uv.lock`, re-resolved for CPython 3.15 with the uv CI
   uses (0.11.32): no package version changed, only the wheel lists, and every package with a compiled wheel
   (pydantic-core, charset-normalizer, coverage, msgpack, tomli) has one for CPython 3.15 on PyPI, so nothing is built from
