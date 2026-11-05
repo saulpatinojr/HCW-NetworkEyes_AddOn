@@ -11,6 +11,16 @@ All notable changes to this repository are recorded here. The format follows Kee
   `main` with `No interpreter found for Python 3.15.1` (run 41754320521). `requires-python` stays `>=3.15.1,<3.16`.
 
 ### Fixed
+- `core-update.yml`'s `pull-request` job could never open the bump pull request: its `uv lock --no-build` needs an
+  interpreter on the Python line `.python-version` names, the job installs none (by design it runs nothing but its own
+  shell and the pinned actions) and `UV_PYTHON_DOWNLOADS=never` keeps uv from fetching one, so every scheduled run since
+  2026-11-03 stopped there with `No interpreter found for Python 3.15` (runs
+  [41944123703](https://github.com/saulpatinojr/HCW-NetworkEyes_AddOn/actions/runs/41944123703) and
+  [41961781195](https://github.com/saulpatinojr/HCW-NetworkEyes_AddOn/actions/runs/41961781195)). The lock now runs
+  inside the base image every `FROM` of the Dockerfile pins by digest (`versions.env`), with the uv binary from the
+  digest-pinned uv image mounted read-only: the CPython the add-on ships with, verified by Docker, as the runner's user,
+  with no capabilities and a read-only root filesystem. `tests/security/test_core_update_app_token.py` pins that shape
+  and checks that `BASE_PYTHON_VERSION` stays on the line `.python-version` names and inside `requires-python`.
 - `core-update.yml` now runs from `main` only, and auto-merge no longer listens to the `bump` job's report. These are
   two High findings from a review of the same two-job workflow in the MigrateOrchestrator add-on
   ([its pull request 57](https://github.com/saulpatinojr/HCW-MigrateOrchestrator_AddOn/pull/57#discussion_r4430793870)),

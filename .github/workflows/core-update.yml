@@ -27,8 +27,10 @@
 #                 It checks out main (the commit the run was started for) and works out the expected pin line itself
 #                 from it and the App's release. It does not trust the bump job's files: code running there could have rewritten
 #                 them. It regenerates pyproject.toml (the marked line replaced) and uv.lock (`uv lock --no-build`,
-#                 with the uv binary from the image the Dockerfile pins by digest; resolving the wheel reads its
-#                 metadata and never imports it), checks that the new lock differs from the default branch's only in
+#                 run inside the base image every FROM of the Dockerfile pins by digest, with the uv binary from the
+#                 uv image it pins the same way, so the interpreter is the one the add-on ships with and nothing is
+#                 installed on the runner; resolving the wheel reads its metadata and never imports it), checks
+#                 that the new lock differs from the default branch's only in
 #                 the engine's own entry (pinned URL, one wheel with a sha256, dependencies already locked) and the
 #                 project's reference to it, and refuses the artifact unless its two copies are byte-identical to the
 #                 regenerated ones. The catalog needs the engine to generate, so it is the one file taken from the
@@ -240,7 +242,7 @@ jobs:
           { echo "current=$current"; echo "latest=$latest"; echo "dist=$dist"; echo "url=$url"; } >> "$GITHUB_OUTPUT"
       - if: ${{ !inputs.probe }}
         id: regen
-        name: Regenerate pyproject.toml and uv.lock here, from the default branch, with the digest-pinned uv
+        name: Regenerate pyproject.toml and uv.lock here, from the default branch, inside the digest-pinned base image
         env:
           LATEST: ${{ steps.expect.outputs.latest }}
           DIST: ${{ steps.expect.outputs.dist }}
@@ -255,11 +257,26 @@ jobs:
           [ -n "$image" ] || { echo "::error::no digest-pinned uv image in infrastructure/docker/Dockerfile"; exit 1; }
           docker pull --quiet "$image" > /dev/null
           cid="$(docker create "$image")"; docker cp "${cid}:/uv" "${RUNNER_TEMP}/uv-bin"; docker rm "$cid" > /dev/null
+          # `uv lock` needs an interpreter that satisfies .python-version and requires-python, and UV_PYTHON_DOWNLOADS=never
+          # keeps it from fetching one. This job installs none (by design: it runs nothing but this file's own shell
+          # and the pinned actions), and the runner image carries whichever patches it carries, so every scheduled
+          # run failed with "No interpreter found" (runs 41944123703 and 41961781195). The lock
+          # therefore runs inside the base image every FROM of the Dockerfile pins by digest (versions.env; ci.yml
+          # checks the two agree): the same CPython the add-on ships with, verified by Docker like the uv binary.
+          # The container runs as the runner's user, with no capabilities, a read-only root filesystem, and only the
+          # checkout and /tmp writable; the default bridge network is what the wheel download needs.
+          base="$(sed -n 's/^BASE_IMAGE=//p' infrastructure/docker/versions.env)@$(sed -n 's/^BASE_DIGEST=//p' infrastructure/docker/versions.env)"
+          [[ "$base" =~ ^python:[0-9][0-9A-Za-z.-]*@sha256:[0-9a-f]{64}$ ]] || { echo "::error::versions.env does not pin python:<version>-slim-<debian> by digest"; exit 1; }
+          grep -qF -- "FROM ${base} " infrastructure/docker/Dockerfile || { echo "::error::no FROM ${base} in infrastructure/docker/Dockerfile"; exit 1; }
+          docker pull --quiet "$base" > /dev/null
           line="  \"${DIST} @ ${URL}\",  # ENGINE_REF ${LATEST}"
           test "$(grep -cE '#[[:space:]]*ENGINE_REF[[:space:]]' pyproject.toml)" = 1
           awk -v line="$line" '/#[[:space:]]*ENGINE_REF[[:space:]]/ { print line; next } { print }' pyproject.toml > "${RUNNER_TEMP}/pyproject.toml"
           cp "${RUNNER_TEMP}/pyproject.toml" pyproject.toml
-          UV_CACHE_DIR="${RUNNER_TEMP}/uv-cache" UV_PYTHON_DOWNLOADS=never "${RUNNER_TEMP}/uv-bin" lock --no-build --upgrade-package "$DIST"
+          docker run --rm --user "$(id -u):$(id -g)" --cap-drop=ALL --security-opt=no-new-privileges --read-only \
+            --tmpfs /tmp:rw,nosuid,nodev,noexec,size=1g -e HOME=/tmp -e UV_CACHE_DIR=/tmp/uv-cache -e UV_PYTHON_DOWNLOADS=never \
+            -v "${RUNNER_TEMP}/uv-bin:/uv:ro" -v "${GITHUB_WORKSPACE}:/work" -w /work \
+            "$base" /uv lock --no-build --upgrade-package "$DIST"
           git --no-pager diff --stat
       - if: ${{ !inputs.probe }}
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
