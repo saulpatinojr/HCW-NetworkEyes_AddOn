@@ -300,11 +300,16 @@ def test_auto_merge_never_reads_the_untrusted_outcome():
     assert not re.search(r"outputs\.outcome|bump/outcome", merge[0]), "the auto-merge step must not read the outcome"
     assert 'gh pr merge --squash --auto "$PR_NUMBER"' in merge[0], "auto-merge waits for the required checks"
     assert "--admin" not in merge[0]
-    # The outcome reaches only the pull request's text (title, labels, body) and a warning that holds no token.
+    # The outcome reaches only the pull request's text (title, labels, body), the step that takes the opposite
+    # label off again on a refresh, and a warning that holds no token.
     readers = [s for s in PR if "steps.verify.outputs.outcome" in s]
     pr = _only(PR, "peter-evans/create-pull-request")
-    assert len(readers) == 2 and pr in readers
-    warning = next(s for s in readers if s != pr)
+    assert len(readers) == 3 and pr in readers
+    label = next(s for s in readers if "gh api -X DELETE" in s)
+    assert re.search(r'/issues/\$\{PR_NUMBER\}/labels/\$\{OPPOSITE\}"', label), "the label step removes one label only"
+    assert not re.search(r"gh pr\b|merge", label), "the label step must not touch the merge"
+    assert "!inputs.probe" in _field(label, "if")
+    warning = next(s for s in readers if s not in (pr, label))
     assert not re.search(r"GH_TOKEN|secrets\.|app-token|\bgh\b", warning), "the warning step must hold no token"
 
 
@@ -374,8 +379,10 @@ def test_every_action_is_pinned_to_a_full_commit_sha():
 
 def test_a_probe_run_never_reaches_a_step_that_writes_or_runs_code():
     # A manual run with probe=true must stay read-only even when a newer release exists (changed == 'true').
-    writers = _uses(PR, "peter-evans/create-pull-request") + [s for s in PR if re.search(r"\bgh pr\b", s)]
-    assert len(writers) == 2, "expected the pull request step and the auto-merge step"
+    writers = _uses(PR, "peter-evans/create-pull-request") + [
+        s for s in PR if re.search(r"\bgh pr\b|gh api -X DELETE", s)
+    ]
+    assert len(writers) == 3, "expected the pull request step, the label step and the auto-merge step"
     for step in writers:
         assert "!inputs.probe" in _field(step, "if"), "a step that writes must be skipped on a probe"
     for step in BUMP:
