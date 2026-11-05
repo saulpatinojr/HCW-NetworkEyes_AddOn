@@ -45,14 +45,16 @@ on 2026-10-26 to the website's newer digest `sha256:fbecd461...`).
 This run prepares the version bump only and publishes nothing. The release exists so that the published image carries
 `apt 3.0.4` (website issue [saulpatinojr/HCW-HybridCloudWorks#1562](https://github.com/saulpatinojr/HCW-HybridCloudWorks/issues/1562);
 the Dockerfile change is [pull request 79](https://github.com/saulpatinojr/HCW-NetworkEyes_AddOn/pull/79), already on
-`main`). The lab application's code is unchanged since 0.1.1 except for `__version__`. "Here" is the owner's Windows
+`main`). This pull request changes nothing in the lab application but `__version__`; what moved in `src/` since 0.1.1 (the engine
+adoption path and the additive `engine` block in `/api/health` and `/api/rules`) is already on `main` and listed in
+`CHANGELOG.md` under 0.1.2. "Here" is the owner's Windows
 workstation: CPython 3.15 managed by uv against the committed `uv.lock` (`--frozen` everywhere); the re-lock ran with
 `uvx uv@0.11.32`, the uv CI uses, not the workstation's uv 0.12.0.
 
 | Check | Executed here | Result |
 | --- | --- | --- |
 | The version in every place that says it: `pyproject.toml`, `uv.lock` (the `hcw-addon-network-assessment` entry), `__version__`, `repository.manifest.json` and the sample output in `docs/operations/runbook.md`; `uvx uv@0.11.32 lock` then `uvx uv@0.11.32 lock --check` | yes | all `0.1.2`; the lock differs from `main` in that one version line only (`revision = 3` untouched); `lock --check` exits 0 |
-| `docs/api/openapi.yaml` `info.version` | not changed | stays `0.1.0`: no route, field or error code changed, and no test ties it to `__version__` |
+| `docs/api/openapi.yaml` `info.version` | not changed | stays `0.1.0`: this pull request adds no route, field or error code (the additive `engine` block since 0.1.1 was documented there without moving the document version), and no test ties it to `__version__` |
 | `uv run ruff check . && uv run ruff format --check .` and `uv run python scripts/rules-doc.py --check` | yes | clean (94 files); `docs/rules/catalog.md` in sync (422 lines) |
 | `uv run pytest -q tests/security tests/unit` | yes | 507 passed in 13 s. It includes `test_manifest_version_matches_pyproject` (`pyproject.toml`, `repository.manifest.json` and `__version__` agree) and `test_health_is_flat_and_complete` (the body's `version` and the `X-Addon-Version` header equal `__version__`); the bash-backed workflow tests passed here too |
 | `uv run pytest -q --cov=src --cov-fail-under=85` (the full suite with coverage), `tests/contract` | no | the pull request's `test` job runs them; only the version string changed in `src/` |
