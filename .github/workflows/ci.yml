@@ -58,7 +58,10 @@ jobs:
       - name: The lab image builds and keeps its edition boundary
         run: |
           set -euo pipefail
-          docker build -f infrastructure/docker/Dockerfile --build-arg EDITION=lab -t addon:ci .
+          # PUBLISH_CACHE_BUST: the same per-run value publish-images.yml passes, so the security-update layer of the
+          # Dockerfile is built afresh here too (the runner has no build cache across runs, so this is for parity).
+          docker build -f infrastructure/docker/Dockerfile --build-arg EDITION=lab \
+            --build-arg "PUBLISH_CACHE_BUST=${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" -t addon:ci .
           if docker run --rm --entrypoint python addon:ci -c 'import azure' 2>/dev/null; then
             echo '::error::azure is importable in the lab image'; exit 1
           fi

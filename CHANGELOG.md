@@ -4,6 +4,18 @@ All notable changes to this repository are recorded here. The format follows Kee
 
 ## [Unreleased]
 
+### Security
+- The published image failed the website's weekly Docker Scout gate on 2026-11-05 for `apt 3.0.3` / `libapt-pkg7.0 3.0.3`
+  (CVE-2026-109518, fixed in 3.0.4, published only through `trixie-security`;
+  [saulpatinojr/HCW-HybridCloudWorks#1562](https://github.com/saulpatinojr/HCW-HybridCloudWorks/issues/1562)). The
+  newest `python:3.15-slim-trixie` digest still ships 3.0.3, so no base bump could clear it. The `lab` stage's Debian
+  security update is now a `RUN` of its own that fails the build when it fails (before, an unscoped `|| true` on the
+  pip uninstall in the same chain swallowed a failed update or upgrade), runs `apt-get update --error-on=any` and
+  `apt-get upgrade` with `Acquire::Retries=0` (the advisory needs a download retry while the base's apt is still the
+  one running), and names a per-run `PUBLISH_CACHE_BUST` build argument that `publish-images.yml` and `ci.yml` pass as
+  the run id and attempt, so a rebuild never reuses an older upgrade layer. A local build on 2026-11-05 carries
+  `apt 3.0.4`. `tests/security/test_image_security_updates.py` pins the shape and the build arguments.
+
 ### Changed
 - `.python-version` names the minor line only, `3.15` (the Makefile's `uv python pin` likewise), not the exact patch
   `3.15.1`: `actions/setup-python` with `3.15` hands out whichever 3.15.x its image carries (3.15.1 on one run, 3.15.2 on
