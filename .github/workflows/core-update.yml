@@ -174,11 +174,20 @@ jobs:
         id: compat
         name: Compatibility check (lint, tests, rule catalog drift, browser e2e)
         continue-on-error: true
+        # One check per line, on purpose. `set -e` does not stop at a command that fails inside an `a && b && c` list
+        # (bash skips the exit for every member but the last), so the earlier shape `ruff && rules-doc --check && pytest`
+        # let a failing catalog check fall through to the browser suite, and the step reported success: the first real
+        # bump (pull request 74, engine-v0.1.0) was opened as "compatible" with 41 failing tests and a refused catalog.
+        # tests/security/test_core_update_app_token.py pins this shape.
         run: |
           set -euo pipefail
           uv sync --frozen
-          uv run ruff check . && uv run python scripts/rules-doc.py --check && uv run pytest -q
-          npm init -y >/dev/null && npm install --no-save --no-audit --no-fund "@playwright/test@1.63.0" && npx playwright install --with-deps chromium
+          uv run ruff check .
+          uv run python scripts/rules-doc.py --check
+          uv run pytest -q
+          npm init -y >/dev/null
+          npm install --no-save --no-audit --no-fund "@playwright/test@1.63.0"
+          npx playwright install --with-deps chromium
           CI=1 npx playwright test -c tests/e2e/playwright.config.ts
       - if: steps.refs.outputs.changed == 'true' && !inputs.probe
         name: Stage the three files and the outcome for the pull-request job
@@ -445,6 +454,24 @@ jobs:
             ADR-0001 (interim ported engine), ADR-0004 (upstream/downstream for this AddOn), ADR-0028 (by analogy).
       # Never reads the outcome (untrusted, see the header). GitHub merges only once the ruleset's required checks pass
       # on the pull request's own head: https://docs.github.com/en/pull-requests/how-tos/merge-and-close-pull-requests/automatically-merging-a-pull-request
+      # create-pull-request adds the labels above and removes none, so a bump that was first opened as `compatible`
+      # and is refreshed after the report changed would carry both labels. Take the opposite one off; a missing
+      # label is not an error (the first open, or already removed).
+      - if: steps.verify.outcome == 'success' && steps.pr.outputs.pull-request-number != '' && !inputs.probe
+        name: Remove the opposite compatibility label (the report can change between refreshes)
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          PR_NUMBER: ${{ steps.pr.outputs.pull-request-number }}
+          OPPOSITE: ${{ steps.verify.outputs.outcome == 'success' && 'needs-adaptation' || 'compatible' }}
+        # Only a 404 (the label is not on the pull request) is the quiet case; any other refusal (rate limit, server
+        # error) is reported, because the pull request would then carry both labels without anyone knowing.
+        run: |
+          out="$(gh api -X DELETE "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/labels/${OPPOSITE}" 2>&1)" && exit 0
+          if printf '%s' "$out" | grep -q 'HTTP 404'; then
+            echo "label ${OPPOSITE} was not on pull request #${PR_NUMBER}"
+          else
+            echo "::warning::Could not remove the label ${OPPOSITE} from pull request #${PR_NUMBER}; remove it by hand. ${out}"
+          fi
       - if: steps.verify.outcome == 'success' && vars.CORE_AUTOMERGE == 'true' && steps.pr.outputs.pull-request-number != '' && !inputs.probe
         name: Turn on auto-merge (GitHub merges after the required checks pass on the pull request)
         env:

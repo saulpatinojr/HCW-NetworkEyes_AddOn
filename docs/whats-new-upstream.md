@@ -25,15 +25,50 @@ Checked on 2026-10-24 against the App's `main` branch, its releases and its tags
 | Other App tags | `v0.1.0` and `v0.8.0` (application releases from the App's earlier history, not the engine). There is no `v0.10.0` and no second engine release. |
 | Engine package changes since `engine-v0.1.0` | Four commits, all Dependabot version bumps inside `packages/cna-azure-network-engine/pyproject.toml` (eight changed lines). No source file changed. The package version is still `0.1.0`, so a new release needs a version bump first. |
 | What this repository runs | The **interim port** of the engine at App commit `5d3b914` (`PROVENANCE.md`, ADR-0001), under `src/network_assessment/{model,rules,classify}`. Lab code reaches it only through `src/network_assessment/engine.py`, which runs the wheel instead as soon as the wheel is installed. The wheel is **not adopted** yet. |
-| `core-update.yml` | **Armed.** `pyproject.toml` has the marker line `# ENGINE_REF none`, so the next scheduled run (every six hours, at minute 41) sees `none` against `0.1.0`, pins the `engine-v0.1.0` wheel, re-locks, runs the compatibility check and opens the bump pull request with the HCW Main Admin App. |
+| `core-update.yml` | **Fired.** `pyproject.toml` still has the marker line `# ENGINE_REF none`. On 2026-11-05 the scheduled run ([run 41969178172](https://github.com/saulpatinojr/HCW-NetworkEyes_AddOn/actions/runs/41969178172)) pinned the `engine-v0.1.0` wheel, re-locked inside the base image and opened [pull request 74](https://github.com/saulpatinojr/HCW-NetworkEyes_AddOn/pull/74) with the HCW Main Admin App; its required checks started by themselves and `test`, `rules-doc` and `pip-audit` failed (entry below). Every later scheduled run refreshes that same branch while `0.1.0` stays the latest release. |
 | Version markers | `RULES_VERSION` is `2026.10.0` in both. `TOPOLOGY_MODEL_VERSION` is `lab-1.0.0` in the port (declared equivalent to the App's 1.3.0 Azure subset) and `1.4.0` in the wheel; the wheel's model is a superset of the port's. `FINDINGS_MODEL_VERSION` is `lab-1.0.0` in the port, `FINDINGS_SCHEMA_VERSION` `1.1.0` in the wheel. |
-| Is `engine-v0.1.0` compatible? | **No, not yet.** Tested on 2026-10-31 (entry below): ids, versions, severities, `applies_to`, the live-only set, the classifier and the normalizer agree; five things in the engine do not, and they are fixed upstream, not here. |
+| Is `engine-v0.1.0` compatible? | **No, not yet.** Tested on 2026-10-31 (entry below) and confirmed on the real bump, [pull request 74](https://github.com/saulpatinojr/HCW-NetworkEyes_AddOn/pull/74), on 2026-11-05: ids, versions, severities, `applies_to`, the live-only set, the classifier and the normalizer agree; five things in the engine do not, and they are fixed upstream, not here. The pull request was opened as "compatible" by mistake (a workflow defect, fixed the same day; entry below); do not merge it. |
 
 In short: the wheel this repository was waiting for exists, the lab can now run on it unchanged, and the bump pull
-request will open by itself. It will say **needs adaptation** for `engine-v0.1.0`, because of five differences in the
-engine that only a new App release can fix.
+request opened by itself ([pull request 74](https://github.com/saulpatinojr/HCW-NetworkEyes_AddOn/pull/74)). It stays open and unmerged for `engine-v0.1.0`, because of five
+differences in the engine that only a new App release can fix; its `test` and `rules-doc` checks are the proof.
 
 ## Entries, newest first
+
+### 2026-11-05: the first real bump pull request opened, and two workflow defects it showed
+
+- **What happened.** The scheduled `core-update.yml` run of 04:39 UTC ([run 41969178172](https://github.com/saulpatinojr/HCW-NetworkEyes_AddOn/actions/runs/41969178172)) did what the
+  2026-10-31 entry said it would: it pinned `cna-azure-network-engine` 0.1.0 by URL, re-locked, and opened
+  [pull request 74](https://github.com/saulpatinojr/HCW-NetworkEyes_AddOn/pull/74) with the HCW Main Admin App, with auto-merge turned on. The pull request's own checks started
+  by themselves ([ci](https://github.com/saulpatinojr/HCW-NetworkEyes_AddOn/actions/runs/41969287315), [security](https://github.com/saulpatinojr/HCW-NetworkEyes_AddOn/actions/runs/41969287470)): `lint`, `image`, `e2e`, `secret-scan`, `dependency-review` and
+  CodeQL passed; `test` (41 failures), `rules-doc` and `pip-audit` failed. This is the first bump pull request for this
+  edition, and it is the proof asked for on [MigrateOrchestrator issue 50](https://github.com/saulpatinojr/HCW-MigrateOrchestrator_AddOn/issues/50).
+- **The engine is as the 2026-10-31 entry described it.** The 41 test failures and the catalog refusal are the five
+  differences already listed there, seen on the real wheel: 33 rules with an empty `description` and 34 with an empty
+  `remediation` (`test_every_rule_text_is_present_and_hedge_free`), `expected` in AZ-COST-002's remediation
+  (`rules-doc.py --check` and `test_report_facts_are_hedge_free`), `discovery:` evidence references
+  (`test_findings_cite_the_export_and_state_facts_only`), and AZ-NET-007 firing twice while AZ-NET-025 never fires
+  (`test_every_portable_rule_fires_and_counts_are_pinned`, `test_summary_is_pinned`). None of them is patched here;
+  they wait for the App's next engine release. The pull request stays open and unmerged until then.
+- **Defect 1, fixed here: the bump said "compatible".** The pull request was titled and labelled `compatible` although
+  the catalog check had refused the wheel. The compatibility step ran its checks as one `ruff && rules-doc --check &&
+  pytest` line under `set -e`, and bash does not stop at a failure inside such a list (only the last member counts), so
+  the refused catalog fell through to the browser suite, which passed, and the step reported success; `pytest` never
+  ran in that job. Each check is now its own line, and `tests/security/test_core_update_app_token.py` runs the step
+  with stubbed tools that fail one check at a time. The same shape is in Cloud Assessor's and Cloud Crawler's
+  `core-update.yml` (reported, not changed here).
+- **Defect 2, fixed here: `pip-audit` cannot audit the engine.** The wheel is a GitHub Release asset, not a PyPI
+  package, so `pip-audit --strict` failed with `Dependency not found on PyPI and could not be audited:
+  cna-azure-network-engine (0.1.0)`. The export the job audits now leaves out the two engine distribution names
+  (`--no-emit-package`, as Cloud Assessor's and Cloud Crawler's `security.yml` already do for their engines); the
+  engine's own dependencies stay in the export and are still audited, `--strict` stays, and the image's export keeps
+  the engine. On the bump's lock the audited set is the same fourteen packages as on `main`, with no known
+  vulnerabilities. `tests/security/test_security_workflow.py` pins both exports.
+- **Reaches this repository?** Yes: the two workflows and their tests. No engine, pin or lab code changes. The
+  `compatible` label on pull request 74 was replaced by `needs-adaptation` by hand; the next scheduled run rewrites
+  the title with the corrected report.
+- **Action.** Ask the App for the release (the row in "Open upstream decisions" below). When it is tagged,
+  `core-update.yml` opens a new bump pull request for it; close pull request 74 then.
 
 ### 2026-11-05: the HCW Main Admin App is also used by two App repositories (credential notes only)
 
@@ -151,6 +186,6 @@ engine that only a new App release can fix.
 |---|---|---|
 | Protect `engine-v*` tags | App `TODO.md` T-730 | Until done, a moved tag could change what your pinned URL serves. The sha256 pin still protects you. |
 | Turn on PyPI publishing for the engine | App `TODO.md` T-728, first bullet | Not needed for this repository (it pins the GitHub Release), but it changes how others install the engine. |
-| A release that fixes the five differences of 2026-10-31 (entry above) | **Not tracked in the App yet**: no issue was opened there from this repository | Until it exists, every bump here says `needs-adaptation` and nothing merges: auto-merge may be turned on, but it waits for the required checks, which fail. |
+| A release that fixes the five differences of 2026-10-31 (entry above) | **Not tracked in the App yet.** An issue text for the App was written on 2026-11-05 (it lists the five items with the failing test names from [pull request 74](https://github.com/saulpatinojr/HCW-NetworkEyes_AddOn/pull/74)); opening it there is the owner's step, recorded on [MigrateOrchestrator issue 50](https://github.com/saulpatinojr/HCW-MigrateOrchestrator_AddOn/issues/50) | Until it exists, the bump for `0.1.0` stays open with failing `test` and `rules-doc` checks and nothing merges: auto-merge is turned on (`CORE_AUTOMERGE` is `true`), but it waits for the required checks. |
 | Next engine release (a new version) | App `REFACTOR_APP.md` section 15, steps 3 and later | Change set B brings `RULES_VERSION` bumps and web findings ids; each arrives here as a `core-update.yml` pull request. |
 | Docker Hub sign-in for the App's own image builds | App `REVIEW.md` R-013 | Concerns the App's images, not this repository's image. |

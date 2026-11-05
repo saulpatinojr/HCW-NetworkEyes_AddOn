@@ -11,6 +11,17 @@ All notable changes to this repository are recorded here. The format follows Kee
   `main` with `No interpreter found for Python 3.15.1` (run 41754320521). `requires-python` stays `>=3.15.1,<3.16`.
 
 ### Fixed
+- `core-update.yml` reported the first real bump, [pull request 74](https://github.com/saulpatinojr/HCW-NetworkEyes_AddOn/pull/74) for `engine-v0.1.0`, as `compatible`
+  while its catalog check had refused the wheel: the compatibility step ran `ruff && rules-doc --check && pytest` as
+  one list under `set -e`, and bash does not exit on a failure inside such a list, so the refused catalog fell through
+  to the browser suite and the step reported success (`pytest` never ran). Each check is now its own line;
+  `tests/security/test_core_update_app_token.py` runs the step with stubbed tools that fail one check at a time and
+  requires the step to fail. The engine's own differences are unchanged and recorded in `docs/whats-new-upstream.md`.
+- `security.yml`'s `pip-audit` job failed on the same pull request with `Dependency not found on PyPI and could not be
+  audited: cna-azure-network-engine (0.1.0)`: the engine wheel is a GitHub Release asset, so `--strict` cannot look
+  it up. The export the job audits now leaves out the two engine distribution names (`--no-emit-package`); the
+  engine's dependencies stay in it, `--strict` stays, and the image's own export keeps the engine.
+  `tests/security/test_security_workflow.py` pins both exports.
 - `core-update.yml`'s `pull-request` job could never open the bump pull request: its `uv lock --no-build` needs an
   interpreter on the Python line `.python-version` names, the job installs none (by design it runs nothing but its own
   shell and the pinned actions) and `UV_PYTHON_DOWNLOADS=never` keeps uv from fetching one, so every scheduled run since

@@ -10,9 +10,14 @@ private key is the repository secret HCW_MAIN_ADMIN_PRIVATE_KEY; no job runs in 
 of the workflow text; they do not prove the credential works. A run with probe=true does (see the header of the
 workflow), and the verification step was exercised against good and tampered artifacts (VALIDATION.md)."""
 
+import os
 import re
+import subprocess
+
+import pytest
 
 from ..conftest import ROOT
+from .test_base_update_workflow import BASH
 
 TEXT = (ROOT / ".github" / "workflows" / "core-update.yml").read_text(encoding="utf-8")
 DOCKERFILE = (ROOT / "infrastructure" / "docker" / "Dockerfile").read_text(encoding="utf-8")
@@ -295,11 +300,16 @@ def test_auto_merge_never_reads_the_untrusted_outcome():
     assert not re.search(r"outputs\.outcome|bump/outcome", merge[0]), "the auto-merge step must not read the outcome"
     assert 'gh pr merge --squash --auto "$PR_NUMBER"' in merge[0], "auto-merge waits for the required checks"
     assert "--admin" not in merge[0]
-    # The outcome reaches only the pull request's text (title, labels, body) and a warning that holds no token.
+    # The outcome reaches only the pull request's text (title, labels, body), the step that takes the opposite
+    # label off again on a refresh, and a warning that holds no token.
     readers = [s for s in PR if "steps.verify.outputs.outcome" in s]
     pr = _only(PR, "peter-evans/create-pull-request")
-    assert len(readers) == 2 and pr in readers
-    warning = next(s for s in readers if s != pr)
+    assert len(readers) == 3 and pr in readers
+    label = next(s for s in readers if "gh api -X DELETE" in s)
+    assert re.search(r'/issues/\$\{PR_NUMBER\}/labels/\$\{OPPOSITE\}"', label), "the label step removes one label only"
+    assert not re.search(r"gh pr\b|merge", label), "the label step must not touch the merge"
+    assert "!inputs.probe" in _field(label, "if")
+    warning = next(s for s in readers if s not in (pr, label))
     assert not re.search(r"GH_TOKEN|secrets\.|app-token|\bgh\b", warning), "the warning step must hold no token"
 
 
@@ -369,8 +379,10 @@ def test_every_action_is_pinned_to_a_full_commit_sha():
 
 def test_a_probe_run_never_reaches_a_step_that_writes_or_runs_code():
     # A manual run with probe=true must stay read-only even when a newer release exists (changed == 'true').
-    writers = _uses(PR, "peter-evans/create-pull-request") + [s for s in PR if re.search(r"\bgh pr\b", s)]
-    assert len(writers) == 2, "expected the pull request step and the auto-merge step"
+    writers = _uses(PR, "peter-evans/create-pull-request") + [
+        s for s in PR if re.search(r"\bgh pr\b|gh api -X DELETE", s)
+    ]
+    assert len(writers) == 3, "expected the pull request step, the label step and the auto-merge step"
     for step in writers:
         assert "!inputs.probe" in _field(step, "if"), "a step that writes must be skipped on a probe"
     for step in BUMP:
@@ -389,3 +401,66 @@ def test_probe_step_only_reads_and_checks_the_token_covers_this_repository_only(
     # the value attached (-XPOST, -fname=value) or separate.
     writes = r"\bgh pr\b|\bgit\b|--method|\s-[XfF]|--field|--raw-field|--input"
     assert not re.search(writes, run), "the probe must not write"
+
+
+# The compatibility step is the one that decides the bump pull request's label and title. It is run here the way GitHub
+# runs it (bash -e), with `uv`, `npm` and `npx` replaced by stubs that fail one check at a time, because a regular
+# expression over its text cannot show that a failure stops it: `set -e` does not exit on a command that fails inside
+# an `a && b && c` list (bash skips the exit for every member but the last), which is how the first real bump (pull
+# request 74, engine-v0.1.0) reported "compatible" with a refused catalog and 41 failing tests.
+COMPAT_CHECKS = (
+    "uv run ruff check .",
+    "uv run python scripts/rules-doc.py --check",
+    "uv run pytest -q",
+    "CI=1 npx playwright test -c tests/e2e/playwright.config.ts",
+)
+
+
+def _run_body(step: str) -> str:
+    body = step.split("run: |\n", 1)[1]
+    return "\n".join(line[10:] for line in body.splitlines()) + "\n"
+
+
+def test_the_compatibility_step_runs_each_check_as_its_own_command():
+    compat = _by_id(BUMP, "compat")
+    assert _field(compat, "continue-on-error") == "true", "its outcome is the label, so the job goes on either way"
+    lines = [line.strip() for line in _run_body(compat).splitlines() if line.strip()]
+    assert lines[0] == "set -euo pipefail"
+    for check in COMPAT_CHECKS:
+        assert check in lines, f"{check!r} must be a line of its own"
+    for line in lines[1:]:
+        assert not re.search(r"&&|\|\||;", line), f"a joined list hides a failure from set -e: {line!r}"
+
+
+@pytest.mark.skipif(BASH is None, reason="bash is not available on this computer")
+@pytest.mark.parametrize("failing", [*COMPAT_CHECKS, None], ids=lambda c: c or "all-pass")
+def test_the_compatibility_step_fails_when_any_check_fails(tmp_path, failing):
+    """Every stubbed tool exits 0 except the one check named by `failing`, which exits 1; the step must then exit
+    non-zero (GitHub records `steps.compat.outcome == 'failure'`). With every check passing it exits 0."""
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    stub = (
+        "#!/usr/bin/env bash\n"
+        'line="$(basename "$0") $*"\n'
+        'if [ -n "${FAILING:-}" ] && [ "$line" = "$FAILING" ]; then echo "stub: $line fails" >&2; exit 1; fi\n'
+        'echo "stub: $line"\n'
+    )
+    for name in ("uv", "npm", "npx"):
+        (bin_dir / name).write_text(stub, encoding="utf-8", newline="\n")
+        (bin_dir / name).chmod(0o755)
+    script = tmp_path / "compat.sh"
+    script.write_text(_run_body(_by_id(BUMP, "compat")), encoding="utf-8", newline="\n")
+    # The stubs see the command without its `CI=1` prefix (bash passes that as the environment).
+    env = {**os.environ, "PATH": os.pathsep.join([bin_dir.as_posix(), os.environ.get("PATH", "")])}
+    if failing is not None:
+        env["FAILING"] = failing.removeprefix("CI=1 ")
+    result = subprocess.run(
+        [BASH, "-e", script.as_posix()], cwd=tmp_path, env=env, capture_output=True, text=True, timeout=60
+    )
+    if failing is None:
+        assert result.returncode == 0, result.stdout + result.stderr
+        assert all(c.removeprefix("CI=1 ") in result.stdout for c in COMPAT_CHECKS)
+    else:
+        assert result.returncode != 0, f"{failing!r} failed but the step passed:\n{result.stdout}{result.stderr}"
+        later = [c for c in COMPAT_CHECKS if COMPAT_CHECKS.index(c) > COMPAT_CHECKS.index(failing)]
+        assert not any(c.removeprefix("CI=1 ") in result.stdout for c in later), "a later check ran after a failure"

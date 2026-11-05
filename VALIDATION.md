@@ -40,7 +40,25 @@ on 2026-10-26 to the website's newer digest `sha256:fbecd461...`).
 | `core-update.yml` against a Core release | **no** | inert: the App published `cna-azure-network-engine` as `engine-v0.1.0` on 2026-10-12, but `pyproject.toml` has no `ENGINE_REF` line yet, so the comparison step exits cleanly (adoption steps: `docs/whats-new-upstream.md`) |
 | CodeQL, gitleaks, dependency-review | **no**, CI only | `security.yml` |
 
-## Run 2026-11-03 (the base and the Python line move to 3.15)
+## Run 2026-11-05 (the first real bump pull request; the compatibility step and the pip-audit export)
+
+The scheduled `core-update.yml` run opened [pull request 74](https://github.com/saulpatinojr/HCW-NetworkEyes_AddOn/pull/74) (`engine-v0.1.0`) as `compatible`; its `test`,
+`rules-doc` and `pip-audit` checks failed. This run fixes the two workflow defects that showed (the engine's own
+differences stay, see `docs/whats-new-upstream.md`). "Here" is the owner's Windows workstation: CPython 3.15 managed by
+uv, uv 0.12.0 locally against the committed `uv.lock` (`--frozen` everywhere), Git Bash for the stubbed step.
+
+| Check | Executed here | Result |
+| --- | --- | --- |
+| `uv sync --frozen`, `uv run ruff check . && uv run ruff format --check .`, `uv run python scripts/rules-doc.py --check` | yes | clean (93 files); `docs/rules/catalog.md` in sync |
+| `uv run pytest -q --cov=src --cov-report=term-missing --cov-fail-under=85` | yes | 505 passed, 6 skipped (the engine wheel is not installed on this branch); coverage 97 percent |
+| The new tests against the old workflow text (both files swapped for `main`'s copies, then restored byte for byte) | yes | 4 failed, 29 passed: the shape test, the stubbed step with `ruff` failing and with `rules-doc --check` failing (a failing `pytest`, last in the old list, was never hidden), and the pip-audit export test |
+| The stubbed compatibility step on the fixed text, one check failing at a time and all passing | yes | exits non-zero on each of the four failures and 0 when all pass (`test_the_compatibility_step_fails_when_any_check_fails`) |
+| `uv export --frozen … --no-emit-package network-assessment-azure-engine --no-emit-package cna-azure-network-engine` on the bump branch's lock and on `main`'s lock | yes | both exit 0; the same fourteen packages at the same versions; the engine is absent from the bump's export and its `pydantic` dependency present |
+| `uv run pip-audit -r <that export> --strict` on the bump branch's export | yes | `No known vulnerabilities found` |
+| `actionlint` 1.7.12 on `core-update.yml` and `security.yml` (shellcheck off) | yes | no findings apart from `ubuntu-26.04` being unknown to this actionlint version (already so on `main`) |
+| `pip-audit` with a real pull request in the `security` workflow | no | the pull request's own `pip-audit` job runs it; the bump branch gets the fix on the next scheduled run |
+| `make e2e` | no | nothing here touches the pane or the API |
+
 
 This run moves the base image to the website's `python:3.15.2-slim-trixie` pin and every place that names the Python
 minor line with it (CHANGELOG, Unreleased, Changed). "Here" is the owner's Windows workstation: CPython 3.15.2 installed
