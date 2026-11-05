@@ -463,9 +463,15 @@ jobs:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           PR_NUMBER: ${{ steps.pr.outputs.pull-request-number }}
           OPPOSITE: ${{ steps.verify.outputs.outcome == 'success' && 'needs-adaptation' || 'compatible' }}
+        # Only a 404 (the label is not on the pull request) is the quiet case; any other refusal (rate limit, server
+        # error) is reported, because the pull request would then carry both labels without anyone knowing.
         run: |
-          gh api -X DELETE "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/labels/${OPPOSITE}" >/dev/null 2>&1 \
-            || echo "label ${OPPOSITE} was not on pull request #${PR_NUMBER}"
+          out="$(gh api -X DELETE "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/labels/${OPPOSITE}" 2>&1)" && exit 0
+          if printf '%s' "$out" | grep -q 'HTTP 404'; then
+            echo "label ${OPPOSITE} was not on pull request #${PR_NUMBER}"
+          else
+            echo "::warning::Could not remove the label ${OPPOSITE} from pull request #${PR_NUMBER}; remove it by hand. ${out}"
+          fi
       - if: steps.verify.outcome == 'success' && vars.CORE_AUTOMERGE == 'true' && steps.pr.outputs.pull-request-number != '' && !inputs.probe
         name: Turn on auto-merge (GitHub merges after the required checks pass on the pull request)
         env:
