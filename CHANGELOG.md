@@ -4,6 +4,31 @@ All notable changes to this repository are recorded here. The format follows Kee
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-11-05
+
+This release exists so that the published image carries `apt 3.0.4`. On 2026-11-05 the website's weekly Docker Scout gate
+(a scan of the images the lab host runs) failed the `v0.1.1` image for `apt 3.0.3` / `libapt-pkg7.0 3.0.3`,
+CVE-2026-109518, which Debian fixed in 3.0.4 through `trixie-security`
+([saulpatinojr/HCW-HybridCloudWorks#1562](https://github.com/saulpatinojr/HCW-HybridCloudWorks/issues/1562)). The fix,
+[pull request 79](https://github.com/saulpatinojr/HCW-NetworkEyes_AddOn/pull/79), is on `main`: the `lab` stage applies
+Debian's security updates in a build step of its own, with download retries off and a per-run cache bust, and a local build
+proved `apt 3.0.4` inside the image. But the lab host only ever runs a published image, and only a `v*` tag publishes one,
+so the fix reaches the host through this release and nothing else.
+
+This pull request changes nothing in the lab application but the version string. What the image carries beyond
+0.1.1 landed on `main` before it and is listed below: the engine adoption path (`src/network_assessment/engine.py`,
+which runs the released wheel when `uv.lock` pins one and the interim port otherwise), the one additive API change
+since 0.1.1, an `engine` block `{source, version}` in the `/api/health` and `/api/rules` responses (already in
+`docs/api/openapi.yaml`, under `Engine`), the two-job `core-update.yml`, the base image on Python 3.15 and the daily
+base-image follower. `web/` and `samples/` are unchanged since 0.1.1. The version moves from `0.1.1` to `0.1.2` in `pyproject.toml`, in `uv.lock`
+(the `hcw-addon-network-assessment` entry only, re-locked with the uv CI uses, 0.11.32), in `__version__`, in
+`repository.manifest.json` and in the sample output of `docs/operations/runbook.md`; `/api/health` and the
+`X-Addon-Version` header read `__version__`, so they say `0.1.2`. `docs/api/openapi.yaml` keeps its document version
+`0.1.0`: the `engine` block was documented there when it was added, without moving that version, and this pull request
+adds no route, field or error code. Publishing the image is the tag `v0.1.2`, which is the owner's call
+and is not part of this change; after it, the website's `lab-host/ansible/group_vars/all.yml` row for `network-assessment`
+(still on `v0.1.0`) takes the new tag and the digest the tag run prints.
+
 ### Security
 - The published image failed the website's weekly Docker Scout gate on 2026-11-05 for `apt 3.0.3` / `libapt-pkg7.0 3.0.3`
   (CVE-2026-109518, fixed in 3.0.4, published only through `trixie-security`;
