@@ -4,6 +4,12 @@ All notable changes to this repository are recorded here. The format follows Kee
 
 ## [Unreleased]
 
+### Changed
+- `.python-version` names the minor line only, `3.15` (the Makefile's `uv python pin` likewise), not the exact patch
+  `3.15.1`: `actions/setup-python` with `3.15` hands out whichever 3.15.x its image carries (3.15.1 on one run, 3.15.2 on
+  the next), the pinned uv 0.11.32 cannot download the other patch, and the exact pin made `uv sync --frozen` fail on
+  `main` with `No interpreter found for Python 3.15.1` (run 41754320521). `requires-python` stays `>=3.15.1,<3.16`.
+
 ### Fixed
 - `core-update.yml` now runs from `main` only, and auto-merge no longer listens to the `bump` job's report. These are
   two High findings from a review of the same two-job workflow in the MigrateOrchestrator add-on

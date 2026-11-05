@@ -80,7 +80,7 @@ Terraform state.
 Requires Python 3.15.1 or newer and [`uv`](https://docs.astral.sh/uv/) 0.11.32 or newer.
 
 ```bash
-uv python pin 3.15.1 && uv sync
+uv python pin 3.15 && uv sync
 uv run pytest -q --cov=src                        # unit, contract, security, manifest; coverage gate 85
 NA_ALLOW_NO_TURNSTILE=1 PORT=8080 uv run python -m network_assessment   # http://127.0.0.1:8080
 curl -s http://127.0.0.1:8080/api/health
@@ -90,7 +90,7 @@ curl -s -X POST http://127.0.0.1:8080/api/assessments -H 'content-type: applicat
 PowerShell:
 
 ```powershell
-uv python pin 3.15.1; uv sync
+uv python pin 3.15; uv sync
 uv run pytest -q --cov=src
 $env:NA_ALLOW_NO_TURNSTILE = "1"; $env:PORT = "8080"; uv run python -m network_assessment
 Invoke-RestMethod http://127.0.0.1:8080/api/health
