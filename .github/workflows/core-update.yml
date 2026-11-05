@@ -174,11 +174,20 @@ jobs:
         id: compat
         name: Compatibility check (lint, tests, rule catalog drift, browser e2e)
         continue-on-error: true
+        # One check per line, on purpose. `set -e` does not stop at a command that fails inside an `a && b && c` list
+        # (bash skips the exit for every member but the last), so the earlier shape `ruff && rules-doc --check && pytest`
+        # let a failing catalog check fall through to the browser suite, and the step reported success: the first real
+        # bump (pull request 74, engine-v0.1.0) was opened as "compatible" with 41 failing tests and a refused catalog.
+        # tests/security/test_core_update_app_token.py pins this shape.
         run: |
           set -euo pipefail
           uv sync --frozen
-          uv run ruff check . && uv run python scripts/rules-doc.py --check && uv run pytest -q
-          npm init -y >/dev/null && npm install --no-save --no-audit --no-fund "@playwright/test@1.63.0" && npx playwright install --with-deps chromium
+          uv run ruff check .
+          uv run python scripts/rules-doc.py --check
+          uv run pytest -q
+          npm init -y >/dev/null
+          npm install --no-save --no-audit --no-fund "@playwright/test@1.63.0"
+          npx playwright install --with-deps chromium
           CI=1 npx playwright test -c tests/e2e/playwright.config.ts
       - if: steps.refs.outputs.changed == 'true' && !inputs.probe
         name: Stage the three files and the outcome for the pull-request job
