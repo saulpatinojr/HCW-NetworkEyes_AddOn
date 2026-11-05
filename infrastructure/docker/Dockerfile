@@ -58,11 +58,17 @@ ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PORT=8080 \
 # succeeding with a warning and upgrading nothing. PUBLISH_CACHE_BUST is a per-run value publish-images.yml and
 # ci.yml pass (run id and attempt); naming it in the command gives this layer a new cache key on every run, so a
 # rebuild of the same commit never reuses an older upgrade result after a newer security upload. Unset on a local
-# build, which is fine: the layer is then cached as usual. tests/security/test_image_security_updates.py pins this.
+# build, which is fine: the layer is then cached as usual. A successful upgrade is not proof that anything moved
+# (a mirror can serve a valid index that lacks the security upload), so the simulated upgrade afterwards must
+# report nothing left to do, with no package held back: an image still behind the index it just fetched fails the
+# build here. A version floor for one advisory would rot; this holds for every future one. The website's Scout
+# check of the published image is the control that names a CVE. tests/security/test_image_security_updates.py
+# pins all of this.
 ARG PUBLISH_CACHE_BUST=
 RUN printf 'security updates, run: %s\n' "${PUBLISH_CACHE_BUST}" \
  && apt-get -o Acquire::Retries=0 update --error-on=any \
  && apt-get -o Acquire::Retries=0 upgrade -y --no-install-recommends \
+ && apt-get -o Acquire::Retries=0 -s upgrade | grep -q '^0 upgraded, 0 newly installed, 0 to remove and 0 not upgraded' \
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/*
 # pip, ensurepip, setuptools and wheel leave the runtime (nothing installs at run time). The uninstall is allowed to

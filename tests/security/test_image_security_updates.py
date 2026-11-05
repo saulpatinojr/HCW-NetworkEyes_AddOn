@@ -105,6 +105,19 @@ def test_every_shipped_stage_applies_the_distribution_security_updates() -> None
                 f"line {number}: `|| true` in the upgrade RUN would let a failed upgrade pass as a successful build"
             )
             assert "rm -rf /var/lib/apt/lists/*" in arguments, f"line {number}: the apt lists are left in the layer"
+            # A successful upgrade proves nothing moved only if the mirror's index held the security upload. The
+            # simulated upgrade afterwards must report nothing left to do (and nothing held back), so an image still
+            # behind the index it just fetched fails the build. It needs the lists, so it precedes their removal.
+            proof = (
+                "apt-get -o Acquire::Retries=0 -s upgrade"
+                " | grep -q '^0 upgraded, 0 newly installed, 0 to remove and 0 not upgraded'"
+            )
+            assert proof in arguments, (
+                f"line {number}: the upgrade RUN does not prove that nothing is left to upgrade (`{proof}`)"
+            )
+            assert (
+                arguments.index(" upgrade -y") < arguments.index(proof) < arguments.index("rm -rf /var/lib/apt/lists/*")
+            ), f"line {number}: the nothing-left-to-upgrade proof must follow the upgrade and precede the list removal"
 
 
 def test_no_other_stage_runs_apt() -> None:
