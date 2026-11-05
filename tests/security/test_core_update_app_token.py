@@ -16,6 +16,9 @@ from ..conftest import ROOT
 
 TEXT = (ROOT / ".github" / "workflows" / "core-update.yml").read_text(encoding="utf-8")
 DOCKERFILE = (ROOT / "infrastructure" / "docker" / "Dockerfile").read_text(encoding="utf-8")
+VERSIONS = (ROOT / "infrastructure" / "docker" / "versions.env").read_text(encoding="utf-8")
+PYPROJECT = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
+PYTHON_VERSION_FILE = (ROOT / ".python-version").read_text(encoding="utf-8").strip()
 _PARTS = re.split(r"(?m)^  ([a-z-]+):\n", TEXT.split("\njobs:\n", 1)[1])[1:]
 JOBS = dict(zip(_PARTS[::2], _PARTS[1::2], strict=True))  # job id -> its text
 BUMP = re.split(r"(?m)^ {6}- ", JOBS["bump"].split("\n    steps:\n", 1)[1])[1:]
@@ -89,14 +92,83 @@ PR_FORBIDDEN = re.compile(
 )
 
 
+def _versions_env(key: str) -> str:
+    found = re.search(rf"(?m)^{key}=(\S+)$", VERSIONS)
+    assert found, f"{key} is missing from infrastructure/docker/versions.env"
+    return found.group(1)
+
+
+def _docker_run_lines(step: str) -> list[str]:
+    """Every `docker run` command of a step, with its backslash continuations joined into one line."""
+    joined = re.sub(r"\\\n\s*", " ", step.split("run: |\n", 1)[1])
+    return [line.strip() for line in joined.splitlines() if line.strip().startswith("docker run ")]
+
+
 def test_the_pull_request_job_runs_no_project_code():
     for step in PR:
         assert not PR_FORBIDDEN.search(step), _field(step, "name") or _field(step, "uses")
-    uv_calls = re.findall(r"(?m)^.*uv-bin\"?\s+\S.*$", JOBS["pull-request"])
-    assert len(uv_calls) == 1 and ' lock --no-build --upgrade-package "$DIST"' in uv_calls[0], uv_calls
-    # Its one interpreter call is this file's own inline script, isolated from the checkout and the environment.
-    calls = re.findall(r"\bpython3?\b[^\n]*", JOBS["pull-request"])
+    # uv runs once, to lock, inside the base image (the next test); the binary is the one copied out of the uv image.
+    uv_calls = [line.strip() for line in JOBS["pull-request"].splitlines() if re.search(r"/uv\s+lock\b", line)]
+    assert uv_calls == ['"$base" /uv lock --no-build --upgrade-package "$DIST"'], uv_calls
+    # Its one interpreter call on the runner is this file's own inline script, isolated from the checkout and the
+    # environment. (`.python-version`, `python:<tag>` image references and `BASE_PYTHON_VERSION` are not calls.)
+    calls = re.findall(r"(?<![\w.:/-])python3?\b(?![:.-])[^\n]*", JOBS["pull-request"])
     assert calls and all(c.startswith("python3 -I - ") for c in calls), calls
+
+
+def test_the_lock_is_regenerated_inside_the_digest_pinned_base_image_with_its_own_interpreter():
+    """`uv lock` needs an interpreter that satisfies `.python-version` and `requires-python`, and the job forbids uv to
+    download one (UV_PYTHON_DOWNLOADS=never). The job installs no interpreter either, so every scheduled run failed at
+    this step with `No interpreter found for Python 3.15` (runs 41944123703 and 41961781195, 2026-11-05). The lock now
+    runs inside the base image every FROM of the Dockerfile pins by digest: the CPython the add-on ships with, verified
+    by Docker like the uv binary, so what the runner image happens to carry no longer matters."""
+    regen = _by_id(PR, "regen")
+    # The image is read from versions.env, checked for shape and checked against the Dockerfile before it is run.
+    assert "sed -n 's/^BASE_IMAGE=//p' infrastructure/docker/versions.env" in regen
+    assert "sed -n 's/^BASE_DIGEST=//p' infrastructure/docker/versions.env" in regen
+    assert '[[ "$base" =~ ^python:[0-9][0-9A-Za-z.-]*@sha256:[0-9a-f]{64}$ ]]' in regen
+    assert 'grep -qF -- "FROM ${base} " infrastructure/docker/Dockerfile' in regen
+    assert 'docker pull --quiet "$base"' in regen
+    # One container, in the regen step only, as the runner's user, with no capabilities, a read-only root filesystem,
+    # the checkout and /tmp as the only writable paths, the uv binary mounted read-only, and uv told to lock and
+    # nothing else. No interpreter comes from the runner: nothing installs one and uv may not download one.
+    assert [s for s in PR if "docker run" in s] == [regen]
+    commands = _docker_run_lines(regen)
+    assert len(commands) == 1, commands
+    command = commands[0]
+    assert command.endswith(' "$base" /uv lock --no-build --upgrade-package "$DIST"'), command
+    for flag in (
+        "--rm",
+        '--user "$(id -u):$(id -g)"',
+        "--cap-drop=ALL",
+        "--security-opt=no-new-privileges",
+        "--read-only",
+        "--tmpfs /tmp:rw,nosuid,nodev,noexec,size=1g",
+        "-e HOME=/tmp",
+        "-e UV_CACHE_DIR=/tmp/uv-cache",
+        "-e UV_PYTHON_DOWNLOADS=never",
+        '-v "${RUNNER_TEMP}/uv-bin:/uv:ro"',
+        '-v "${GITHUB_WORKSPACE}:/work"',
+        "-w /work",
+    ):
+        assert f" {flag} " in f"{command} ", flag
+    for forbidden in ("--privileged", "docker.sock", "--network", "--pid", "--ipc", "--cap-add", "--entrypoint"):
+        assert forbidden not in command, forbidden
+    assert "UV_PYTHON_DOWNLOADS=never" in command
+    assert re.search(r"\buv\s+python\b", regen) is None and "--python" not in regen
+    # The base image's CPython is the one the project pins, so the lock resolves there: versions.env (which
+    # base-update.yml moves with every FROM) must stay on the line `.python-version` names and inside requires-python.
+    base_python = _versions_env("BASE_PYTHON_VERSION")
+    assert base_python == PYTHON_VERSION_FILE or base_python.startswith(PYTHON_VERSION_FILE + "."), (
+        f".python-version {PYTHON_VERSION_FILE} is not the line of BASE_PYTHON_VERSION {base_python}"
+    )
+    requires = re.search(r'(?m)^requires-python = ">=([0-9.]+),<([0-9.]+)"$', PYPROJECT)
+    assert requires, "requires-python must be the range >=<lowest patch>,<<next minor>"
+    version = tuple(int(part) for part in base_python.split("."))
+    lowest = tuple(int(part) for part in requires.group(1).split("."))
+    ceiling = tuple(int(part) for part in requires.group(2).split("."))
+    assert lowest <= version < ceiling, f"BASE_PYTHON_VERSION {base_python} is outside {requires.group(0)}"
+    assert f"FROM {_versions_env('BASE_IMAGE')}@{_versions_env('BASE_DIGEST')} " in DOCKERFILE
 
 
 def test_the_bump_job_hands_over_exactly_one_artifact_and_the_other_job_downloads_it():
