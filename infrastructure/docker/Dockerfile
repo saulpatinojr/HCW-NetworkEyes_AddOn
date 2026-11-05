@@ -6,7 +6,7 @@
 #          pip --require-hashes --no-deps (nothing resolves beyond the lock), then places the lab application
 #          (which carries the ported engine, ADR-0001) beside them as a source tree, so no build backend enters
 #          the image.
-#   lab    the runtime: apt upgrade, /install copied in, pip/ensurepip/setuptools removed, uid 10001, read-only
+#   lab    the runtime: Debian security updates (retries off, per-run cache bust), /install copied in, pip/ensurepip/setuptools removed, uid 10001, read-only
 #          friendly (writes nothing), HEALTHCHECK on /api/health through urllib, CMD python -m network_assessment.
 #
 # The lab edition is technically unable to reach Azure: no cloud SDK is installed, the process refuses to start
@@ -47,11 +47,27 @@ RUN test "$EDITION" = "lab"
 LABEL org.opencontainers.image.licenses="MIT"
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PORT=8080 \
     NA_STATIC_DIR=/app/web NA_SAMPLES_DIR=/app/samples NA_FRAME_ANCESTORS="'none'" NA_TELEMETRY=0
-RUN apt-get update \
- && apt-get upgrade -y --no-install-recommends \
+# Debian's security updates, in a RUN of their own so that a failure fails the build. The base is pinned by digest,
+# but a Debian security upload reaches the mirrors days before the official image is rebuilt with it: on 2026-11-05
+# the website's Docker Scout gate refused the published image for apt 3.0.3 (CVE-2026-109518, fixed in 3.0.4 from
+# trixie-security) while the newest python:3.15-slim-trixie digest still shipped 3.0.3, so no base bump could clear
+# it (saulpatinojr/HCW-HybridCloudWorks#1562). `Acquire::Retries=0` on both commands: the apt doing this upgrade is
+# still the base's, and CVE-2026-109518 needs a download retry to slip an unverified package in, so the retry path
+# stays closed until the upgraded apt is in place (a mirror hiccup fails the build instead of retrying).
+# `--error-on=any` fails the update when any index (trixie-security above all) cannot be fetched, instead of
+# succeeding with a warning and upgrading nothing. PUBLISH_CACHE_BUST is a per-run value publish-images.yml and
+# ci.yml pass (run id and attempt); naming it in the command gives this layer a new cache key on every run, so a
+# rebuild of the same commit never reuses an older upgrade result after a newer security upload. Unset on a local
+# build, which is fine: the layer is then cached as usual. tests/security/test_image_security_updates.py pins this.
+ARG PUBLISH_CACHE_BUST=
+RUN printf 'security updates, run: %s\n' "${PUBLISH_CACHE_BUST}" \
+ && apt-get -o Acquire::Retries=0 update --error-on=any \
+ && apt-get -o Acquire::Retries=0 upgrade -y --no-install-recommends \
  && apt-get clean \
- && rm -rf /var/lib/apt/lists/* \
- && python -m pip uninstall -y pip setuptools wheel >/dev/null 2>&1 || true \
+ && rm -rf /var/lib/apt/lists/*
+# pip, ensurepip, setuptools and wheel leave the runtime (nothing installs at run time). The uninstall is allowed to
+# fail inside its braces only; before, its `|| true` was unscoped and swallowed a failed apt upgrade too.
+RUN { python -m pip uninstall -y pip setuptools wheel >/dev/null 2>&1 || true; } \
  && rm -rf /usr/local/lib/python3.15/ensurepip /usr/local/lib/python3.15/site-packages/pip* \
            /usr/local/lib/python3.15/site-packages/setuptools* /usr/local/lib/python3.15/site-packages/wheel* \
            /usr/local/bin/pip* /usr/local/bin/wheel /root/.cache \

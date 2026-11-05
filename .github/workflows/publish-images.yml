@@ -37,7 +37,9 @@ jobs:
         with:
           context: .
           file: infrastructure/docker/Dockerfile
-          build-args: EDITION=lab
+          build-args: |
+            EDITION=lab
+            PUBLISH_CACHE_BUST=${{ github.run_id }}-${{ github.run_attempt }}
           load: true
           push: false
           tags: ${{ env.IMAGE }}:scan
@@ -82,7 +84,9 @@ jobs:
         with:
           context: .
           file: infrastructure/docker/Dockerfile
-          build-args: EDITION=lab
+          build-args: |
+            EDITION=lab
+            PUBLISH_CACHE_BUST=${{ github.run_id }}-${{ github.run_attempt }}
           push: true
           tags: |
             ${{ env.IMAGE }}:v${{ steps.version.outputs.version }}
