@@ -18,22 +18,55 @@ Checked on 2026-10-24 against the App's `main` branch, its releases and its tags
 
 | Question | Answer |
 |---|---|
-| App `main` | Commit `592512b`, after pull request [#264](https://github.com/saulpatinojr/HCW-NetworkEyes_App/pull/264). Update this row when you adopt something. |
-| Latest engine release | **`engine-v0.1.0`**, published 2026-10-12 by `320-release-engine.yml` ([run](https://github.com/saulpatinojr/HCW-NetworkEyes_App/actions/runs/38205653284), success). [Release page](https://github.com/saulpatinojr/HCW-NetworkEyes_App/releases/tag/engine-v0.1.0). |
-| Its files | `cna_azure_network_engine-0.1.0-py3-none-any.whl`, sha256 `a609b80059fca7b22057b464a0c41895b324e21dc3e28d569a6e0894e94bd1ba` (re-computed by downloading it on 2026-10-24), and `cna_azure_network_engine-0.1.0.tar.gz`, sha256 `1672ff3d656143f83bf0759d27ed26806b4e8884017af3a3ff7c99387af84b1e` (as reported by GitHub). URL pattern: `https://github.com/saulpatinojr/HCW-NetworkEyes_App/releases/download/engine-v0.1.0/cna_azure_network_engine-0.1.0-py3-none-any.whl`. |
-| Engine package name | The App renamed the engine package on 2026-10-27, in a pull request that is not released yet: distribution `network-assessment-azure-engine`, import name `network_assessment_azure_engine`. `engine-v0.1.0` stays published under the old name, so the next release under the new name needs a version above 0.1.0 (the tag `engine-v0.1.0` exists). |
-| Other App tags | `v0.1.0` and `v0.8.0` (application releases from the App's earlier history, not the engine). There is no `v0.10.0` and no second engine release. |
-| Engine package changes since `engine-v0.1.0` | Four commits, all Dependabot version bumps inside `packages/cna-azure-network-engine/pyproject.toml` (eight changed lines). No source file changed. The package version is still `0.1.0`, so a new release needs a version bump first. |
+| App `main` | Commit `39a219c`, the squash merge of pull request [#351](https://github.com/saulpatinojr/HCW-NetworkEyes_App/pull/351) (2026-11-05), the commit `engine-v0.1.1` points at. Update this row when you adopt something. |
+| Latest engine release | **`engine-v0.1.1`**, published 2026-11-05 by `320-release-engine.yml` ([run 42092315364](https://github.com/saulpatinojr/HCW-NetworkEyes_App/actions/runs/42092315364), success). [Release page](https://github.com/saulpatinojr/HCW-NetworkEyes_App/releases/tag/engine-v0.1.1). Tagged on the squash merge of [pull request 351](https://github.com/saulpatinojr/HCW-NetworkEyes_App/pull/351), commit `39a219c`. |
+| Its files | `network_assessment_azure_engine-0.1.1-py3-none-any.whl`, sha256 `2e95c46678ad63953784ae566b28f5bc9c041ae2e064f23ef547fa05cd0752ff` (computed by downloading it on 2026-11-05), and `network_assessment_azure_engine-0.1.1.tar.gz`, sha256 `4f93fc05d85777c3f728831ba635c43c4e9125c796c9b62bbd6d3f825a004cb4`. |
+| Engine package name | Distribution `network-assessment-azure-engine`, import name `network_assessment_azure_engine`, since the App renamed the package on 2026-10-27; `engine-v0.1.1` is the first release published under that name (`engine-v0.1.0` was published as `cna-azure-network-engine`). `core-update.yml` knows both names. |
+| Other App tags | `v0.1.0` and `v0.8.0` (application releases from the App's earlier history, not the engine). The engine tags are `engine-v0.1.0` and `engine-v0.1.1`. |
+| Engine package changes since `engine-v0.1.1` | None: `engine-v0.1.1` is tagged on the App's current `main` (`39a219c`). The package version is `0.1.1`. |
 | What this repository runs | The **interim port** of the engine at App commit `5d3b914` (`PROVENANCE.md`, ADR-0001), under `src/network_assessment/{model,rules,classify}`. Lab code reaches it only through `src/network_assessment/engine.py`, which runs the wheel instead as soon as the wheel is installed. The wheel is **not adopted** yet. |
 | `core-update.yml` | **Fired.** `pyproject.toml` still has the marker line `# ENGINE_REF none`. On 2026-11-05 the scheduled run ([run 41969178172](https://github.com/saulpatinojr/HCW-NetworkEyes_AddOn/actions/runs/41969178172)) pinned the `engine-v0.1.0` wheel, re-locked inside the base image and opened [pull request 74](https://github.com/saulpatinojr/HCW-NetworkEyes_AddOn/pull/74) with the HCW Main Admin App; its required checks started by themselves and `test`, `rules-doc` and `pip-audit` failed (entry below). Every later scheduled run refreshes that same branch while `0.1.0` stays the latest release. |
 | Version markers | `RULES_VERSION` is `2026.10.0` in both. `TOPOLOGY_MODEL_VERSION` is `lab-1.0.0` in the port (declared equivalent to the App's 1.3.0 Azure subset) and `1.4.0` in the wheel; the wheel's model is a superset of the port's. `FINDINGS_MODEL_VERSION` is `lab-1.0.0` in the port, `FINDINGS_SCHEMA_VERSION` `1.1.0` in the wheel. |
-| Is `engine-v0.1.0` compatible? | **No, not yet.** Tested on 2026-10-31 (entry below) and confirmed on the real bump, [pull request 74](https://github.com/saulpatinojr/HCW-NetworkEyes_AddOn/pull/74), on 2026-11-05: ids, versions, severities, `applies_to`, the live-only set, the classifier and the normalizer agree; five things in the engine do not, and they are fixed upstream, not here. The pull request was opened as "compatible" by mistake (a workflow defect, fixed the same day; entry below); do not merge it. |
+| Is `engine-v0.1.1` compatible? | **Yes.** `engine-v0.1.0` was not (its entry of 2026-10-31 and the real bump, [pull request 74](https://github.com/saulpatinojr/HCW-NetworkEyes_AddOn/pull/74): 41 failing tests and a refused rules document). `engine-v0.1.1` fixes every difference that bump showed; against the full test suite of this repository with the wheel in place of the pin the result is 511 passed, 0 failed, `scripts/rules-doc.py --check` in sync (entry of 2026-11-05 below). |
 
-In short: the wheel this repository was waiting for exists, the lab can now run on it unchanged, and the bump pull
-request opened by itself ([pull request 74](https://github.com/saulpatinojr/HCW-NetworkEyes_AddOn/pull/74)). It stays open and unmerged for `engine-v0.1.0`, because of five
-differences in the engine that only a new App release can fix; its `test` and `rules-doc` checks are the proof.
+In short: `engine-v0.1.1` is the release this repository was waiting for. The `engine-v0.1.0` bump
+([pull request 74](https://github.com/saulpatinojr/HCW-NetworkEyes_AddOn/pull/74)) stayed unmerged because of five
+differences only a new App release could fix; `engine-v0.1.1` fixes them, this repository knows it (the
+`MODEL_VERSIONS` row in `tests/conftest.py`), and the next `core-update.yml` run opens the bump that replaces #74.
 
 ## Entries, newest first
+
+### 2026-11-05: `engine-v0.1.1`, the release that fixes the five differences
+
+- **What happened.** The App closed [issue 350](https://github.com/saulpatinojr/HCW-NetworkEyes_App/issues/350) with
+  [pull request 351](https://github.com/saulpatinojr/HCW-NetworkEyes_App/pull/351) (merged as commit `39a219c`) and
+  tagged it `engine-v0.1.1` ([release](https://github.com/saulpatinojr/HCW-NetworkEyes_App/releases/tag/engine-v0.1.1)).
+  The wheel is published under the new name: distribution `network-assessment-azure-engine`, file
+  `network_assessment_azure_engine-0.1.1-py3-none-any.whl`, import name `network_assessment_azure_engine` (the first
+  name in `engine.py`'s `WHEEL_PACKAGES`).
+- **What changed in the engine, against the 2026-10-31 list.** (1) AZ-NET-007 and AZ-NET-025 read the WAF policy
+  linked to the gateway (`ApplicationGateway.effective_waf_enabled` / `effective_waf_mode`); on the sample the
+  summary is 11 high / 19 medium, as pinned. (2) Every rule has a description and a remediation. (3) No rule text
+  or finding carries a hedge word (AZ-COST-002's remediation and AZ-NET-031's recommendation reworded). (4)
+  Evidence references are `export:<subscription>.<path>` for a normalised export (`discovery:` for the App's live
+  runs; the prefix follows the topology's `source`). (5) AZ-NET-004's fact no longer prints `NoneMbps`. Not changed:
+  AZ-NET-031 still keys its finding on the private-link connection id, and the live-only `unknowns[]` reasons are
+  still field paths; neither is gated here. Rule ids, versions, severities, `RULES_VERSION` (`2026.10.0`) and the
+  registry digest are unchanged, so `tests/unit/test_registry.py` and `test_engine.py` keep their pins.
+- **Proof before the release.** The App built the 0.1.1 wheel locally and ran this repository's checks on a scratch
+  copy of the `core-update/engine-v0.1.0` branch with the wheel installed in place of 0.1.0: `uv run pytest -q`
+  went from 41 failed / 470 passed to 511 passed; `scripts/rules-doc.py --check` from refused (`expected` in
+  AZ-COST-002) to in sync (422 lines); `ruff check .` passed both times. Without the row below, exactly one test
+  failed, `test_the_engine_is_one_this_edition_knows`: the "new engine" signal working as designed.
+- **Reaches this repository? Yes, one line.** `tests/conftest.py`'s `MODEL_VERSIONS` table gains
+  `"network-assessment-azure-engine 0.1.1": "1.4.0"` (the wheel's `TOPOLOGY_MODEL_VERSION` is still `1.4.0`), so the
+  bump pull request that `core-update.yml` opens for 0.1.1 passes `test`, `rules-doc` and `pip-audit` on its own
+  and auto-merge lands it. No engine, pin or lab code change here; the bump does the pin and regenerates
+  `docs/rules/catalog.md`.
+- **Action.** None for the owner. The next scheduled `core-update.yml` run (every six hours, `41 */6 * * *` UTC)
+  opens the 0.1.1 bump; close [pull request 74](https://github.com/saulpatinojr/HCW-NetworkEyes_AddOn/pull/74)
+  (the 0.1.0 bump) when it does. After that bump merges, the interim port under `src/network_assessment/{model,
+  rules,classify}` is deleted as `PROVENANCE.md` plans.
 
 ### 2026-11-05: the first real bump pull request opened, and two workflow defects it showed
 
