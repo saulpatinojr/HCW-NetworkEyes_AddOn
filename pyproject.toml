@@ -9,7 +9,7 @@ dependencies = [
   "fastapi==0.162.0",
   "uvicorn==0.54.0",
   "pydantic==2.14.1",
-  # ENGINE_REF none -- the interim port runs; core-update.yml replaces this whole line with the engine wheel pin
+  "cna-azure-network-engine @ https://github.com/saulpatinojr/HCW-NetworkEyes_App/releases/download/engine-v0.1.0/cna_azure_network_engine-0.1.0-py3-none-any.whl",  # ENGINE_REF 0.1.0
 ]
 
 [dependency-groups]

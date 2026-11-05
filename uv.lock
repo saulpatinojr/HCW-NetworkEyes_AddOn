@@ -135,6 +135,30 @@ wheels = [
 ]
 
 [[package]]
+name = "cna-azure-network-engine"
+version = "0.1.0"
+source = { url = "https://github.com/saulpatinojr/HCW-NetworkEyes_App/releases/download/engine-v0.1.0/cna_azure_network_engine-0.1.0-py3-none-any.whl" }
+dependencies = [
+    { name = "pydantic" },
+]
+wheels = [
+    { url = "https://github.com/saulpatinojr/HCW-NetworkEyes_App/releases/download/engine-v0.1.0/cna_azure_network_engine-0.1.0-py3-none-any.whl", hash = "sha256:a609b80059fca7b22057b464a0c41895b324e21dc3e28d569a6e0894e94bd1ba" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "azure-identity", marker = "extra == 'azure'", specifier = ">=1.26.0" },
+    { name = "azure-mgmt-costmanagement", marker = "extra == 'azure'", specifier = ">=4.0.1,<5" },
+    { name = "azure-mgmt-loganalytics", marker = "extra == 'azure'", specifier = ">=14.0.0,<15" },
+    { name = "azure-mgmt-monitor", marker = "extra == 'azure'", specifier = ">=6.0.2,<7" },
+    { name = "azure-mgmt-network", marker = "extra == 'azure'", specifier = ">=31.0.1" },
+    { name = "azure-mgmt-resourcegraph", marker = "extra == 'azure'", specifier = ">=8.0.0,<9" },
+    { name = "azure-monitor-query", marker = "extra == 'azure'", specifier = ">=2.0.0,<3" },
+    { name = "pydantic", specifier = ">=2.13,<3" },
+]
+provides-extras = ["azure"]
+
+[[package]]
 name = "colorama"
 version = "0.4.6"
 source = { registry = "https://pypi.org/simple" }
@@ -250,6 +274,7 @@ name = "hcw-addon-network-assessment"
 version = "0.1.1"
 source = { editable = "." }
 dependencies = [
+    { name = "cna-azure-network-engine" },
     { name = "fastapi" },
     { name = "pydantic" },
     { name = "uvicorn" },
@@ -266,6 +291,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "cna-azure-network-engine", url = "https://github.com/saulpatinojr/HCW-NetworkEyes_App/releases/download/engine-v0.1.0/cna_azure_network_engine-0.1.0-py3-none-any.whl" },
     { name = "fastapi", specifier = "==0.162.0" },
     { name = "pydantic", specifier = "==2.14.1" },
     { name = "uvicorn", specifier = "==0.54.0" },
