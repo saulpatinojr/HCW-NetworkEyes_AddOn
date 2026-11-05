@@ -123,7 +123,7 @@ answer `503 turnstile_not_configured` (fail closed). Browser suite: `make e2e` (
 A `v*` tag builds the image, proves the edition boundary inside it, scans it (Trivy, HIGH/CRITICAL, fixed only), pushes
 `docker.io/hybridcloudworks/img-ne-lab-addon:v<version>` with provenance and SBOM, attests it, and prints the
 digest in the run summary. The website pins that digest in its lab-host `group_vars`; the digest is the only coupling.
-Pushing needs the repository variables `DOCKERHUB_ENABLED` and `DOCKERHUB_CONNECTION` (`docs/deployment/lab-host.md`); both are set, and `v0.1.0` and `v0.1.1-rc.1` were pushed that way.
+Pushing needs the repository variables `DOCKERHUB_ENABLED` and `DOCKERHUB_CONNECTION` (`docs/deployment/lab-host.md`); both are set, and `v0.1.0`, `v0.1.1-rc.1` and `v0.1.1` (published 2026-10-27) were pushed that way.
 
 ## What the export cannot show
 

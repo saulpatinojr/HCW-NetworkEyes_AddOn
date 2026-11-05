@@ -40,6 +40,27 @@ on 2026-10-26 to the website's newer digest `sha256:fbecd461...`).
 | `core-update.yml` against a Core release | **no** | inert: the App published `cna-azure-network-engine` as `engine-v0.1.0` on 2026-10-12, but `pyproject.toml` has no `ENGINE_REF` line yet, so the comparison step exits cleanly (adoption steps: `docs/whats-new-upstream.md`) |
 | CodeQL, gitleaks, dependency-review | **no**, CI only | `security.yml` |
 
+## Run 2026-11-05 (release 0.1.2 prepared)
+
+This run prepares the version bump only and publishes nothing. The release exists so that the published image carries
+`apt 3.0.4` (website issue [saulpatinojr/HCW-HybridCloudWorks#1562](https://github.com/saulpatinojr/HCW-HybridCloudWorks/issues/1562);
+the Dockerfile change is [pull request 79](https://github.com/saulpatinojr/HCW-NetworkEyes_AddOn/pull/79), already on
+`main`). The lab application's code is unchanged since 0.1.1 except for `__version__`. "Here" is the owner's Windows
+workstation: CPython 3.15 managed by uv against the committed `uv.lock` (`--frozen` everywhere); the re-lock ran with
+`uvx uv@0.11.32`, the uv CI uses, not the workstation's uv 0.12.0.
+
+| Check | Executed here | Result |
+| --- | --- | --- |
+| The version in every place that says it: `pyproject.toml`, `uv.lock` (the `hcw-addon-network-assessment` entry), `__version__`, `repository.manifest.json` and the sample output in `docs/operations/runbook.md`; `uvx uv@0.11.32 lock` then `uvx uv@0.11.32 lock --check` | yes | all `0.1.2`; the lock differs from `main` in that one version line only (`revision = 3` untouched); `lock --check` exits 0 |
+| `docs/api/openapi.yaml` `info.version` | not changed | stays `0.1.0`: no route, field or error code changed, and no test ties it to `__version__` |
+| `uv run ruff check . && uv run ruff format --check .` and `uv run python scripts/rules-doc.py --check` | yes | clean (94 files); `docs/rules/catalog.md` in sync (422 lines) |
+| `uv run pytest -q tests/security tests/unit` | yes | 507 passed in 13 s. It includes `test_manifest_version_matches_pyproject` (`pyproject.toml`, `repository.manifest.json` and `__version__` agree) and `test_health_is_flat_and_complete` (the body's `version` and the `X-Addon-Version` header equal `__version__`); the bash-backed workflow tests passed here too |
+| `uv run pytest -q --cov=src --cov-fail-under=85` (the full suite with coverage), `tests/contract` | no | the pull request's `test` job runs them; only the version string changed in `src/` |
+| Local image build and the runbook's `curl` against a live server | no | the Dockerfile is unchanged since [pull request 79](https://github.com/saulpatinojr/HCW-NetworkEyes_AddOn/pull/79), whose own run recorded `apt 3.0.4` inside a local build; the merged commit's publish dry run (next row) builds it again on CI |
+| Publish dry run on the merged commit (`gh workflow run publish-images.yml --ref main`; the header says a manual run builds, checks the boundary and scans, and never pushes) | **no**, after the merge | it is run once this change is on `main`, and its Trivy result is recorded on the website issue before the owner tags `v0.1.2` |
+| Trivy scan, push, provenance, SBOM, attestation, digest | **no**, CI on a `v*` tag only | `publish-images.yml`; only a `v*` tag pushes, and `v0.1.2` is the owner's call |
+| Playwright e2e, CodeQL, gitleaks, dependency-review, `ci.yml` on the pull request | **no**, CI only | not run here; the pull request's own checks cover them |
+
 ## Run 2026-11-05 (the first real bump pull request; the compatibility step and the pip-audit export)
 
 The scheduled `core-update.yml` run opened [pull request 74](https://github.com/saulpatinojr/HCW-NetworkEyes_AddOn/pull/74) (`engine-v0.1.0`) as `compatible`; its `test`,
