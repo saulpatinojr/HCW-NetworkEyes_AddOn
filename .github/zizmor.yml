@@ -1,0 +1,13 @@
+# zizmor configuration, read by the lint step in ci.yml
+# (HCW-HybridCloudWorks#1575).
+#
+# adhoc-packages: the browser suite installs one exact Playwright version with
+# `npm install "@playwright/test@<version>"`. This is a Python project with no
+# npm lockfile, so zizmor counts the install as outside a lockfile. The version
+# is pinned in the workflow, and the core-update compatibility check installs
+# the same one. Kept on purpose for these two files only.
+rules:
+  adhoc-packages:
+    ignore:
+      - ci.yml
+      - core-update.yml

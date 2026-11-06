@@ -186,7 +186,7 @@ jobs:
           uv run python scripts/rules-doc.py --check
           uv run pytest -q
           npm init -y >/dev/null
-          npm install --no-save --no-audit --no-fund "@playwright/test@1.63.0" # zizmor: ignore[adhoc-packages] one exact version for the browser suite; this Python project has no npm lockfile
+          npm install --no-save --no-audit --no-fund "@playwright/test@1.63.0"
           npx playwright install --with-deps chromium
           CI=1 npx playwright test -c tests/e2e/playwright.config.ts
       - if: steps.refs.outputs.changed == 'true' && !inputs.probe

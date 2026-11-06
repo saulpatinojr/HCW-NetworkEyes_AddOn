@@ -97,7 +97,9 @@ jobs:
         if: ${{ !cancelled() && steps.lint-tools.outcome == 'success' }}
         run: |
           zizmor --version
-          zizmor --offline --format=github .github/workflows
+          args=(--offline --format=github)
+          if [ -f .github/zizmor.yml ]; then args+=(--config .github/zizmor.yml); fi
+          zizmor "${args[@]}" .github/workflows
 
       - name: hadolint
         if: ${{ !cancelled() && steps.lint-tools.outcome == 'success' }}
@@ -203,7 +205,7 @@ jobs:
       - name: Playwright (exact version) and chromium
         run: |
           npm init -y >/dev/null
-          npm install --no-save --no-audit --no-fund "@playwright/test@1.63.0" # zizmor: ignore[adhoc-packages] one exact version for the browser suite; this Python project has no npm lockfile
+          npm install --no-save --no-audit --no-fund "@playwright/test@1.63.0"
           npx playwright install --with-deps chromium
       - run: CI=1 npx playwright test -c tests/e2e/playwright.config.ts
       - if: failure()
