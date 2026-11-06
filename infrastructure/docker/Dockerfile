@@ -65,6 +65,9 @@ ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PORT=8080 \
 # check of the published image is the control that names a CVE. tests/security/test_image_security_updates.py
 # pins all of this.
 ARG PUBLISH_CACHE_BUST=
+# The one pipe here already fails closed: a failing `apt-get -s upgrade` prints no "0 upgraded" line, so the
+# grep fails the step. pipefail would add a false failure instead (`grep -q` stops reading early), hence (#1575):
+# hadolint ignore=DL4006
 RUN printf 'security updates, run: %s\n' "${PUBLISH_CACHE_BUST}" \
  && apt-get -o Acquire::Retries=0 update --error-on=any \
  && apt-get -o Acquire::Retries=0 upgrade -y --no-install-recommends \

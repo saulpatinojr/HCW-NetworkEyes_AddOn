@@ -16,6 +16,8 @@ jobs:
     runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
         with: { python-version: "${{ env.PYTHON_VERSION }}" }
       - run: python -m pip install "uv==${{ env.UV_VERSION }}"
@@ -114,6 +116,8 @@ jobs:
     runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
       # The build stage exports uv.lock, so a lock or Dockerfile change is proven here, not first at a release tag.
       - name: The lab image builds and keeps its edition boundary
         run: |
@@ -155,6 +159,8 @@ jobs:
     runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
         with: { python-version: "${{ env.PYTHON_VERSION }}" }
       - run: python -m pip install "uv==${{ env.UV_VERSION }}"
@@ -174,6 +180,8 @@ jobs:
     runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
         with: { python-version: "${{ env.PYTHON_VERSION }}" }
       - run: python -m pip install "uv==${{ env.UV_VERSION }}"
@@ -184,6 +192,8 @@ jobs:
     runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
         with: { python-version: "${{ env.PYTHON_VERSION }}" }
       - run: python -m pip install "uv==${{ env.UV_VERSION }}"
@@ -193,7 +203,7 @@ jobs:
       - name: Playwright (exact version) and chromium
         run: |
           npm init -y >/dev/null
-          npm install --no-save --no-audit --no-fund "@playwright/test@1.63.0"
+          npm install --no-save --no-audit --no-fund "@playwright/test@1.63.0" # zizmor: ignore[adhoc-packages] one exact version for the browser suite; this Python project has no npm lockfile
           npx playwright install --with-deps chromium
       - run: CI=1 npx playwright test -c tests/e2e/playwright.config.ts
       - if: failure()
@@ -204,6 +214,8 @@ jobs:
     needs: [lint, test, rules-doc]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
       - run: bash scripts/package-repository.sh
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with: { name: hcw-networkeyes-addon, path: hcw-networkeyes-addon.zip, if-no-files-found: error }
