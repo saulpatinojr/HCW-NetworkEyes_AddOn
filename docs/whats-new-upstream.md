@@ -47,8 +47,11 @@ differences only a new App release could fix; `engine-v0.1.1` fixes them, this r
   (`ApplicationGateway.waf_scopes`, defaulting to empty); AZ-NET-007 v2 → **v3** and AZ-NET-025 v1 → **v2**, each
   keeping its gateway-wide finding and adding one finding per listener or path rule whose own policy is Disabled
   (007) or Enabled in Detection mode (025), keyed on that listener's or path rule's id and citing
-  `waf_policies[id=...].state` / `.mode`; `RULES_VERSION` `2026.10.0` → **`2026.11.0`**; package `0.1.2`. Rule ids,
-  severities and `applies_to` do not change.
+  `waf_policies[id=...].state` / `.mode`. The gateway-wide finding is not unconditional: a listener or path rule
+  linked to the gateway's own policy adds no second finding, and when every listener has its own policy
+  (`ApplicationGateway.listener_count`, `gateway_policy_unused`) the gateway-wide setting applies to no traffic and
+  gets no finding. `RULES_VERSION` `2026.10.0` → **`2026.11.0`**; package `0.1.2`. Rule ids, severities and
+  `applies_to` do not change.
 - **Done here now.** `tests/conftest.py`'s `MODEL_VERSIONS` gains `"network-assessment-azure-engine 0.1.2": "1.5.0"`.
   It is harmless against the 0.1.1 wheel this repository runs, and without it the bump would also fail
   `test_the_engine_is_one_this_edition_knows`.
