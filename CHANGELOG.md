@@ -6,6 +6,12 @@ All notable changes to this repository are recorded here. The format follows Kee
 
 ### Changed
 
+- **Ready for engine 0.1.2** ([HCW-NetworkEyes_App#352](https://github.com/saulpatinojr/HCW-NetworkEyes_App/issues/352)):
+  `tests/conftest.py` knows the model version of `network-assessment-azure-engine 0.1.2` (`1.5.0`), and
+  `docs/whats-new-upstream.md` records what changes upstream (WAF policies per listener and path rule; AZ-NET-007 v3,
+  AZ-NET-025 v2, `RULES_VERSION` `2026.11.0`) and the version pins the bump pull request will need. Nothing changes in
+  the image or the API until that bump.
+
 - **CI lints the workflows and the Dockerfile on every pull request** ([HCW-HybridCloudWorks#1575](https://github.com/saulpatinojr/HCW-HybridCloudWorks/issues/1575)). The required `lint` job now ends with actionlint 1.7.12, zizmor 1.31.1 (offline) and hadolint 2.14.0 (failing at warning), the same pinned releases and SHA-256 digests as the website's CI; CodeRabbit ran these until it was removed on 2026-11-06. `.github/actionlint.yaml` declares the `ubuntu-26.04` runner label, which actionlint 1.7.12 predates.
 - **The lint step's downloads retry, and its Dockerfile list cannot hide a git failure** ([HCW-HybridCloudWorks#1575](https://github.com/saulpatinojr/HCW-HybridCloudWorks/issues/1575)), matching the website's job ([HCW-HybridCloudWorks#1580](https://github.com/saulpatinojr/HCW-HybridCloudWorks/pull/1580)). The two `curl` downloads take `--retry 3 --retry-all-errors`, so a passing network error no longer fails the required job; every file is still checked against its SHA-256. The zizmor install keeps pip's own default of five retries (the website's `--retries 3` lowered it and is removed there too). hadolint's file list is written to a file before it is read, so a failing `git ls-files` stops the step instead of reading as "no Dockerfile tracked", and the pathspecs now match `Dockerfile`, `Dockerfile.*` and `*.Dockerfile` only, not any name that merely contains the word.
 

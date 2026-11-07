@@ -24,6 +24,7 @@ MODEL_VERSIONS = {
     engine.PORT_SOURCE: "lab-1.0.0",
     "cna-azure-network-engine 0.1.0": "1.4.0",
     "network-assessment-azure-engine 0.1.1": "1.4.0",
+    "network-assessment-azure-engine 0.1.2": "1.5.0",
 }
 EXPECTED_MODEL_VERSION = MODEL_VERSIONS.get(engine.SOURCE)
 
