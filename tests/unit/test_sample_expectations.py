@@ -80,7 +80,7 @@ def test_summary_is_pinned(assessment):
         s.topology.pattern == "hub_spoke" and len(s.topology.hub_vnet_ids) == 2 and len(s.topology.spoke_vnet_ids) == 2
     )
     assert (
-        s.rules_version == "2026.10.0"
+        s.rules_version == "2026.11.0"
         and s.model_version == EXPECTED_MODEL_VERSION
         and doc["model_version"] == EXPECTED_MODEL_VERSION
     )

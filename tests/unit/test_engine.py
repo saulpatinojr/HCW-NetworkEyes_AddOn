@@ -22,8 +22,8 @@ from network_assessment.ingestion import parse_csv, parse_json
 from ..conftest import EXPECTED_MODEL_VERSION, MODEL_VERSIONS, ROOT, SAMPLE_CSV, SAMPLE_JSON, SAMPLE_PORTAL_CSV
 
 # Same digest and formula as tests/unit/test_registry.py (which tests the port itself): id|version|severity|applies_to.
-REGISTRY_DIGEST = "7424a4a3ffb04be3328629889924bc31d88afbe2d576bd71f389f8d242b71339"
-EXPECTED_RULES_VERSION = "2026.10.0"
+REGISTRY_DIGEST = "dd1d1f26a4e80db1fb786ea4bd71374a449522e4fb13999855477d8a994c4add"
+EXPECTED_RULES_VERSION = "2026.11.0"
 LIVE_ONLY = {
     "AZ-NET-008",
     "AZ-NET-009",

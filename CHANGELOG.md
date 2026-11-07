@@ -6,6 +6,13 @@ All notable changes to this repository are recorded here. The format follows Kee
 
 ### Changed
 
+- **Runs engine 0.1.2** ([pull request 87](https://github.com/saulpatinojr/HCW-NetworkEyes_AddOn/pull/87),
+  [HCW-NetworkEyes_App#352](https://github.com/saulpatinojr/HCW-NetworkEyes_App/issues/352)): the lab now runs
+  `network-assessment-azure-engine 0.1.2` (was `0.1.1`). Application Gateway findings now read the WAF policy of each
+  listener and path rule, AZ-NET-007 is at version 3 and AZ-NET-025 at version 2, and `/api/health` reports rules
+  version `2026.11.0`. The tests' version pins and `docs/rules/catalog.md` moved with it, and the "Current upstream
+  state" table in `docs/whats-new-upstream.md` is brought up to date (it still described the interim port).
+
 - **Ready for engine 0.1.2** ([HCW-NetworkEyes_App#352](https://github.com/saulpatinojr/HCW-NetworkEyes_App/issues/352)):
   `tests/conftest.py` knows the model version of `network-assessment-azure-engine 0.1.2` (`1.5.0`), and
   `docs/whats-new-upstream.md` records what changes upstream (WAF policies per listener and path rule; AZ-NET-007 v3,
