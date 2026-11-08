@@ -9,6 +9,16 @@ engine now comes from the network-assessment-azure-engine wheel released by saul
 installed as a dependency under that package's own licence (its metadata declares Apache-2.0); no engine source is
 distributed in this repository.
 
+Bundled engine: network-assessment-azure-engine. The container image of this lab edition installs that wheel, so the
+image is redistributed under two licences, and its label org.opencontainers.image.licenses says
+"MIT AND Apache-2.0": this repository's code is MIT, the engine is Apache-2.0.
+  Copyright: Copyright 2026 Hybrid Cloud Works (the copyright line of the App's LICENSE and NOTICE).
+  Licence:   Apache License, Version 2.0. The full text and the engine's NOTICE are in this repository under
+             third_party/network-assessment-azure-engine/ (LICENSE is a byte-for-byte copy of the App's), and in the
+             image under /usr/share/licenses/network-assessment-azure-engine/. This repository's own LICENSE and this
+             NOTICE are in the image under /usr/share/licenses/hcw-networkeyes-addon/.
+  Source:    https://github.com/saulpatinojr/HCW-NetworkEyes_App (packages/network-assessment-azure-engine).
+
 [VERIFY] [REVIEW REQUIRED] Compliance references. The framework mappings shipped with the engine wheel and shown in
 docs/rules/catalog.md (Azure Well-Architected Framework, Azure Security Benchmark, CIS Microsoft Azure Foundations
 Benchmark, NIST CSF, PCI-DSS 4.0, ISO 27001:2022, HIPAA §164.312, FedRAMP Moderate, CISA ZTMM v2, FinOps Framework) are compliance claims

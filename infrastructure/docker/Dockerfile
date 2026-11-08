@@ -41,10 +41,12 @@ PY
 FROM python:3.15.2-slim-trixie@sha256:e97b88e416c3c01eb427b21fd8cd3ebf006e6ee38afcfcc3cae1c54ee2ab0a75 AS lab
 ARG EDITION=lab
 RUN test "$EDITION" = "lab"
-# The licence of this repository's LICENSE file, as an SPDX id. publish-images.yml sets the other labels at push time;
-# this one never changes between builds, so it lives with the image and every build carries it. ci.yml fails when the
-# built image lacks it or LICENSE stops being the MIT License.
-LABEL org.opencontainers.image.licenses="MIT"
+# The licences of what the image carries, as an SPDX expression: this repository's own code is MIT (LICENSE), and the
+# engine wheel installed beside it is Apache-2.0 (its metadata says so; third_party/network-assessment-azure-engine/).
+# publish-images.yml sets the other labels at push time; this one never changes between builds, so it lives with the
+# image and every build carries it. ci.yml and publish-images.yml fail when the built image carries another value, and
+# tests/security/test_image_licences.py when this line, LICENSE or the bundled licence files disagree.
+LABEL org.opencontainers.image.licenses="MIT AND Apache-2.0"
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PORT=8080 \
     NA_STATIC_DIR=/app/web NA_SAMPLES_DIR=/app/samples NA_FRAME_ANCESTORS="'none'" NA_TELEMETRY=0
 # Debian's security updates, in a RUN of their own so that a failure fails the build. The base is pinned by digest,
@@ -82,6 +84,13 @@ RUN { python -m pip uninstall -y pip setuptools wheel >/dev/null 2>&1 || true; }
            /usr/local/bin/pip* /usr/local/bin/wheel /root/.cache \
  && groupadd --gid 10001 app && useradd --uid 10001 --gid 10001 --no-create-home --shell /usr/sbin/nologin app
 COPY --from=build /install /usr/local
+# The licence texts travel with the image (MIT asks for its notice with every copy; Apache-2.0 section 4 for the
+# licence and the NOTICE). Root-owned and read-only to uid 10001. third_party/ holds one folder per bundled component,
+# so the engine's pair lands in /usr/share/licenses/network-assessment-azure-engine/ (the folder is copied whole so
+# that the boundary test, which allows no cloud name on a code line of this file, keeps holding). The engine's pair
+# stays even once a wheel that ships its own (engine 0.1.3 and later, in its .dist-info/licenses/) is adopted.
+COPY LICENSE NOTICE /usr/share/licenses/hcw-networkeyes-addon/
+COPY third_party/ /usr/share/licenses/
 COPY --chown=10001:10001 web /app/web
 COPY --chown=10001:10001 samples /app/samples
 WORKDIR /app
