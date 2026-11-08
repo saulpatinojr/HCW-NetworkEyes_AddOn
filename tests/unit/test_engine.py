@@ -13,6 +13,7 @@ import importlib
 import re
 import subprocess
 import sys
+import types
 from pathlib import Path
 from urllib.parse import urlsplit
 
@@ -103,6 +104,14 @@ def test_without_the_wheel_the_lab_refuses_to_start(monkeypatch):
     assert isinstance(caught.value, ImportError)
     for _, distribution in engine.WHEEL_PACKAGES:
         assert distribution in str(caught.value)
+
+
+def test_a_wheel_too_old_for_this_edition_is_refused_at_startup():
+    """An older wheel (the legacy cna-azure-network-engine name, or anything before 0.1.4) lacks
+    HEDGED_WORDING_REASON: startup must stop with EngineNotInstalled, not a bare AttributeError."""
+    old_rules = types.ModuleType("cna_azure_network_engine.rules")
+    with pytest.raises(engine.EngineNotInstalled, match=r"HEDGED_WORDING_REASON.*0\.1\.4.*ENGINE_REF"):
+        engine._required(old_rules, "HEDGED_WORDING_REASON", "network-assessment-azure-engine 0.1.4")
 
 
 def test_the_application_does_not_start_without_the_wheel():

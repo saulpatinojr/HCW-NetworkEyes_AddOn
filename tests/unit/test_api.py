@@ -205,6 +205,15 @@ def test_a_resource_name_with_a_hedge_word_does_not_stop_the_upload(client, samp
     assert (h["findingsCount"], h["unknownRules"]) == (p["findingsCount"], p["unknownRules"])
     assert h["findingsCount"] > 0
 
+    def rule_ids(created):
+        body = created.json()
+        got = client.get(f"/api/assessments/{body['assessmentId']}", headers={"x-owner-token": body["ownerToken"]})
+        assert got.status_code == 200, got.text
+        result = got.json()["assessment"]
+        return sorted(f["ruleId"] for f in result["findings"]), sorted(u["ruleId"] for u in result["unknowns"])
+
+    assert rule_ids(hedged) == rule_ids(plain), "the same rules are reported and the same are unknown"
+
 
 @pytest.mark.parametrize(
     "content,headers,status,code",
