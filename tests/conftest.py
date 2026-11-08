@@ -25,6 +25,7 @@ MODEL_VERSIONS = {
     "network-assessment-azure-engine 0.1.1": "1.4.0",
     "network-assessment-azure-engine 0.1.2": "1.5.0",
     "network-assessment-azure-engine 0.1.3": "1.5.0",
+    "network-assessment-azure-engine 0.1.4": "1.5.0",
 }
 EXPECTED_MODEL_VERSION = MODEL_VERSIONS.get(engine.SOURCE)
 
