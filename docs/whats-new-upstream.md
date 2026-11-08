@@ -40,8 +40,8 @@ Every engine change from here on is made in the App, released, and arrives throu
   to `0.1.5` and makes three changes:
   1. When a rule is registered, its remediation and the note on each framework mapping (the `alignment` field) are now
      checked for hedge words, as the title and description already were. Two notes failed and are reworded to state
-     what was observed: `AZ-NET-009` "Zero rule hits suggests traffic bypasses the firewall" becomes "Zero rule hits:
-     no traffic passes through the firewall", and `AZ-NET-019` "App Gateway capacity degradation indicates resilience
+     what was observed: `AZ-NET-009` "Zero rule hits suggests traffic bypasses the firewall" becomes "Zero rule hits or
+     zero data processed in 24 hours was observed on the firewall" (the rule fires on either), and `AZ-NET-019` "App Gateway capacity degradation indicates resilience
      gap" becomes "App Gateway backend latency or failure rate above the threshold is a resilience gap". **Both rules
      move to version 2, and `RULES_VERSION` moves from `2026.11.0` to `2026.11.1`.** What the rules find does not
      change.
@@ -51,6 +51,10 @@ Every engine change from here on is made in the App, released, and arrives throu
      customer values.
   3. A test upstream fails when a rule's own text glues a hedge word to a customer value (`f"{name}-may"`), which a
      customer identifier could otherwise excuse. Nothing here changes for it.
+  4. Evaluation also checks the remediation and framework notes a rule sets on a finding itself (a rule's own
+     `recommendation`, or a finding it builds with its own mappings); a hedged one is withheld into `unknowns[]`.
+     No current text hedges, so the samples are not expected to gain an unknown (the bump's
+     `test_samples_have_no_finding_withheld_for_hedged_wording` would say so).
 - **What this repository did meanwhile.** `tests/conftest.py` knows `network-assessment-azure-engine 0.1.5`
   (model `1.5.0`, unchanged) in `MODEL_VERSIONS`; the row is unused until the bump.
 - **What the bump to 0.1.5 needs.** Once the owner pushes the `engine-v0.1.5` tag on the App, `core-update.yml` opens
