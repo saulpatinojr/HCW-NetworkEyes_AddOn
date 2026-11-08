@@ -29,23 +29,18 @@ def test_manifest_version_matches_pyproject():
     assert __version__ == manifest["version"]
 
 
-def test_provenance_headers_match_the_table():
-    """Every ported module starts with the provenance header and is listed in PROVENANCE.md."""
-    prov = (ROOT / "PROVENANCE.md").read_text(encoding="utf-8")
-    ported = [
-        "src/network_assessment/model/enforcer.py",
-        "src/network_assessment/model/findings.py",
-        "src/network_assessment/model/topology.py",
-        "src/network_assessment/classify/topology.py",
-        "src/network_assessment/rules/taxonomy.py",
-        "src/network_assessment/rules/frameworks.py",
-        "src/network_assessment/rules/azure_net.py",
-        "src/network_assessment/rules/azure_bcdr.py",
-        "src/network_assessment/rules/azure_cost.py",
-    ]
-    for rel in ported:
-        lines = (ROOT / rel).read_text(encoding="utf-8").splitlines()
-        header = " ".join(line[1:].strip() for line in lines[:4] if line.startswith("#"))
-        assert lines[0].startswith("# Ported from saulpatinojr/HCW-NetworkEyes_App "), rel
-        assert "at 5d3b914; changes:" in header, rel
-        assert f"`{rel}`" in prov, rel
+def test_the_interim_port_stays_deleted():
+    """The engine is the wheel only (ADR-0006): the ported packages, PROVENANCE.md and the lab's own normalizer are
+    gone, and no source, test or script imports them again."""
+    pkg = ROOT / "src" / "network_assessment"
+    for gone in ("model", "rules", "classify"):
+        assert not (pkg / gone).exists(), f"src/network_assessment/{gone} is back; engine changes go upstream"
+    assert not (pkg / "ingestion" / "normalize.py").exists()
+    assert not (ROOT / "PROVENANCE.md").exists()
+    banned = tuple(f"network_assessment.{m}" for m in ("model", "rules", "classify", "ingestion.normalize"))
+    for folder in ("src", "tests", "scripts"):
+        for path in (ROOT / folder).rglob("*.py"):
+            text = path.read_text(encoding="utf-8")
+            for name in banned:
+                for prefix in ("import ", "from "):
+                    assert f"{prefix}{name}" not in text, f"{path.relative_to(ROOT)} imports {name}"

@@ -10,10 +10,10 @@
 - [ ] `npx playwright test -c tests/e2e/playwright.config.ts` — result, or CI run link:
 - [ ] Checks not run and why:
 
-## Rules (if `src/network_assessment/rules/**` or `model/**` changed)
+## Rules (if the engine pin, `src/network_assessment/engine.py` or the rule pins changed)
 
-- [ ] The change is recorded in `PROVENANCE.md` (ported code changes only through its entries until the Core's wheel exists, ADR-0001)
-- [ ] Rule ids are never reused; a changed rule bumps its `version`; `RULES_VERSION` and the pinned digest in `tests/unit/test_registry.py` move together
+- [ ] No engine code is added here: rules, model, classifier and normalizer change upstream and arrive as a wheel (ADR-0006)
+- [ ] Rule ids are never reused; a changed rule bumps its `version`; `RULES_VERSION` and the pinned digest in `tests/unit/test_engine.py` move together
 - [ ] Titles, facts and remediation stay hedge-free (the enforcer gates them); `learnUrl` stays `[VERIFY]` until the owner confirms it
 - [ ] `docs/rules/catalog.md` regenerated (`make rules-doc`); `tests/unit/test_sample_expectations.py` re-pinned if the sample's results changed
 

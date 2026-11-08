@@ -4,8 +4,8 @@
 #   build  exports the hash-pinned third-party set from uv.lock (`uv export --frozen`, with the uv CI uses, by
 #          digest; nothing resolves, and uv never reaches the lab stage), installs it into /install with
 #          pip --require-hashes --no-deps (nothing resolves beyond the lock), then places the lab application
-#          (which carries the ported engine, ADR-0001) beside them as a source tree, so no build backend enters
-#          the image.
+#          (the engine itself is the pinned wheel installed with the rest, ADR-0006) beside them as a source tree,
+#          so no build backend enters the image.
 #   lab    the runtime: Debian security updates (retries off, per-run cache bust), /install copied in, pip/ensurepip/setuptools removed, uid 10001, read-only
 #          friendly (writes nothing), HEALTHCHECK on /api/health through urllib, CMD python -m network_assessment.
 #

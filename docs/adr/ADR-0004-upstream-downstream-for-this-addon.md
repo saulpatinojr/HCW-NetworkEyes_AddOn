@@ -6,6 +6,12 @@
 > "the Core" below as the App. The engine wheel is a GitHub Release asset of each `engine-v*` tag there, pinned here by
 > URL and sha256 (`core-update.yml`), so no PyPI step stands between a release and its adoption.
 
+> **Note 2026-11-08 ([ADR-0006](ADR-0006-the-engine-wheel-is-the-only-engine.md)).** The interim port is deleted and
+> the wheel is the only engine, so "Interim: the ported engine" and the `PROVENANCE.md` clause below describe history.
+> The hash pin of rule ids, severities and `applies_to` now lives in `tests/unit/test_engine.py` (it was
+> `tests/unit/test_registry.py`), and the topology model marker each release must report is `MODEL_VERSIONS` in
+> `tests/conftest.py` (`lab-1.0.0` left with the port).
+
 Status: accepted, 2026-10-10. Scope: `HCW-NetworkEyes_AddOn` (downstream) and `saulpatinojr/HCW-NetworkEyes_App`
 (upstream). Applies the program's ADR-0028 model (recorded in `HCW-AzMigrateOrchestrator_App`, copied into the
 sibling Python AddOn) to this pair.

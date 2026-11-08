@@ -106,20 +106,20 @@ def test_no_azure_endpoints_or_credential_symbols_in_code_or_pane():
 
 
 def _engine_wheel():
-    """(import name, distribution, package directory) of the installed engine wheel, or None while the port runs."""
+    """(import name, distribution, package directory) of the installed engine wheel. The wheel is the only engine
+    (ADR-0006), so a missing wheel fails these security tests instead of skipping them."""
     from network_assessment.engine import WHEEL_PACKAGES
 
     for module, distribution in WHEEL_PACKAGES:
         spec = importlib.util.find_spec(module)
         if spec is not None and spec.submodule_search_locations:
             return module, distribution, Path(next(iter(spec.submodule_search_locations)))
-    return None
+    pytest.fail(f"the engine wheel is not installed (expected one of {WHEEL_PACKAGES})")
 
 
 # The engine wheel's live discovery, behind its [azure] extra. This edition never imports it (the runtime test below
 # proves it), so it is the one part of the engine the import, endpoint and credential scans do not read.
 ENGINE_ALLOWED_SUBPACKAGES = ("discovery",)
-needs_wheel = pytest.mark.skipif(_engine_wheel() is None, reason="the engine wheel is not installed (the port runs)")
 
 
 def _engine_files(suffixes):
@@ -130,7 +130,6 @@ def _engine_files(suffixes):
             yield path
 
 
-@needs_wheel
 def test_the_engine_wheel_imports_no_cloud_sdk_outside_its_discovery_extra():
     files = list(_engine_files({".py"}))
     assert files
@@ -147,7 +146,6 @@ def test_the_engine_wheel_imports_no_cloud_sdk_outside_its_discovery_extra():
                 assert ".discovery" not in f".{name}", f"{path} imports the discovery extra ({name})"
 
 
-@needs_wheel
 def test_the_engine_wheel_names_no_azure_endpoint_or_credential_outside_its_discovery_extra():
     for path in _engine_files({".py", ".json", ".txt", ".toml", ".cfg"}):
         text = path.read_text(encoding="utf-8", errors="ignore")
@@ -155,7 +153,6 @@ def test_the_engine_wheel_names_no_azure_endpoint_or_credential_outside_its_disc
             assert needle not in text, f"{path} references {needle}"
 
 
-@needs_wheel
 def test_the_engine_wheel_installs_only_its_own_package():
     module, distribution, _ = _engine_wheel()
     dist = importlib.metadata.distribution(distribution)

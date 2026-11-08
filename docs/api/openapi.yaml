@@ -216,12 +216,13 @@ components:
       type: object
       description: >-
         Which assessment engine answers (additive; not forwarded by the website's status proxy). `source` is the released
-        engine wheel's distribution name, or `interim-port` for the port of the App's engine at commit 5d3b914; `version`
-        is the wheel's version (it equals the ENGINE_REF line of pyproject.toml), or null for the port.
+        engine wheel's distribution name and `version` its version (it equals the ENGINE_REF line of pyproject.toml).
+        The wheel is the only engine since the interim port was deleted (ADR-0006), so `interim-port` and a null version
+        no longer occur.
       required: [source, version]
       properties:
-        source: { type: string, examples: [interim-port, cna-azure-network-engine, network-assessment-azure-engine] }
-        version: { type: [string, "null"] }
+        source: { type: string, examples: [network-assessment-azure-engine, cna-azure-network-engine] }
+        version: { type: string, examples: ["0.1.2"] }
     RulesResponse:
       type: object
       properties:

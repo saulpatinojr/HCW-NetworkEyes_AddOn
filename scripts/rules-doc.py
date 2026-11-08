@@ -19,17 +19,8 @@ sys.path.insert(0, str(ROOT / "src"))
 from network_assessment import engine  # noqa: E402
 from network_assessment.engine import RULES_VERSION, TOPOLOGY_MODEL_VERSION, assert_text_is_hedge_free  # noqa: E402
 
-PORT_PROVENANCE = (
-    "Provenance: the rules are ported from `saulpatinojr/HCW-NetworkEyes_App` at `5d3b914` (Engine A "
-    "`cna/ai_engine/analysis_engine.py`, Engine B `apps/cna-api/main.py`, `bcdr_signals.py`, "
-    "`finops_signals.py`); `PROVENANCE.md` lists every change. Titles, facts and remediation are hedge-free "
-    "(the observed-state enforcer gates them)."
-)
-
 
 def _provenance() -> str:
-    if not engine.is_wheel():
-        return PORT_PROVENANCE
     return (
         f"Provenance: the rules come from the engine wheel `{engine.SOURCE}`, released by "
         "`saulpatinojr/HCW-NetworkEyes_App` and pinned in `pyproject.toml` (the `ENGINE_REF` line). Titles, facts "
