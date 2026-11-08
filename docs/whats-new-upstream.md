@@ -32,6 +32,41 @@ Every engine change from here on is made in the App, released, and arrives throu
 
 ## Entries, newest first
 
+### 2026-11-08: engine 0.1.5 is prepared upstream (not released yet): rule notes are checked for hedge words
+
+- **What changes upstream.** [HCW-NetworkEyes_App#376](https://github.com/saulpatinojr/HCW-NetworkEyes_App/pull/376)
+  (open when this entry was written; issue
+  [HCW-NetworkEyes_App#364](https://github.com/saulpatinojr/HCW-NetworkEyes_App/issues/364)) moves the package version
+  to `0.1.5` and makes three changes:
+  1. When a rule is registered, its remediation and the note on each framework mapping (the `alignment` field) are now
+     checked for hedge words, as the title and description already were. Two notes failed and are reworded to state
+     what was observed: `AZ-NET-009` "Zero rule hits suggests traffic bypasses the firewall" becomes "Zero rule hits:
+     no traffic passes through the firewall", and `AZ-NET-019` "App Gateway capacity degradation indicates resilience
+     gap" becomes "App Gateway backend latency or failure rate above the threshold is a resilience gap". **Both rules
+     move to version 2, and `RULES_VERSION` moves from `2026.11.0` to `2026.11.1`.** What the rules find does not
+     change.
+  2. `ObservedStateEnforcer.scan_text` and `validate`, and the registry's `evaluate_subscription`, raise `TypeError`
+     when the customer identifiers are passed as one plain string instead of a collection (a string is a collection
+     of its characters). This repository passes none: its only call, in `src/network_assessment/engine.py`, passes no
+     customer values.
+  3. A test upstream fails when a rule's own text glues a hedge word to a customer value (`f"{name}-may"`), which a
+     customer identifier could otherwise excuse. Nothing here changes for it.
+- **What this repository did meanwhile.** `tests/conftest.py` knows `network-assessment-azure-engine 0.1.5`
+  (model `1.5.0`, unchanged) in `MODEL_VERSIONS`; the row is unused until the bump.
+- **What the bump to 0.1.5 needs.** Once the owner pushes the `engine-v0.1.5` tag on the App, `core-update.yml` opens
+  the bump. Besides the version pins (`ENGINE_REF` and the wheel URL in `pyproject.toml`, the sha256 in `uv.lock`),
+  unlike the last three releases the rule pins move:
+  - `tests/unit/test_engine.py`: `EXPECTED_RULES_VERSION` becomes `2026.11.1`, and `REGISTRY_DIGEST` becomes
+    `715d1fddb5359262da368da57518a4c51ddb6057aeb86029ebadb1b1aaaffed1`. That value was computed upstream with this
+    repository's own formula (`id|version|severity|applies_to`, in id order) on the App branch; the same formula on
+    the App's current `main` gives today's pin `dd1d1f26…4c4add`. Check it against the released wheel; do not copy it
+    blindly.
+  - `docs/rules/catalog.md` (`make rules-doc`): the version column of the `AZ-NET-009` and `AZ-NET-019` rows goes from
+    `1` to `2`, and the provenance line names `0.1.5`. The catalog does not print the framework notes, so no other line
+    is expected to move.
+  - `GET /api/rules` and the `rules.json` in each bundle carry the reworded notes (they serialise every framework
+    mapping). Nothing in this repository is known to pin those notes; the suite will say if something does.
+
 ### 2026-11-08: engine 0.1.4 adopted; a resource name with a hedge word no longer stops the upload
 
 - **Released.** `engine-v0.1.4` was published on 2026-11-08
