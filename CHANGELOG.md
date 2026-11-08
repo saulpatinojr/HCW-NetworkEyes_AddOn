@@ -12,6 +12,8 @@ All notable changes to this repository are recorded here. The format follows Kee
 
 ### Changed
 
+- **Runs engine 0.1.3** ([pull request 91](https://github.com/saulpatinojr/HCW-NetworkEyes_AddOn/pull/91)): `network-assessment-azure-engine 0.1.3` (was `0.1.2`). Its only change is that the wheel ships its own `LICENSE` and `NOTICE`; rules, model and catalog are unchanged. The licence copies bundled in the image equal the wheel's byte for byte.
+
 - **The engine wheel is the only engine; the interim port is deleted** (ADR-0006). The copy of the App's engine this
   repository carried until the wheel existed (`src/network_assessment/{model,rules,classify}`), its tests, the lab's
   own normalizer (`src/network_assessment/ingestion/normalize.py`) and `PROVENANCE.md` are removed, about 4,800
