@@ -9,6 +9,7 @@ the lab refuses to start without the wheel instead of falling back to anything.
 """
 
 import hashlib
+import importlib
 import re
 import subprocess
 import sys
@@ -169,4 +170,26 @@ def test_findings_cite_the_export_and_state_facts_only(path):
     for f in a.findings:
         assert f.observed_state.evidence_ref.startswith("export:"), (f.id, f.observed_state.evidence_ref)
         assert not enforcer.scan_text(f.observed_state.fact), f.id
-        assert f.title and f.description and f.remediation, f.id
+        for label in ("title", "description", "remediation"):
+            engine.assert_text_is_hedge_free(f"{f.id}.{label}", getattr(f, label))
+
+
+def test_evaluation_refuses_a_finding_whose_fact_hedges(monkeypatch):
+    """The hedge-free gate at evaluation (CLAUDE.md, never weaken): the wheel must refuse a hedged finding, not
+    report it. Every finding the rules build passes through the registry's two finishing steps; this makes them
+    hedge the fact, so a wheel that stopped validating findings fails here."""
+    registry = importlib.import_module(f"{engine._pkg.__name__}.rules.registry")
+
+    def hedged(step):
+        def wrapper(*args, **kwargs):
+            finding = step(*args, **kwargs)
+            state = finding.observed_state.model_copy(update={"fact": "The gateway may be exposed."})
+            return finding.model_copy(update={"observed_state": state})
+
+        return wrapper
+
+    for name in ("_complete_finding", "_finding_from_observation"):
+        monkeypatch.setattr(registry, name, hedged(getattr(registry, name)))
+    parsed = _parse(SAMPLES[0])
+    with pytest.raises(engine.ObservedStateViolation):
+        assess(engine.normalize(parsed), source_format="test", row_count=parsed.row_count)

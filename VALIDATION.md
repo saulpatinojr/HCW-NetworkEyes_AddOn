@@ -37,7 +37,7 @@ on 2026-10-26 to the website's newer digest `sha256:fbecd461...`).
 | Trivy scan, SBOM, provenance, attestation | **no**, CI only | as above |
 | Human verification against the real siteverify endpoint | **no** | mocked in `tests/unit/test_api.py` and `test_security_modules.py` (success, wrong action, wrong hostname, refusal, unavailable); the real call needs the owner's widget and secret (`docs/deployment/lab-host.md`) |
 | Lab-host deployment, Caddy route, website pane | **no** | owner steps and the website PR (Phase 6); the catalogue row stays `coming` until the digest exists |
-| `core-update.yml` against a Core release | **no** | inert: the App published `cna-azure-network-engine` as `engine-v0.1.0` on 2026-10-12, but `pyproject.toml` has no `ENGINE_REF` line yet, so the comparison step exits cleanly (adoption steps: `docs/whats-new-upstream.md`) |
+| `core-update.yml` against a Core release | **yes**, CI | ran for real since this table was first written: it opened the bump pull requests that adopted `engine-v0.1.1` ([#78](https://github.com/saulpatinojr/HCW-NetworkEyes_AddOn/pull/78)) and `engine-v0.1.2` ([#87](https://github.com/saulpatinojr/HCW-NetworkEyes_AddOn/pull/87)); `pyproject.toml` carries `# ENGINE_REF 0.1.2` (row updated 2026-11-08) |
 | CodeQL, gitleaks, dependency-review | **no**, CI only | `security.yml` |
 
 ## Run 2026-11-08 (the interim port is deleted; ADR-0006)
