@@ -40,6 +40,23 @@ on 2026-10-26 to the website's newer digest `sha256:fbecd461...`).
 | `core-update.yml` against a Core release | **yes**, CI | ran for real since this table was first written: it opened the bump pull requests that adopted `engine-v0.1.1` ([#78](https://github.com/saulpatinojr/HCW-NetworkEyes_AddOn/pull/78)) and `engine-v0.1.2` ([#87](https://github.com/saulpatinojr/HCW-NetworkEyes_AddOn/pull/87)); `pyproject.toml` carries `# ENGINE_REF 0.1.2` (row updated 2026-11-08) |
 | CodeQL, gitleaks, dependency-review | **no**, CI only | `security.yml` |
 
+## Run 2026-11-08 (the image states MIT AND Apache-2.0 and carries both licence texts)
+
+Toolchain: the same scratch environment as the run below (CPython **3.15.0b4**, filled from `uv export --frozen` plus
+the `engine-v0.1.2` wheel; `uv sync` refuses 3.15.0b4 because the project requires `>=3.15.1`); tests run with
+`PYTHONPATH=src`. ruff 0.17.3, pytest 9.1.1. Lint tools from PyPI in a separate scratch environment: actionlint 1.7.12
+(the version `ci.yml` pins), hadolint 2.15.1 and zizmor 1.32.0 (`ci.yml` pins 2.14.0 and 1.31.1).
+
+| Check | Executed here | Result |
+|---|---|---|
+| `ruff check .` and `ruff format --check .` | yes | clean (72 files) |
+| `python scripts/rules-doc.py --check` | yes | `docs/rules/catalog.md` in sync (422 lines) |
+| `pytest -q --cov=src --cov-fail-under=85` | yes | 408 passed; coverage 97.06%. Without the new `tests/security/test_image_licences.py` (6 tests) the suite is 402, the count `main` had before this change |
+| `actionlint` (all workflows) | yes | exit 0, no findings |
+| `hadolint infrastructure/docker/Dockerfile` | yes | exit 0, no findings |
+| `zizmor --offline .github/workflows` | yes | no findings (2 ignored, 39 suppressed, as configured) |
+| Docker image build, the `image` job's label and licence-file checks, the publish dry run, Playwright e2e | **no**, CI only | no Docker daemon here; the pull request's `image` job builds the image and runs the new checks |
+
 ## Run 2026-11-08 (the interim port is deleted; ADR-0006)
 
 Toolchain: CPython **3.15.0b4** (the only 3.15 `uv python install 3.15` offered here; the project requires

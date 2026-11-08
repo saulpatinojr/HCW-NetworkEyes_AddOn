@@ -156,13 +156,16 @@ jobs:
           have="$(docker run --rm --entrypoint python addon:ci --version 2>&1 | tr -d '\r')"
           [ "$have" = "Python ${want}" ] || { echo "::error file=infrastructure/docker/versions.env::the built image runs '${have}', but BASE_PYTHON_VERSION is ${want}"; exit 1; }
           echo "image python: ${have} (BASE_PYTHON_VERSION=${want})"
-      - name: The image states its open-source licence (org.opencontainers.image.licenses is the SPDX id of LICENSE)
+      - name: The image states its open-source licences (MIT for this code, Apache-2.0 for the engine) and carries their texts
         run: |
           set -euo pipefail
           head -n 1 LICENSE | tr -d '\r' | grep -qx 'MIT License' || { echo '::error file=LICENSE::LICENSE is not the MIT License; change the licence label in infrastructure/docker/Dockerfile, the two checks in ci.yml and publish-images.yml, and NOTICE and README with it'; exit 1; }
           have="$(docker image inspect --format '{{ index .Config.Labels "org.opencontainers.image.licenses" }}' addon:ci)"
-          [ "$have" = "MIT" ] || { echo "::error file=infrastructure/docker/Dockerfile::org.opencontainers.image.licenses is '${have}' in the built image; it must be MIT (the SPDX id of LICENSE)"; exit 1; }
-          echo "image licence label: ${have}"
+          [ "$have" = "MIT AND Apache-2.0" ] || { echo "::error file=infrastructure/docker/Dockerfile::org.opencontainers.image.licenses is '${have}' in the built image; it must be 'MIT AND Apache-2.0' (this code is MIT, the engine wheel Apache-2.0)"; exit 1; }
+          for f in hcw-networkeyes-addon/LICENSE hcw-networkeyes-addon/NOTICE network-assessment-azure-engine/LICENSE network-assessment-azure-engine/NOTICE; do
+            docker run --rm --entrypoint test addon:ci -s "/usr/share/licenses/${f}" || { echo "::error file=infrastructure/docker/Dockerfile::/usr/share/licenses/${f} is missing or empty in the built image"; exit 1; }
+          done
+          echo "image licence label: ${have}; licence texts under /usr/share/licenses/"
   test:
     runs-on: ubuntu-26.04
     steps:

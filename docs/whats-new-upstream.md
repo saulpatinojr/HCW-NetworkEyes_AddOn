@@ -33,6 +33,23 @@ Every engine change from here on is made in the App, released, and arrives throu
 
 ## Entries, newest first
 
+### 2026-11-08: engine 0.1.3 is prepared upstream (not released yet): the wheel carries its licence files
+
+- **What changed upstream.** [HCW-NetworkEyes_App#360](https://github.com/saulpatinojr/HCW-NetworkEyes_App/pull/360)
+  (open when this entry was written) makes the engine wheel ship `LICENSE` (Apache-2.0) and `NOTICE` under its
+  `.dist-info/licenses/` folder, with a `License-File:` line for each in its `METADATA`, and moves the package version
+  to `0.1.3`. The released `engine-v0.1.2` wheel declares `License-Expression: Apache-2.0` but carries neither file.
+  No rule, model or behaviour changes: `RULES_VERSION` stays `2026.11.0` and `TOPOLOGY_MODEL_VERSION` stays `1.5.0`.
+- **What this repository did meanwhile.** It does not wait for the release: the image label is now
+  `MIT AND Apache-2.0`, and the engine's licence text and NOTICE are bundled from `third_party/network-assessment-azure-engine/`
+  into `/usr/share/licenses/network-assessment-azure-engine/` in the image (see `NOTICE` and `CHANGELOG.md`).
+- **What the bump to 0.1.3 needs.** Once the owner pushes the `engine-v0.1.3` tag on the App, `core-update.yml` opens the
+  bump. Expected to need only the version pins: `ENGINE_REF` and the wheel URL in `pyproject.toml`, the sha256 in
+  `uv.lock`; the registry digest, `RULES_VERSION` and `MODEL_VERSIONS` should not move (check them, do not assume).
+  Keep `third_party/network-assessment-azure-engine/` after the bump; it costs two small files and the label check
+  still reads it. If the App changes the package `NOTICE` before releasing, copy the released one over the bundled
+  copy in the same bump.
+
 ### 2026-11-08: the interim port is deleted; the wheel is the only engine
 
 - **What changed here.** Not an upstream change: this repository finished the plan it recorded when it first ported
