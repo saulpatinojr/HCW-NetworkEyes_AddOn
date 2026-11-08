@@ -37,7 +37,7 @@ Every engine change from here on is made in the App, released, and arrives throu
 - **What changes upstream.** [HCW-NetworkEyes_App#376](https://github.com/saulpatinojr/HCW-NetworkEyes_App/pull/376)
   (open when this entry was written; issue
   [HCW-NetworkEyes_App#364](https://github.com/saulpatinojr/HCW-NetworkEyes_App/issues/364)) moves the package version
-  to `0.1.5` and makes three changes:
+  to `0.1.5` and makes four changes:
   1. When a rule is registered, its remediation and the note on each framework mapping (the `alignment` field) are now
      checked for hedge words, as the title and description already were. Two notes failed and are reworded to state
      what was observed: `AZ-NET-009` "Zero rule hits suggests traffic bypasses the firewall" becomes "Zero rule hits or
