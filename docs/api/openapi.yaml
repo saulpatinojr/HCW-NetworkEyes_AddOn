@@ -114,7 +114,7 @@ paths:
     parameters:
       - { $ref: "#/components/parameters/Id" }
       - { name: x-owner-token, in: header, required: false, schema: { type: string } }
-      - { name: x-bundle-token, in: header, required: false, schema: { type: string, description: Single-use 10-minute token issued by POST /api/assessments/{id}/workspace } }
+      - { name: x-bundle-token, in: header, required: false, schema: { type: string, description: "Single-use 10-minute token issued by POST /api/assessments/{id}/workspace" } }
     get:
       summary: README.md, report.md, findings.json, topology.json, summary.json, rules.json and NOT-FOR-PRODUCTION.md zipped with STORE (attachment)
       responses:
