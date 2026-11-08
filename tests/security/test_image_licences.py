@@ -65,3 +65,14 @@ def test_both_workflows_check_the_built_image_for_the_expression():
         text = (ROOT / ".github" / "workflows" / name).read_text(encoding="utf-8")
         assert f'= "{EXPRESSION}"' in text, name
         assert "/usr/share/licenses/" in text and "network-assessment-azure-engine/LICENSE" in text, name
+
+
+def test_the_bundled_engine_licence_files_match_the_installed_wheel_when_it_ships_them():
+    """From engine 0.1.3 the wheel ships LICENSE and NOTICE in its .dist-info/licenses/. Then the copies bundled here
+    must be the same bytes, so a NOTICE changed upstream cannot drift from the one in the image unnoticed. Older wheels
+    ship neither file, and there is nothing to compare."""
+    dist = importlib.metadata.distribution("network-assessment-azure-engine")
+    shipped = {Path(str(f)).name: f for f in dist.files or [] if Path(str(f)).parent.name == "licenses"}
+    for name in ("LICENSE", "NOTICE"):
+        if name in shipped:
+            assert dist.locate_file(shipped[name]).read_bytes() == (ENGINE_LICENCES / name).read_bytes(), name

@@ -45,7 +45,9 @@ RUN test "$EDITION" = "lab"
 # engine wheel installed beside it is Apache-2.0 (its metadata says so; third_party/network-assessment-azure-engine/).
 # publish-images.yml sets the other labels at push time; this one never changes between builds, so it lives with the
 # image and every build carries it. ci.yml and publish-images.yml fail when the built image carries another value, and
-# tests/security/test_image_licences.py when this line, LICENSE or the bundled licence files disagree.
+# tests/security/test_image_licences.py when this line, LICENSE or the bundled licence files disagree. The label covers
+# the Hybrid Cloud Works code only (this repository MIT, the engine Apache-2.0); the base image, Python and the other
+# installed packages keep their own licences, with their texts in .dist-info and /usr/share/doc.
 LABEL org.opencontainers.image.licenses="MIT AND Apache-2.0"
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PORT=8080 \
     NA_STATIC_DIR=/app/web NA_SAMPLES_DIR=/app/samples NA_FRAME_ANCESTORS="'none'" NA_TELEMETRY=0

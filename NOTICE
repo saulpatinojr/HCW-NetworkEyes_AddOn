@@ -9,9 +9,10 @@ engine now comes from the network-assessment-azure-engine wheel released by saul
 installed as a dependency under that package's own licence (its metadata declares Apache-2.0); no engine source is
 distributed in this repository.
 
-Bundled engine: network-assessment-azure-engine. The container image of this lab edition installs that wheel, so the
-image is redistributed under two licences, and its label org.opencontainers.image.licenses says
-"MIT AND Apache-2.0": this repository's code is MIT, the engine is Apache-2.0.
+Bundled engine: network-assessment-azure-engine. The container image of this lab edition installs that wheel, and its
+label org.opencontainers.image.licenses says "MIT AND Apache-2.0" for the Hybrid Cloud Works code in it: this
+repository's code is MIT, the engine is Apache-2.0. The base image, Python and the other installed packages keep their
+own licences; their texts are in their own .dist-info folders and under /usr/share/doc in the image.
   Copyright: Copyright 2026 Hybrid Cloud Works (the copyright line of the App's LICENSE and NOTICE).
   Licence:   Apache License, Version 2.0. The full text and the engine's NOTICE are in this repository under
              third_party/network-assessment-azure-engine/ (LICENSE is a byte-for-byte copy of the App's), and in the

@@ -53,7 +53,9 @@ jobs:
           if docker run --rm "${IMAGE}:scan" python -m pip --version; then echo "::error::pip is present in the runtime image"; exit 1; fi
           test "$(docker run --rm "${IMAGE}:scan" id -u)" = "10001"
           test "$(docker image inspect --format '{{ index .Config.Labels "org.opencontainers.image.licenses" }}' "${IMAGE}:scan")" = "MIT AND Apache-2.0" || { echo "::error::the image does not state its open-source licences (org.opencontainers.image.licenses=MIT AND Apache-2.0)"; exit 1; }
-          docker run --rm --entrypoint test "${IMAGE}:scan" -s /usr/share/licenses/network-assessment-azure-engine/LICENSE || { echo "::error::the image does not carry the engine's Apache-2.0 licence text"; exit 1; }
+          for f in hcw-networkeyes-addon/LICENSE hcw-networkeyes-addon/NOTICE network-assessment-azure-engine/LICENSE network-assessment-azure-engine/NOTICE; do
+            docker run --rm --entrypoint test "${IMAGE}:scan" -s "/usr/share/licenses/${f}" || { echo "::error::/usr/share/licenses/${f} is missing or empty in the image"; exit 1; }
+          done
           if docker run --rm -e IDENTITY_ENDPOINT=http://169.254.169.254 "${IMAGE}:scan"; then echo "::error::the image started under an identity endpoint"; exit 1; fi
           cid="$(docker run -d --read-only --tmpfs /tmp --cap-drop ALL --security-opt no-new-privileges -e NA_ALLOW_NO_TURNSTILE=1 "${IMAGE}:scan")"
           for _ in $(seq 1 30); do
