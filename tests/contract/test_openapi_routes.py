@@ -83,3 +83,16 @@ def test_the_health_schema_requires_exactly_what_the_live_response_carries(clien
 def test_the_rules_schema_documents_every_field_the_live_response_carries(client):
     body = client.get("/api/rules").json()
     assert set(body) <= _properties(_schema("RulesResponse")), "a rules field is not documented"
+
+
+def test_no_unquoted_description_contains_a_brace():
+    """A `{` inside an unquoted description ends the flow mapping it sits in, so a strict YAML parser rejects the
+    file (2026-11-08, the x-bundle-token description). The route checks above read lines, not YAML, and would not
+    notice; descriptions that name a path parameter are quoted instead."""
+    offending = [
+        f"line {number}: {line.strip()}"
+        for number, line in enumerate(SPEC.splitlines(), start=1)
+        # an unquoted description value (not a quoted string, not a nested mapping) with a `{` before its end
+        if re.search(r"""description:[ \t]*(?![\s"'{])[^,}\n]*\{""", line)
+    ]
+    assert not offending, offending

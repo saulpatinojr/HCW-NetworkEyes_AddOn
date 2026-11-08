@@ -4,6 +4,10 @@ All notable changes to this repository are recorded here. The format follows Kee
 
 ## [Unreleased]
 
+### Fixed
+
+- **`docs/api/openapi.yaml` parses as YAML again.** The `x-bundle-token` header's description held an unquoted `{id}`, which ends the flow mapping it sits in, so a strict YAML parser rejected the whole file; the route contract test reads lines, not YAML, and did not notice. The description is quoted, and `tests/contract/test_openapi_routes.py` now fails on any unquoted description containing a `{`.
+
 ### Changed
 
 - **The engine wheel is the only engine; the interim port is deleted** (ADR-0006). The copy of the App's engine this
