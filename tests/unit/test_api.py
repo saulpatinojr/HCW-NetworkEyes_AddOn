@@ -192,6 +192,20 @@ def test_wrapper_body_csv_body_and_portal_csv(client, sample_rows):
     assert body["summary"]["unknownRules"] > 11 and body["summary"]["findingsCount"] >= 1
 
 
+def test_a_resource_name_with_a_hedge_word_does_not_stop_the_upload(client, sample_json_bytes):
+    """HCW-NetworkEyes_App#356, fixed in engine 0.1.4: a customer's resource called, say, `...-may-...` used to make
+    the engine raise and the upload answer 500. Now only the engine's own wording is judged, so renaming every sample
+    resource to carry the hedge word "may" changes neither the findings nor the unknowns."""
+    plain = client.post("/api/assessments", content=sample_json_bytes, headers=JSON)
+    renamed = sample_json_bytes.replace(b"hcw-sample-", b"hcw-sample-may-")
+    assert renamed != sample_json_bytes
+    hedged = client.post("/api/assessments", content=renamed, headers=JSON)
+    assert plain.status_code == hedged.status_code == 201, hedged.text
+    p, h = plain.json()["summary"], hedged.json()["summary"]
+    assert (h["findingsCount"], h["unknownRules"]) == (p["findingsCount"], p["unknownRules"])
+    assert h["findingsCount"] > 0
+
+
 @pytest.mark.parametrize(
     "content,headers,status,code",
     [

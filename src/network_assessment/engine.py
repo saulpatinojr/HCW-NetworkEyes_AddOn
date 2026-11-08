@@ -55,6 +55,8 @@ AzureTopology = _pkg.AzureTopology
 TopologyClassification = _pkg.TopologyClassification
 ObservedStateEnforcer = _findings.ObservedStateEnforcer
 ObservedStateViolation = _findings.ObservedStateViolation
+# The fixed reason a rule carries in unknowns[] when the wheel withheld its finding for hedged wording (since 0.1.4).
+HEDGED_WORDING_REASON: str = _rules.HEDGED_WORDING_REASON
 RULES_VERSION: str = _pkg.RULES_VERSION
 TOPOLOGY_MODEL_VERSION: str = _pkg.TOPOLOGY_MODEL_VERSION
 classify_topology = _pkg.classify_topology
