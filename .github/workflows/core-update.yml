@@ -11,9 +11,9 @@
 # whole marked line either way. `uv lock` records the wheel's sha256 and the image build's `uv export --frozen` carries
 # it, so the image's `pip install --require-hashes` verifies every third-party file. src/network_assessment/engine.py
 # runs the wheel as soon as it is installed, so the bump's checks test the lab against the new engine; the bump also
-# regenerates docs/rules/catalog.md, which is generated from the engine's rule texts. The ported copy under
-# src/network_assessment/{model,rules,classify} is deleted by hand after the first green bump is merged
-# (PROVENANCE.md, "Deletion plan"). Without an ENGINE_REF line the workflow finds nothing to do and exits cleanly.
+# regenerates docs/rules/catalog.md, which is generated from the engine's rule texts. The interim ported copy of the
+# engine was deleted after the first green bumps (ADR-0006), so the wheel is the only engine and engine.py refuses to
+# start without it. Without an ENGINE_REF line the workflow finds nothing to do and exits cleanly.
 #
 # Two jobs, because the bump runs upstream code (the new wheel, through this edition's tests and scripts) and the pull
 # request needs a credential that reaches four repositories. Code that runs in a step can reach later steps of the same
@@ -113,11 +113,11 @@ jobs:
         env: { GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}", REQUESTED: "${{ inputs.ref }}" }
         run: |
           set -euo pipefail
-          # `none` is the marker before the first adoption (the interim port runs); otherwise the pinned version.
+          # `none` was the marker before the first adoption (the interim port, deleted since, ADR-0006); otherwise the pinned version.
           current="$(grep -oE "#[[:space:]]*ENGINE_REF[[:space:]]+[0-9A-Za-z][0-9A-Za-z.+-]*" pyproject.toml | head -1 | awk '{print $NF}' || true)"
           if [ -z "$current" ]; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::no ENGINE_REF in pyproject.toml: the engine is still the ported copy under src/network_assessment (ADR-0001); nothing to adopt yet"
+            echo "::notice::no ENGINE_REF in pyproject.toml: nothing to compare against, so nothing to adopt (ADR-0006: the wheel is the only engine)"
             exit 0
           fi
           if [ -n "$REQUESTED" ]; then latest_tag="$REQUESTED"; else
@@ -438,7 +438,7 @@ jobs:
             uv.lock
             docs/rules/catalog.md
           body: |
-            The App `saulpatinojr/HCW-NetworkEyes_App` released engine **${{ steps.expect.outputs.latest }}** (`${{ steps.expect.outputs.dist }}`; this edition pinned `${{ steps.expect.outputs.current }}`, where `none` means the interim ported engine was running).
+            The App `saulpatinojr/HCW-NetworkEyes_App` released engine **${{ steps.expect.outputs.latest }}** (`${{ steps.expect.outputs.dist }}`; this edition pinned `${{ steps.expect.outputs.current }}`).
 
             Compatibility check reported by the bump job (lint, unit, contract, security, rule catalog drift, Playwright e2e): **${{ steps.verify.outputs.outcome }}**. That job ran the new engine, so its report is a signal, not proof; this pull request's own checks are the gate.
             Logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
@@ -447,11 +447,10 @@ jobs:
 
             - compatible: merge.
             - needs adaptation: fix this edition on this branch (`RULES_VERSION` digest, sample expectations, the OpenAPI spec), then merge. A difference in the engine itself is fixed upstream and arrives as the next release; it is never patched here.
-            - after the first green bump is merged: delete the interim port (`src/network_assessment/{model,rules,classify}`, its tests and its `PROVENANCE.md` rows) in its own pull request.
 
             When the repository variable `CORE_AUTOMERGE` is `true`, auto-merge is turned on for every bump, compatible or not, and GitHub merges only after this pull request's required checks pass. The label above comes from the `bump` job's report, which is not trusted, so it never decides the merge. To hold a bump, select **Disable auto-merge** at the bottom of this page.
 
-            ADR-0001 (interim ported engine), ADR-0004 (upstream/downstream for this AddOn), ADR-0028 (by analogy).
+            ADR-0004 (upstream/downstream for this AddOn), ADR-0006 (the wheel is the only engine), ADR-0028 (by analogy).
       # Never reads the outcome (untrusted, see the header). GitHub merges only once the ruleset's required checks pass
       # on the pull request's own head: https://docs.github.com/en/pull-requests/how-tos/merge-and-close-pull-requests/automatically-merging-a-pull-request
       # create-pull-request adds the labels above and removes none, so a bump that was first opened as `compatible`

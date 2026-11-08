@@ -6,6 +6,19 @@ All notable changes to this repository are recorded here. The format follows Kee
 
 ### Changed
 
+- **The engine wheel is the only engine; the interim port is deleted** (ADR-0006). The copy of the App's engine this
+  repository carried until the wheel existed (`src/network_assessment/{model,rules,classify}`), its tests, the lab's
+  own normalizer (`src/network_assessment/ingestion/normalize.py`) and `PROVENANCE.md` are removed, about 4,800
+  lines. `src/network_assessment/engine.py` now imports the `network-assessment-azure-engine` wheel or stops the
+  application at startup with `EngineNotInstalled` (it used to fall back to the port quietly), so the `engine` block
+  of `GET /api/health` and `GET /api/rules` always names the wheel and its version (`interim-port` and a null version
+  no longer occur; `docs/api/openapi.yaml` says so). Nothing an assessment returns changes: the wheel already ran,
+  `docs/rules/catalog.md` is unchanged. The lab keeps its own hedge-word list and rule-text check
+  (`tests/unit/test_engine.py`); two new tests prove the startup refusal, and one in
+  `tests/end_to_end/test_repository_manifest.py` fails if the port or an import of it comes back. `CLAUDE.md`,
+  `AGENTS.md`, `README.md`, `CONTRIBUTING.md`, `NOTICE`, the pull request template, ADR-0001 (partly superseded) and
+  `docs/whats-new-upstream.md` describe the wheel-only engine.
+
 - **The base image follows the website's current digest** ([pull request 86](https://github.com/saulpatinojr/HCW-NetworkEyes_AddOn/pull/86)): `python:3.15.2-slim-trixie` moves to `sha256:e97b88e416c3…`, the digest the website's lab image moved to on 2026-11-07 ([HCW-HybridCloudWorks#1585](https://github.com/saulpatinojr/HCW-HybridCloudWorks/pull/1585)), a newer build of the same Debian 13 "trixie" image. Opened by `base-update.yml`, which changes the image reference in `infrastructure/docker/versions.env` and the two `FROM` lines of `infrastructure/docker/Dockerfile`; this changelog entry was added to its pull request by hand.
 - **Runs engine 0.1.2** ([pull request 87](https://github.com/saulpatinojr/HCW-NetworkEyes_AddOn/pull/87),
   [HCW-NetworkEyes_App#352](https://github.com/saulpatinojr/HCW-NetworkEyes_App/issues/352)): the lab now runs

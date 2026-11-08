@@ -51,10 +51,10 @@ timeout and projects exactly `configured, reachable, version, edition, capabilit
 (`rules`, `model`, `engine`, `limits`, `turnstile`, `siteOrigins`, `azureConnectivity`) is for the pane and is never
 forwarded.
 
-`engine` (also on `GET /api/rules`) says which assessment engine answers: `{"source": "interim-port", "version": null}`
-while this edition runs its port of the App's engine, and `{"source": "<distribution>", "version": "<version>"}` once it
-runs the released engine wheel pinned in `pyproject.toml` (for example `cna-azure-network-engine` and `0.1.0`). It is an
-additive field: the envelope stays flat, and nothing the status proxy reads changes.
+`engine` (also on `GET /api/rules`) says which assessment engine answers: the released engine wheel pinned in
+`pyproject.toml`, as `{"source": "<distribution>", "version": "<version>"}` (today `network-assessment-azure-engine` and
+`0.1.2`). The `interim-port` value with a null version, which the lab answered before it adopted the wheel, no longer
+occurs (ADR-0006). It is an additive field: the envelope stays flat, and nothing the status proxy reads changes.
 The pane mounts only when the proxy answers `configured: true, reachable: true`; otherwise the page shows
 "This tool isn't available right now."
 

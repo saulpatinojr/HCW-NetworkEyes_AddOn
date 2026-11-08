@@ -77,8 +77,8 @@ test("security headers and the health envelope", async ({ request }) => {
   expect(body.edition).toBe("lab");
   expect(body.azureConnectivity).toBe("disabled-by-design");
   expect(body.rules.version).toBe("2026.11.0");
-  // The model marker is the active engine's (lab-1.0.0 for the interim port); tests/unit/test_engine.py pins it
-  // per engine, so here it only has to agree with what GET /api/rules reports.
+  // The model marker is the engine wheel's; tests/unit/test_engine.py pins it per release, so here it only has to
+  // agree with what GET /api/rules reports.
   const rules = await (await request.get("/api/rules")).json();
   expect(body.model.version).toBe(rules.modelVersion);
   expect(body.model.version).not.toBe("");

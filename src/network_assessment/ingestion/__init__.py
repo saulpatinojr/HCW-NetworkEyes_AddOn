@@ -1,7 +1,7 @@
 """Export parsers (lab-edition code).
 
-The normalizer the API runs is the active engine's (`network_assessment.engine.normalize`). This edition's own
-`ingestion/normalize.py` is the one the interim port runs, and the reference the wheel's normalizer was ported from.
+The normalizer the API runs is the engine wheel's (`network_assessment.engine.normalize`); this edition's own
+normalizer was deleted with the interim port (ADR-0006).
 """
 
 from network_assessment.ingestion.arg_row import ArgRow

@@ -1,15 +1,17 @@
-"""What this edition needs from the engine it runs, whichever it is (`network_assessment.engine`: the released wheel
-when installed, the interim port otherwise).
+"""What this edition needs from the engine it runs (`network_assessment.engine`: the released wheel, the only engine
+since the interim port was deleted, ADR-0006).
 
-These tests run against the port today and against the wheel on the core-update bump pull request, so they are the
+These tests run against the wheel `uv.lock` installs, so on a core-update bump pull request they are the
 compatibility check for an engine release: rule ids, versions, severities and `applies_to` (ADR-0004), the
 live-only rules staying registered so `unknowns[]` is stable, complete and hedge-free rule texts for the catalog and
-GET /api/rules, `export:` evidence references (docs/api/openapi.yaml), the topology model marker, and the same
-normalised export as this edition's own normalizer.
+GET /api/rules, `export:` evidence references (docs/api/openapi.yaml) and the topology model marker. They also prove
+the lab refuses to start without the wheel instead of falling back to anything.
 """
 
 import hashlib
 import re
+import subprocess
+import sys
 from pathlib import Path
 from urllib.parse import urlsplit
 
@@ -21,7 +23,7 @@ from network_assessment.ingestion import parse_csv, parse_json
 
 from ..conftest import EXPECTED_MODEL_VERSION, MODEL_VERSIONS, ROOT, SAMPLE_CSV, SAMPLE_JSON, SAMPLE_PORTAL_CSV
 
-# Same digest and formula as tests/unit/test_registry.py (which tests the port itself): id|version|severity|applies_to.
+# The digest of every rule's id|version|severity|applies_to, in id order; it moves only with RULES_VERSION.
 REGISTRY_DIGEST = "dd1d1f26a4e80db1fb786ea4bd71374a449522e4fb13999855477d8a994c4add"
 EXPECTED_RULES_VERSION = "2026.11.0"
 LIVE_ONLY = {
@@ -62,7 +64,7 @@ EDITION_HEDGE_WORDS = (
 
 
 def _engine_ref() -> tuple[str, str]:
-    """The ENGINE_REF value (`none` or a version) and its whole line in pyproject.toml."""
+    """The ENGINE_REF value (a version) and its whole line in pyproject.toml."""
     text = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
     lines = [x for x in text.splitlines() if re.search(r"#\s*ENGINE_REF\s", x)]  # the marker core-update.yml reads
     assert len(lines) == 1, "pyproject.toml must carry exactly one ENGINE_REF line"
@@ -79,20 +81,43 @@ def _parse(path: Path):
 def test_the_engine_is_one_this_edition_knows():
     assert engine.SOURCE in MODEL_VERSIONS, f"{engine.SOURCE}: add its model version to tests/conftest.py"
     assert engine.TOPOLOGY_MODEL_VERSION == EXPECTED_MODEL_VERSION
-    assert engine.is_wheel() == (engine.SOURCE != engine.PORT_SOURCE)
+    assert engine.SOURCE.split(" ") == [engine.DISTRIBUTION, engine.VERSION]
 
 
 def test_the_engine_that_runs_is_the_one_pyproject_pins():
     ref, line = _engine_ref()
-    assert engine.is_wheel() == (ref != "none"), f"ENGINE_REF {ref}, but {engine.SOURCE} runs"
-    if ref == "none":
-        assert engine.VERSION is None and engine.DISTRIBUTION is None
-        assert line.strip().startswith("#"), "before the first adoption the line is only the marker"
-    else:
-        assert ref == engine.VERSION
-        assert line.strip().startswith(f'"{engine.DISTRIBUTION} @ https://github.com/'), line
-        assert f"/engine-v{ref}/" in line and line.rstrip().endswith(f"ENGINE_REF {ref}"), line
-    assert engine.describe() == {"source": engine.DISTRIBUTION or "interim-port", "version": engine.VERSION}
+    assert ref != "none", "the interim port is gone (ADR-0006): pyproject.toml must pin an engine wheel"
+    assert ref == engine.VERSION, f"ENGINE_REF {ref}, but {engine.SOURCE} runs"
+    assert line.strip().startswith(f'"{engine.DISTRIBUTION} @ https://github.com/'), line
+    assert f"/engine-v{ref}/" in line and line.rstrip().endswith(f"ENGINE_REF {ref}"), line
+    assert engine.describe() == {"source": engine.DISTRIBUTION, "version": engine.VERSION}
+
+
+def test_without_the_wheel_the_lab_refuses_to_start(monkeypatch):
+    # No fallback engine exists any more, so a missing wheel is a startup error that says what to do, not a
+    # silent switch to something else.
+    monkeypatch.setattr(engine.importlib.util, "find_spec", lambda name, *a, **k: None)
+    with pytest.raises(engine.EngineNotInstalled, match="ENGINE_REF") as caught:
+        engine._find_wheel()
+    assert isinstance(caught.value, ImportError)
+    for _, distribution in engine.WHEEL_PACKAGES:
+        assert distribution in str(caught.value)
+
+
+def test_the_application_does_not_start_without_the_wheel():
+    # A fresh interpreter in which neither engine name can be imported (a None entry in sys.modules makes
+    # importlib.util.find_spec answer None): importing the application fails with EngineNotInstalled.
+    hide = "; ".join(f"sys.modules[{module!r}] = None" for module, _ in engine.WHEEL_PACKAGES)
+    code = f"import sys; {hide}; import network_assessment.app"
+    run = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, timeout=60, check=False)
+    assert run.returncode != 0
+    assert "EngineNotInstalled" in run.stderr and "ENGINE_REF" in run.stderr, run.stderr[-500:]
+
+
+def test_an_empty_rule_text_is_refused():
+    for empty in ("", None):
+        with pytest.raises(engine.ObservedStateViolation, match="is empty"):
+            engine.assert_text_is_hedge_free("AZ-TEST-001.title", empty)
 
 
 @pytest.mark.parametrize("word", EDITION_HEDGE_WORDS)
@@ -145,26 +170,3 @@ def test_findings_cite_the_export_and_state_facts_only(path):
         assert f.observed_state.evidence_ref.startswith("export:"), (f.id, f.observed_state.evidence_ref)
         assert not enforcer.scan_text(f.observed_state.fact), f.id
         assert f.title and f.description and f.remediation, f.id
-
-
-@pytest.mark.skipif(not engine.is_wheel(), reason="only meaningful while the wheel runs beside the interim port")
-@pytest.mark.parametrize("path", SAMPLES, ids=lambda p: p.name)
-def test_the_wheel_normalises_exactly_like_this_edition(path):
-    # Deleted with the interim port: ingestion/normalize.py builds the port's model.
-    from network_assessment.ingestion.normalize import normalize as lab_normalize
-
-    parsed = _parse(path)
-    lab, wheel = lab_normalize(parsed), engine.normalize(parsed)
-    assert wheel.facts == lab.facts
-    assert wheel.topology.warnings == lab.topology.warnings
-    lab_doc = lab.topology.model_dump(mode="json")
-    wheel_doc = wheel.topology.model_dump(mode="json")
-
-    def same_fields(ours, theirs):
-        if isinstance(ours, dict) and isinstance(theirs, dict):
-            return {k: same_fields(v, theirs.get(k)) for k, v in ours.items() if k != "model_version"}
-        if isinstance(ours, list) and isinstance(theirs, list) and len(ours) == len(theirs):
-            return [same_fields(o, t) for o, t in zip(ours, theirs, strict=True)]
-        return theirs
-
-    assert same_fields(lab_doc, wheel_doc) == {k: v for k, v in lab_doc.items() if k != "model_version"}

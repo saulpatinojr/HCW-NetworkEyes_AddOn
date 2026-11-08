@@ -24,9 +24,8 @@ You can also run it on your own machine with the Quick start below and open
 `http://127.0.0.1:8080`. There is no account and nothing to install in Azure: you export, you upload, you read.
 
 > **Status:** lab edition, not production. Limitations are recorded in [`VALIDATION.md`](VALIDATION.md). The engine is
-> an interim port of the App's, with provenance ([`PROVENANCE.md`](PROVENANCE.md)); every rule's reference link and
-> every compliance-framework reference is marked `[VERIFY]` until the owner confirms it; the MIT relicensing of the
-> ported code is `[REVIEW REQUIRED]` ([`NOTICE`](NOTICE)).
+> the App's released wheel; every rule's reference link and every compliance-framework reference is marked `[VERIFY]`
+> until the owner confirms it ([`NOTICE`](NOTICE)).
 
 ## How the pieces relate
 
@@ -35,29 +34,28 @@ flowchart LR
   Core["HCW-NetworkEyes_App<br/>upstream: the engine, the appliance edition on Azure"]
   Wheel["network-assessment-azure-engine<br/>wheel attached to each engine-v* release of the App"]
   subgraph AddOn["HCW-NetworkEyes_AddOn (this repository)"]
-    Port["src/network_assessment/{model,rules,classify}<br/>interim ported engine (PROVENANCE.md)"]
     Lab["src/network_assessment<br/>lab edition: ingestion, FastAPI, upload-only, in-memory"]
     Pane["web/<br/>vanilla pane, HCW theme tokens"]
-    Port --> Lab --> Pane
+    Lab --> Pane
   end
   Image["docker.io/hybridcloudworks/img-ne-lab-addon<br/>scanned, by digest"]
   Host["lab host<br/>network-assessment.lab.hybridcloudworks.com (port 18082, loopback)"]
   Site["hybridcloudworks.com<br/>/tools/network-assessment (sandboxed pane)"]
   Core -. "publishes on every engine-v* tag" .-> Wheel
-  Wheel -. "core-update PR pins it; the port is deleted (ADR-0001)" .-> Lab
+  Wheel -. "core-update PR pins it (ENGINE_REF)" .-> Lab
   Lab -- "publish-images.yml on v* tags" --> Image
   Image -- "website repo: addons Ansible role, digest in group_vars" --> Host
   Host -- "frame + status proxy" --> Site
 ```
 
-The engine is ported **here** from the App (`HCW-NetworkEyes_App`) at `5d3b914` so the lab can ship now
-([`docs/adr/ADR-0001-interim-ported-engine.md`](docs/adr/ADR-0001-interim-ported-engine.md)). The App has published
-`cna-azure-network-engine` 0.1.0 (`engine-v0.1.0`, 2026-10-12). It is not adopted yet: `pyproject.toml` carries the
-marker `# ENGINE_REF none`, so `.github/workflows/core-update.yml` opens the pull request that pins it, and
-`src/network_assessment/engine.py` runs the wheel as soon as it is installed. That release needs fixes upstream first;
-what is new upstream, and what to do about it, is in [`docs/whats-new-upstream.md`](docs/whats-new-upstream.md). After
-the first green bump is merged this repository deletes the ported copy, and later releases arrive as compatible /
-needs-adaptation pull requests. Nothing here can reach Azure:
+The engine comes from the App (`HCW-NetworkEyes_App`) as the `network-assessment-azure-engine` wheel, pinned by URL
+on the `# ENGINE_REF` line of `pyproject.toml` and by sha256 in `uv.lock`; `src/network_assessment/engine.py` is the one
+place the lab reaches it, and the lab refuses to start without it. The interim copy of the engine this repository
+carried until the wheel existed was deleted on 2026-11-08
+([`docs/adr/ADR-0006-the-engine-wheel-is-the-only-engine.md`](docs/adr/ADR-0006-the-engine-wheel-is-the-only-engine.md),
+which supersedes the interim part of [ADR-0001](docs/adr/ADR-0001-interim-ported-engine.md)). What is new upstream, and
+what to do about it, is in [`docs/whats-new-upstream.md`](docs/whats-new-upstream.md); each new engine release arrives
+from `.github/workflows/core-update.yml` as a compatible or needs-adaptation pull request. Nothing here can reach Azure:
 `tests/security/test_edition_boundary.py` fails the build if anything could, and `publish-images.yml` proves
 `import azure` fails inside the built image.
 
@@ -105,10 +103,8 @@ answer `503 turnstile_not_configured` (fail closed). Browser suite: `make e2e` (
 
 | Path | What |
 |---|---|
-| `src/network_assessment/model` | The lab topology model (`TOPOLOGY_MODEL_VERSION = "lab-1.0.0"`), the findings model and the observed-state enforcer, ported |
-| `src/network_assessment/rules` | `registry.py` (`@rule`, `RULES`, `RULES_VERSION = "2026.10.0"`, `evaluate()`), `azure_net.py` (AZ-NET-001..033), `azure_bcdr.py` (001..007), `azure_cost.py` (001, 004; 002/003/005 live-only), `frameworks.py` (mappings as data), `taxonomy.py` |
-| `src/network_assessment/classify` | The topology classifier, ported |
-| `src/network_assessment/ingestion` | `parse.py` (JSON array or `az graph query` envelope, Resource Graph Explorer CSV, portal CSV with the warning), `arg_row.py`, `normalize.py` (the ~20 `microsoft.network/*` types onto the model) |
+| `src/network_assessment/engine.py` | The one import point of the engine wheel (rules, model, classifier, normalizer, observed-state enforcer); refuses to start without it |
+| `src/network_assessment/ingestion` | `parse.py` (JSON array or `az graph query` envelope, Resource Graph Explorer CSV, portal CSV with the warning), `arg_row.py`; the wheel's normalizer maps the ~20 `microsoft.network/*` types onto its model |
 | `src/network_assessment/report` | Summary document, `report.md`, the bundle |
 | `src/network_assessment` | The lab application: `config.py` (`NA_*`), `edition.py` (import-time guard), `store.py`, `security/` (verification with hostname binding, headers, CORS, limits, rate limit, content-free logging), `routes/`, `app.py`, `assess.py`, `__main__.py` |
 | `web/` | The pane: `index.html`, `app.js`, `styles.css`, `theme.css` (HCW tokens copied with provenance) |
@@ -137,5 +133,5 @@ pane and to `report.md`.
 ## Contributing, security, license
 
 [`CONTRIBUTING.md`](CONTRIBUTING.md) · [`SECURITY.md`](SECURITY.md) · [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) ·
-MIT ([`LICENSE`](LICENSE), [`NOTICE`](NOTICE), [`PROVENANCE.md`](PROVENANCE.md)). Coding-agent guidance:
+MIT ([`LICENSE`](LICENSE), [`NOTICE`](NOTICE)). Coding-agent guidance:
 [`AGENTS.md`](AGENTS.md), [`CLAUDE.md`](CLAUDE.md).

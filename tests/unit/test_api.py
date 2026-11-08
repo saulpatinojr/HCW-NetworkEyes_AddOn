@@ -34,7 +34,7 @@ def test_health_is_flat_and_complete(client):
     }
     assert body["limits"] == {"maxUploadBytes": 5242880, "maxRows": 5000, "ttlMinutes": 120}
     # Additive: which engine answers (docs/website-integration/integration-guide.md, "Status proxy").
-    assert body["engine"] == {"source": engine.DISTRIBUTION or "interim-port", "version": engine.VERSION}
+    assert body["engine"] == {"source": engine.DISTRIBUTION, "version": engine.VERSION}
     assert body["workspace"] == "coder"
     assert body["capabilities"] == [
         "resource-graph-export",

@@ -40,6 +40,25 @@ on 2026-10-26 to the website's newer digest `sha256:fbecd461...`).
 | `core-update.yml` against a Core release | **no** | inert: the App published `cna-azure-network-engine` as `engine-v0.1.0` on 2026-10-12, but `pyproject.toml` has no `ENGINE_REF` line yet, so the comparison step exits cleanly (adoption steps: `docs/whats-new-upstream.md`) |
 | CodeQL, gitleaks, dependency-review | **no**, CI only | `security.yml` |
 
+## Run 2026-11-08 (the interim port is deleted; ADR-0006)
+
+Toolchain: CPython **3.15.0b4** (the only 3.15 `uv python install 3.15` offered here; the project requires
+`>=3.15.1`, so `uv sync` refused it), in a scratch virtual environment outside the repository filled from
+`uv export --frozen --no-emit-project --all-groups` plus the `engine-v0.1.2` wheel downloaded through the GitHub API
+(its sha256 `084ea06e…708a1` equals the one in `uv.lock`); tests run with `PYTHONPATH=src`. ruff 0.17.3, pytest 9.1.1,
+pydantic 2.14.1.
+
+| Check | Executed here | Result |
+|---|---|---|
+| `uv sync` | tried, **refused** | `.python-version` resolves to 3.15.0b4, which `requires-python >=3.15.1` excludes; the scratch environment above stood in |
+| The same suite on `main` before the change (baseline) | yes | 515 passed, coverage 96.03% |
+| `ruff check .` and `ruff format --check .` | yes | clean (71 files) |
+| `python scripts/rules-doc.py --check` | yes | `docs/rules/catalog.md` in sync (422 lines), unchanged by this change |
+| `pytest -q --cov=src` | yes | 400 passed, 0 skipped; coverage 97.06% (gate 85). The 115 fewer tests are the deleted port tests and the one normaliser comparison; three were added (startup refusal in a fresh interpreter, the `EngineNotInstalled` message, an empty rule text) and one replaced (the port stays deleted) |
+| `python -m compileall -q src tests scripts` | yes | exit 0 |
+| `IDENTITY_ENDPOINT=http://169.254.169.254 python -c "import network_assessment.app"` | yes | `EditionBoundaryError: refusing to start: identity environment present (IDENTITY_ENDPOINT)` |
+| Docker image build, the `image` job, Playwright e2e, CodeQL, pip-audit | **no**, CI only | no Docker daemon or Playwright here; the pull request's own checks cover them |
+
 ## Run 2026-11-05 (release 0.1.2 prepared)
 
 This run prepares the version bump only and publishes nothing. The release exists so that the published image carries
@@ -202,7 +221,7 @@ except for `__version__`. "Here" is the owner's Windows workstation: Python 3.14
 
 ## Limitations recorded
 
-- Since `pyproject.toml` carries the `# ENGINE_REF none` marker, `core-update.yml` is armed: its `pull-request` job opens the bump pull request with a GitHub App token (the HCW Main Admin App: its client ID is the repository variable
+- Since `pyproject.toml` carries the `# ENGINE_REF` line (the wheel's version since pull request 78), `core-update.yml` is armed: its `pull-request` job opens the bump pull request with a GitHub App token (the HCW Main Admin App: its client ID is the repository variable
   `HCW_MAIN_ADMIN_CLIENT_ID`, its private key the repository secret `HCW_MAIN_ADMIN_PRIVATE_KEY`), not `GITHUB_TOKEN`, so the required checks run on the pull request itself. That path is covered by
   `tests/security/test_core_update_app_token.py` (static) and by the dry runs of 2026-10-31; the two-job version was not linted with
   actionlint or zizmor, and it has not yet opened a real bump pull request here. To prove the credential on a day with no release to adopt:
@@ -233,10 +252,10 @@ except for `__version__`. "Here" is the owner's Windows workstation: Python 3.14
   Auto-merge of a
   bump (any bump since pull request 68; it then waits for the required checks) needs the repository setting "Allow auto-merge" (on 2026-10-26 UTC); with it off, `core-update` warns
   and leaves the pull request for a person to merge.
-- The engine wheel `engine-v0.1.0` is not compatible with this edition yet (five differences in the engine, listed in
-  `docs/whats-new-upstream.md`). The bump pull request for it is expected to stay `needs-adaptation` until the App
-  releases a fix; it is not merged (its required checks fail, so auto-merge, if turned on, keeps waiting), and the
-  engine is not patched here.
+- The engine wheel is the only engine (ADR-0006): without it installed the lab does not start (`EngineNotInstalled`).
+  The comparison of the wheel's normalizer with the lab's own went with the lab's normalizer; the normalised result
+  of the samples is still pinned by `tests/unit/test_normalize.py`, run against the wheel. An engine fault is fixed
+  upstream and arrives as the next release; it is not patched here.
 - An export shows configuration only: metrics, diagnostic settings, attacks in progress, BGP state, effective routes
   and NSG rules, private DNS resolution, Defender assessments and cost are `unknown` by design (11 live-only rules
   reported in `unknowns[]`; the panel and `report.md` say so).
@@ -249,7 +268,7 @@ except for `__version__`. "Here" is the owner's Windows workstation: Python 3.14
 - AZ-NET-012 follows the Core's spoke definition (a VNet whose peering uses remote gateways or allows forwarded
   traffic), so a hub whose peerings allow forwarded traffic is also checked; the sample shows this on the hub's
   application-gateway subnet.
-- The topology classifier marks any VNet with `allowGatewayTransit` as a hub (ported semantics); the sample's
+- The topology classifier marks any VNet with `allowGatewayTransit` as a hub (the engine's semantics, first ported here, now the wheel's); the sample's
   `hcw-sample-vnet-legacy` is therefore a hub with no gateway, which is also what AZ-NET-005 reports.
 - The portal "All resources" CSV maps the display names of 22 network types to ARM types; other display names stay
   as written and are counted, not evaluated. Only the two count-based rules (AZ-NET-004, AZ-NET-033) run on it.
@@ -257,8 +276,8 @@ except for `__version__`. "Here" is the owner's Windows workstation: Python 3.14
   `networkwatchers`, `ddosprotectionplans` and other unmapped network types are counted and listed in the warnings.
 - Every `learn_url` is the most plausible page on `learn.microsoft.com` as of 2026-10-10 and is marked `[VERIFY]`
   until the owner confirms it; every framework reference is `[VERIFY]` and `[REVIEW REQUIRED]` (legal/compliance);
-  the Basic SKU retirement date (2025-09-30) named in AZ-NET-026/027 is `[VERIFY]`; the MIT relicensing of ported Core
-  code (labelled Proprietary at `5d3b914`) is `[REVIEW REQUIRED]` (`NOTICE`); the `downloads` sandbox capability is
+  the Basic SKU retirement date (2025-09-30) named in AZ-NET-026/027 is `[VERIFY]`; the ported Core code whose MIT
+  relicensing was `[REVIEW REQUIRED]` was deleted on 2026-11-08 (`NOTICE`, ADR-0006); the `downloads` sandbox capability is
   `[REVIEW REQUIRED]` on the website side; the base-image digest is `[VERIFY]` at the first image build; numbering the
   zone-redundancy rules AZ-BCDR-006/007 (not AZ-NET-02x) and lowering AZ-NET-032/033 to MEDIUM/LOW are flagged for
   the owner.
@@ -269,9 +288,9 @@ except for `__version__`. "Here" is the owner's Windows workstation: Python 3.14
   `pyproject.toml` and `repository.manifest.json` by a test).
 - starlette 1.7 prefers `httpx2` for its test client; this edition pins `httpx` (the brief) and mutes that one
   deprecation notice in `pyproject.toml`.
-- `pyproject.toml` is a single project, not a uv workspace with an engine member as the sibling has: the ported engine
-  lives under `src/network_assessment/{model,rules,classify}` and is deleted, not handed upstream, once the Core's
-  wheel exists (ADR-0001); the brief's validation command `import network_assessment.api.app` is therefore
+- `pyproject.toml` is a single project, not a uv workspace with an engine member as the sibling has: the engine is a
+  pinned wheel dependency, and the interim port that used to live under `src/network_assessment/{model,rules,classify}`
+  was deleted (ADR-0006); the brief's validation command `import network_assessment.api.app` is therefore
   `import network_assessment.app` here (the sibling's module layout, ADR-0002).
 - `base-update.yml` moves the base image pin to the website's pin by opening a pull request, with the same HCW Main Admin App credential as
   `core-update.yml` (so `core-update.yml`'s probe run also proves the credential here). The workflow, `scripts/follow_website_base.py` and the three
