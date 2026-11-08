@@ -13,6 +13,7 @@ import importlib
 import re
 import subprocess
 import sys
+import types
 from pathlib import Path
 from urllib.parse import urlsplit
 
@@ -105,6 +106,14 @@ def test_without_the_wheel_the_lab_refuses_to_start(monkeypatch):
         assert distribution in str(caught.value)
 
 
+def test_a_wheel_too_old_for_this_edition_is_refused_at_startup():
+    """An older wheel (the legacy cna-azure-network-engine name, or anything before 0.1.4) lacks
+    HEDGED_WORDING_REASON: startup must stop with EngineNotInstalled, not a bare AttributeError."""
+    old_rules = types.ModuleType("cna_azure_network_engine.rules")
+    with pytest.raises(engine.EngineNotInstalled, match=r"HEDGED_WORDING_REASON.*0\.1\.4.*ENGINE_REF"):
+        engine._required(old_rules, "HEDGED_WORDING_REASON", "network-assessment-azure-engine 0.1.4")
+
+
 def test_the_application_does_not_start_without_the_wheel():
     # A fresh interpreter in which neither engine name can be imported (a None entry in sys.modules makes
     # importlib.util.find_spec answer None): importing the application fails with EngineNotInstalled.
@@ -174,11 +183,16 @@ def test_findings_cite_the_export_and_state_facts_only(path):
             engine.assert_text_is_hedge_free(f"{f.id}.{label}", getattr(f, label))
 
 
-def test_evaluation_refuses_a_finding_whose_fact_hedges(monkeypatch):
-    """The hedge-free gate at evaluation (CLAUDE.md, never weaken): the wheel must refuse a hedged finding, not
-    report it. Every finding the rules build passes through the registry's two finishing steps; this makes them
-    hedge the fact, so a wheel that stopped validating findings fails here."""
+def test_evaluation_never_reports_a_finding_whose_fact_hedges(monkeypatch):
+    """The hedge-free gate at evaluation (CLAUDE.md, never weaken): the wheel must never report a hedged finding.
+    Every finding the rules build passes through the registry's two finishing steps; this makes them hedge the fact.
+    Since engine 0.1.4 the wheel withholds such a finding (its rule goes to unknowns[] with HEDGED_WORDING_REASON)
+    instead of failing the whole assessment, so a wheel that stopped validating findings reports them and fails here."""
     registry = importlib.import_module(f"{engine._pkg.__name__}.rules.registry")
+    parsed = _parse(SAMPLES[0])
+    plain, _ = assess(engine.normalize(parsed), source_format="test", row_count=parsed.row_count)
+    rules_with_findings = {f.rule_id for f in plain.findings}
+    assert rules_with_findings, "the sample must produce findings for this test to mean anything"
 
     def hedged(step):
         def wrapper(*args, **kwargs):
@@ -190,6 +204,24 @@ def test_evaluation_refuses_a_finding_whose_fact_hedges(monkeypatch):
 
     for name in ("_complete_finding", "_finding_from_observation"):
         monkeypatch.setattr(registry, name, hedged(getattr(registry, name)))
-    parsed = _parse(SAMPLES[0])
-    with pytest.raises(engine.ObservedStateViolation):
-        assess(engine.normalize(parsed), source_format="test", row_count=parsed.row_count)
+    result, _ = assess(engine.normalize(parsed), source_format="test", row_count=parsed.row_count)
+    assert result.findings == [], "a hedged finding was reported"
+    withheld = {u.rule_id for u in result.unknowns if u.reason == engine.HEDGED_WORDING_REASON}
+    assert withheld == rules_with_findings
+    assert result.summary.findings_count == 0
+
+
+@pytest.mark.parametrize("sample", SAMPLES, ids=lambda p: p.name)
+def test_samples_have_no_finding_withheld_for_hedged_wording(sample):
+    """A hedge word in the engine's own wording must fail CI here, not quietly turn into an unknown (engine 0.1.4
+    withholds such findings instead of raising). The samples hold no hedge word, so nothing may be withheld."""
+    parsed = _parse(sample)
+    result, _ = assess(engine.normalize(parsed), source_format="test", row_count=parsed.row_count)
+    withheld = sorted(u.rule_id for u in result.unknowns if u.reason == engine.HEDGED_WORDING_REASON)
+    assert withheld == [], f"findings withheld for hedged wording: {withheld}"
+
+
+def test_the_withheld_reason_names_no_resource():
+    """The reason is one fixed sentence the wheel exports; it must not quote anything from the upload."""
+    assert engine.HEDGED_WORDING_REASON.strip()
+    assert "hcw-sample" not in engine.HEDGED_WORDING_REASON

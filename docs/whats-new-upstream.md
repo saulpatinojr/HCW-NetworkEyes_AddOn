@@ -12,28 +12,54 @@ have to rediscover it.
 
 ## Current upstream state
 
-Checked on 2026-11-07 against the App's releases and tags, while adopting `engine-v0.1.2`
-([pull request 87](https://github.com/saulpatinojr/HCW-NetworkEyes_AddOn/pull/87)); the "What this repository runs"
-and "Version markers" rows updated on 2026-11-08, when the interim port was deleted.
+Checked on 2026-11-08 against the App's releases and tags, while adopting `engine-v0.1.4`
+([pull request 93](https://github.com/saulpatinojr/HCW-NetworkEyes_AddOn/pull/93)).
 
 | Question | Answer |
 |---|---|
-| App commit of the latest engine release | `3eb3996`, the commit the tag `engine-v0.1.3` points at (the merge of [HCW-NetworkEyes_App#360](https://github.com/saulpatinojr/HCW-NetworkEyes_App/pull/360)). Update this row when you adopt something. |
-| Latest engine release | **`engine-v0.1.3`**, published 2026-11-08 by `320-release-engine.yml` ([run 42444065885](https://github.com/saulpatinojr/HCW-NetworkEyes_App/actions/runs/42444065885), success). [Release page](https://github.com/saulpatinojr/HCW-NetworkEyes_App/releases/tag/engine-v0.1.3). |
-| Its files | `network_assessment_azure_engine-0.1.3-py3-none-any.whl`, sha256 `89a6bc2bd6f0dd428906764a7cf348efe9b009bb4ed825c0f289b897570ce345` (the digest on the release page, the one `uv.lock` records, and the sha256 of the downloaded file), and `network_assessment_azure_engine-0.1.3.tar.gz`, sha256 `0ed70e2da7bda035cb13c5309c3425b04e73eab21b93671e03c661de0dc809f0`. The wheel carries `LICENSE` and `NOTICE` under `.dist-info/licenses/` with a `License-File:` line for each. |
+| App commit of the latest engine release | `1db870d`, the commit the tag `engine-v0.1.4` points at (the merge of [HCW-NetworkEyes_App#363](https://github.com/saulpatinojr/HCW-NetworkEyes_App/pull/363)). Update this row when you adopt something. |
+| Latest engine release | **`engine-v0.1.4`**, published 2026-11-08 by `320-release-engine.yml` ([run 42447463808](https://github.com/saulpatinojr/HCW-NetworkEyes_App/actions/runs/42447463808), success). [Release page](https://github.com/saulpatinojr/HCW-NetworkEyes_App/releases/tag/engine-v0.1.4). |
+| Its files | `network_assessment_azure_engine-0.1.4-py3-none-any.whl`, sha256 `cc11aa7e8d05b126cccc5667ab019d4440096b448481e4d85b450e906bc97823` (the digest on the release page, the one `uv.lock` records, and the sha256 of the downloaded file), and `network_assessment_azure_engine-0.1.4.tar.gz`, sha256 `5493bf78e475a356961dcb4e476e211e2a093bf0c8fef44fea671d3d607abe7e`. The wheel carries `LICENSE` and `NOTICE` under `.dist-info/licenses/` with a `License-File:` line for each. |
 | Engine package name | Distribution `network-assessment-azure-engine`, import name `network_assessment_azure_engine`, since the App renamed the package on 2026-10-27 (`engine-v0.1.0` was published as `cna-azure-network-engine`). `core-update.yml` knows both names. |
-| Other App tags | `v0.1.0` and `v0.8.0` (application releases from the App's earlier history, not the engine). The engine tags are `engine-v0.1.0` to `engine-v0.1.3`. |
-| What this repository runs | **The wheel**, `network-assessment-azure-engine 0.1.3`, pinned by URL in `pyproject.toml` (`# ENGINE_REF 0.1.3`) and by sha256 in `uv.lock`; `src/network_assessment/engine.py` runs it. The wheel was first adopted at `0.1.1` ([pull request 78](https://github.com/saulpatinojr/HCW-NetworkEyes_AddOn/pull/78)). **It is the only engine**: the interim port under `src/network_assessment/{model,rules,classify}`, the lab's own normalizer and `PROVENANCE.md` were deleted on 2026-11-08 (ADR-0006), and `engine.py` refuses to start without the wheel. |
-| `core-update.yml` | Opens one bump pull request per new `engine-v*` release, with the HCW Main Admin App. The `engine-v0.1.3` bump is [pull request 91](https://github.com/saulpatinojr/HCW-NetworkEyes_AddOn/pull/91). |
+| Other App tags | `v0.1.0` and `v0.8.0` (application releases from the App's earlier history, not the engine). The engine tags are `engine-v0.1.0` to `engine-v0.1.4`. |
+| What this repository runs | **The wheel**, `network-assessment-azure-engine 0.1.4`, pinned by URL in `pyproject.toml` (`# ENGINE_REF 0.1.4`) and by sha256 in `uv.lock`; `src/network_assessment/engine.py` runs it. The wheel was first adopted at `0.1.1` ([pull request 78](https://github.com/saulpatinojr/HCW-NetworkEyes_AddOn/pull/78)). **It is the only engine**: the interim port under `src/network_assessment/{model,rules,classify}`, the lab's own normalizer and `PROVENANCE.md` were deleted on 2026-11-08 (ADR-0006), and `engine.py` refuses to start without the wheel. |
+| `core-update.yml` | Opens one bump pull request per new `engine-v*` release, with the HCW Main Admin App. The `engine-v0.1.4` bump is [pull request 93](https://github.com/saulpatinojr/HCW-NetworkEyes_AddOn/pull/93). |
 | Version markers | `RULES_VERSION` `2026.11.0`, `TOPOLOGY_MODEL_VERSION` `1.5.0` (`MODEL_VERSIONS` in `tests/conftest.py`; the registry digest is pinned in `tests/unit/test_engine.py`). The port's `2026.10.0` and `lab-1.0.0` left with the port. |
-| Is `engine-v0.1.3` compatible? | **Yes.** Its only change is packaging: the wheel and sdist ship `LICENSE` and `NOTICE`. `RULES_VERSION`, the registry digest and `TOPOLOGY_MODEL_VERSION` are unchanged; the bump ([pull request 91](https://github.com/saulpatinojr/HCW-NetworkEyes_AddOn/pull/91)) needed only the `MODEL_VERSIONS` row for 0.1.3 in `tests/conftest.py`, and the bundled licence copies equal the wheel's byte for byte (`tests/security/test_image_licences.py`). |
+| Is `engine-v0.1.4` compatible? | **Yes, with one test rewritten.** A finding that fails the hedge check is now withheld into `unknowns[]` instead of raising, so the gate test in `tests/unit/test_engine.py` checks that instead (details in the entry below). `RULES_VERSION`, the registry digest, `TOPOLOGY_MODEL_VERSION` and the rules in `docs/rules/catalog.md` are unchanged; only the catalog's generated provenance line moves from engine `0.1.3` to `0.1.4`, checked by the suite rather than assumed. |
 
-In short: this repository runs the App's engine wheel, now at `0.1.3`, and nothing else: the interim port is gone.
+In short: this repository runs the App's engine wheel, now at `0.1.4`, and nothing else: the interim port is gone.
 Every engine change from here on is made in the App, released, and arrives through a `core-update.yml` bump.
 
 ## Entries, newest first
 
-### 2026-11-08: engine 0.1.4 is prepared upstream (not released yet): a resource name no longer stops the report
+### 2026-11-08: engine 0.1.4 adopted; a resource name with a hedge word no longer stops the upload
+
+- **Released.** `engine-v0.1.4` was published on 2026-11-08
+  ([release](https://github.com/saulpatinojr/HCW-NetworkEyes_App/releases/tag/engine-v0.1.4)) from `1db870d`.
+  `core-update.yml` opened [pull request 93](https://github.com/saulpatinojr/HCW-NetworkEyes_AddOn/pull/93).
+- **What actually shipped, which is narrower than the entry below expected.** That entry was written while
+  [HCW-NetworkEyes_App#361](https://github.com/saulpatinojr/HCW-NetworkEyes_App/pull/361) was open and says every
+  string from the export is masked. The release went further in the safe direction
+  ([HCW-NetworkEyes_App#363](https://github.com/saulpatinojr/HCW-NetworkEyes_App/pull/363)): a hedge word is excused
+  only when it sits inside a customer *identifier* (a resource name, id or location) that has no spaces and joins the
+  hedge word to a letter or digit with `-`, `.`, `/` or `:`. A resource named just `may`, a description or a tag value
+  excuses nothing. Anything that still fails is withheld into `unknowns[]` with `HEDGED_WORDING_REASON`.
+- **What this repository changed.**
+  - `src/network_assessment/engine.py` re-exports `HEDGED_WORDING_REASON`, so lab code and tests read it from the one
+    place that reaches the wheel.
+  - `test_evaluation_refuses_a_finding_whose_fact_hedges` became `test_evaluation_never_reports_a_finding_whose_fact_hedges`:
+    with every finding's fact made to hedge, no finding is reported and exactly the rules that had findings are in
+    `unknowns[]` with that reason. The "never weaken" line in `CLAUDE.md` still holds: a hedged finding is still never
+    shown; it no longer fails the whole upload.
+  - New `test_samples_have_no_finding_withheld_for_hedged_wording` (one per sample), so a hedge word in the engine's own
+    wording fails this repository's CI instead of turning quietly into an unknown.
+  - New `test_a_resource_name_with_a_hedge_word_does_not_stop_the_upload` in `tests/unit/test_api.py`: the JSON sample
+    with every `hcw-sample-` name renamed to `hcw-sample-may-` answers 201 with the same findings and unknowns counts.
+    Run against `0.1.3` it fails with the old `ObservedStateViolation`, so it tests the fix, not just the new code.
+- **Not changed.** `RULES_VERSION` `2026.11.0`, the registry digest, `TOPOLOGY_MODEL_VERSION` `1.5.0` (its
+  `MODEL_VERSIONS` row was added ahead of time) and the rule catalog apart from its provenance line.
+
+### 2026-11-08: engine 0.1.4 is prepared upstream: a resource name no longer stops the report
 
 - **The problem it fixes.** The engine refuses "hedge words" (words such as "may", "could" and "should" that guess
   instead of stating what was seen) in a finding's text. In `0.1.3` that check read the whole text, including the

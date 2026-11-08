@@ -42,6 +42,18 @@ def _find_wheel() -> tuple[ModuleType, str]:
     )
 
 
+def _required(module: ModuleType, name: str, since: str) -> Any:
+    """``module.name``, or EngineNotInstalled when the installed wheel is older than ``since`` and lacks it."""
+    try:
+        return getattr(module, name)
+    except AttributeError:
+        raise EngineNotInstalled(
+            f"the installed assessment engine has no {module.__name__}.{name} (added in {since}); install "
+            "the locked dependencies with `uv sync`, which installs the wheel pinned on the ENGINE_REF line "
+            "of pyproject.toml"
+        ) from None
+
+
 _pkg, DISTRIBUTION = _find_wheel()
 VERSION: str = importlib.metadata.version(DISTRIBUTION)
 SOURCE = f"{DISTRIBUTION} {VERSION}"
@@ -55,6 +67,8 @@ AzureTopology = _pkg.AzureTopology
 TopologyClassification = _pkg.TopologyClassification
 ObservedStateEnforcer = _findings.ObservedStateEnforcer
 ObservedStateViolation = _findings.ObservedStateViolation
+# The fixed reason a rule carries in unknowns[] when the wheel withheld its finding for hedged wording (since 0.1.4).
+HEDGED_WORDING_REASON: str = _required(_rules, "HEDGED_WORDING_REASON", "network-assessment-azure-engine 0.1.4")
 RULES_VERSION: str = _pkg.RULES_VERSION
 TOPOLOGY_MODEL_VERSION: str = _pkg.TOPOLOGY_MODEL_VERSION
 classify_topology = _pkg.classify_topology
