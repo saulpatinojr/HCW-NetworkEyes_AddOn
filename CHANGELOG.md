@@ -12,6 +12,8 @@ All notable changes to this repository are recorded here. The format follows Kee
 
 ### Changed
 
+- **Ready for engine 0.1.4** ([HCW-NetworkEyes_App#356](https://github.com/saulpatinojr/HCW-NetworkEyes_App/issues/356)): `tests/conftest.py` knows `network-assessment-azure-engine 0.1.4` (model `1.5.0`), and `docs/whats-new-upstream.md` records the upstream fix (a customer's resource name containing a word such as "may" no longer stops the whole assessment; a finding that fails the hedge check is withheld and listed in `unknowns[]`) and the test the bump must rewrite. The summary line of that file now says the lab runs `0.1.3`, as its table already did.
+
 - **Runs engine 0.1.3** ([pull request 91](https://github.com/saulpatinojr/HCW-NetworkEyes_AddOn/pull/91)): `network-assessment-azure-engine 0.1.3` (was `0.1.2`). Its only change is that the wheel ships its own `LICENSE` and `NOTICE`; rules, model and catalog are unchanged. The licence copies bundled in the image equal the wheel's byte for byte.
 
 - **The engine wheel is the only engine; the interim port is deleted** (ADR-0006). The copy of the App's engine this

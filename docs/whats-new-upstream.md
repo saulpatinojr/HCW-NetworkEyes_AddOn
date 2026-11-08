@@ -28,10 +28,44 @@ and "Version markers" rows updated on 2026-11-08, when the interim port was dele
 | Version markers | `RULES_VERSION` `2026.11.0`, `TOPOLOGY_MODEL_VERSION` `1.5.0` (`MODEL_VERSIONS` in `tests/conftest.py`; the registry digest is pinned in `tests/unit/test_engine.py`). The port's `2026.10.0` and `lab-1.0.0` left with the port. |
 | Is `engine-v0.1.3` compatible? | **Yes.** Its only change is packaging: the wheel and sdist ship `LICENSE` and `NOTICE`. `RULES_VERSION`, the registry digest and `TOPOLOGY_MODEL_VERSION` are unchanged; the bump ([pull request 91](https://github.com/saulpatinojr/HCW-NetworkEyes_AddOn/pull/91)) needed only the `MODEL_VERSIONS` row for 0.1.3 in `tests/conftest.py`, and the bundled licence copies equal the wheel's byte for byte (`tests/security/test_image_licences.py`). |
 
-In short: this repository runs the App's engine wheel, now at `0.1.2`, and nothing else: the interim port is gone.
+In short: this repository runs the App's engine wheel, now at `0.1.3`, and nothing else: the interim port is gone.
 Every engine change from here on is made in the App, released, and arrives through a `core-update.yml` bump.
 
 ## Entries, newest first
+
+### 2026-11-08: engine 0.1.4 is prepared upstream (not released yet): a resource name no longer stops the report
+
+- **The problem it fixes.** The engine refuses "hedge words" (words such as "may", "could" and "should" that guess
+  instead of stating what was seen) in a finding's text. In `0.1.3` that check read the whole text, including the
+  customer's own resource names the rules quote, and the error it raised was not caught. So an export with one
+  resource called, for example, `may-promo-listener` stopped the whole assessment, not just that finding. Nothing in
+  `routes/assessments.py` catches `ObservedStateViolation`, so here the upload fails with a server error (read from
+  the code, not reproduced against the running lab). Reported as
+  [HCW-NetworkEyes_App#356](https://github.com/saulpatinojr/HCW-NetworkEyes_App/issues/356).
+- **What changes upstream.** [HCW-NetworkEyes_App#361](https://github.com/saulpatinojr/HCW-NetworkEyes_App/pull/361)
+  (open when this entry was written)
+  makes two changes and moves the package version to `0.1.4`:
+  1. The check judges only the engine's wording. Before it scans a fact, title or description, every value that came
+     from the uploaded export (names, ids, locations: every string in the topology) is masked, whole words only. A
+     value that is nothing but a hedge word (a resource named just `may`) is never masked.
+  2. A finding that still fails the check is **withheld**, never reported: its rule goes to `unknowns[]` with the fixed
+     reason `HEDGED_WORDING_REASON` (exported from `network_assessment_azure_engine.rules`; it carries no resource
+     name), and the rest of the report renders.
+  No rule's output changes: `RULES_VERSION` stays `2026.11.0`, the registry digest and `TOPOLOGY_MODEL_VERSION`
+  (`1.5.0`) stay.
+- **What this repository did meanwhile.** `tests/conftest.py` knows `network-assessment-azure-engine 0.1.4`
+  (model `1.5.0`) in `MODEL_VERSIONS`; the row is unused until the bump.
+- **What the bump to 0.1.4 needs.** Once the owner pushes the `engine-v0.1.4` tag on the App, `core-update.yml` opens
+  the bump. Besides the version pins (`ENGINE_REF` and the wheel URL in `pyproject.toml`, the sha256 in `uv.lock`):
+  - `test_evaluation_refuses_a_finding_whose_fact_hedges` in `tests/unit/test_engine.py` expects `assess()` to raise
+    `ObservedStateViolation`. With `0.1.4` it no longer raises. Rewrite it to keep the same guarantee (a hedged
+    finding is never reported): `a.findings` is empty for the patched rules, and every rule that had a finding is in
+    `a.unknowns` with the reason `HEDGED_WORDING_REASON`. This keeps the CLAUDE.md "never weaken" line, because the
+    gate still stops every hedged finding; it now stops it without failing the whole upload.
+  - Add a test that the samples produce no `unknowns[]` entry with `HEDGED_WORDING_REASON`, so a hedge word in the
+    engine's own wording still fails this repository's CI instead of quietly turning into an unknown.
+  - Optional, worth doing: an upload test with a resource named `may-promo-listener` that answers 201 with findings.
+  - `docs/rules/catalog.md`, `RULES_VERSION` and the digest pin are not expected to move (check them, do not assume).
 
 ### 2026-11-08: engine 0.1.3 adopted; the wheel now carries its own licence files
 
