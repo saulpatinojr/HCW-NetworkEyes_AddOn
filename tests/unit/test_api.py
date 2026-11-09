@@ -29,7 +29,7 @@ def test_health_is_flat_and_complete(client):
     assert body["turnstile"] == {"required": False, "siteKey": None} and body["siteOrigins"] == [
         "https://hybridcloudworks.com"
     ]
-    assert body["rules"] == {"version": "2026.11.0", "count": 45, "liveOnly": 11} and body["model"] == {
+    assert body["rules"] == {"version": "2026.11.1", "count": 45, "liveOnly": 11} and body["model"] == {
         "version": EXPECTED_MODEL_VERSION
     }
     assert body["limits"] == {"maxUploadBytes": 5242880, "maxRows": 5000, "ttlMinutes": 120}
@@ -59,7 +59,7 @@ def test_config_and_rules(client):
     assert c["siteOrigins"] == ["https://hybridcloudworks.com"] and c["limits"]["maxRows"] == 5000
     k = client.get("/api/rules").json()
     assert k["engine"] == client.get("/api/health").json()["engine"]
-    assert k["count"] == 45 and k["liveOnly"] == 11 and k["version"] == "2026.11.0" and k["verify"] is True
+    assert k["count"] == 45 and k["liveOnly"] == 11 and k["version"] == "2026.11.1" and k["verify"] is True
     assert k["rules"][0]["id"] == "AZ-BCDR-001" and k["rules"][-1]["id"] == "AZ-NET-033"
     assert all(r["learnUrl"].startswith("https://learn.microsoft.com/") for r in k["rules"])
     assert {r["appliesTo"] for r in k["rules"]} == {"export", "live-only"}
@@ -138,7 +138,7 @@ def test_create_read_files_delete_lifecycle(client, created):
         and "attachment" in md.headers["content-disposition"]
     )
     js = client.get(f"/api/assessments/{assessment_id}/report.json", headers=headers)
-    assert js.status_code == 200 and js.json()["id"] == assessment_id and js.json()["rulesVersion"] == "2026.11.0"
+    assert js.status_code == 200 and js.json()["id"] == assessment_id and js.json()["rulesVersion"] == "2026.11.1"
     z = client.get(f"/api/assessments/{assessment_id}/bundle.zip", headers=headers)
     assert z.status_code == 200 and z.headers["content-type"] == "application/zip"
     assert sorted(zipfile.ZipFile(io.BytesIO(z.content)).namelist()) == [

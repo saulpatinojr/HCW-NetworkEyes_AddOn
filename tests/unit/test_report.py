@@ -46,9 +46,9 @@ def test_bundle_entries_and_zip(built):
     findings = json.loads(files["findings.json"])
     assert len(findings["findings"]) == 45 and len(findings["unknowns"]) == 11
     assert json.loads(files["topology.json"])["model_version"] == EXPECTED_MODEL_VERSION
-    assert json.loads(files["summary.json"])["rulesVersion"] == "2026.11.0"
+    assert json.loads(files["summary.json"])["rulesVersion"] == "2026.11.1"
     rules = json.loads(files["rules.json"])
-    assert rules["rulesVersion"] == "2026.11.0" and len(rules["rules"]) == 45
+    assert rules["rulesVersion"] == "2026.11.1" and len(rules["rules"]) == 45
     assert (
         files["NOT-FOR-PRODUCTION.md"].decode() == NOT_FOR_PRODUCTION
         and "| `report.md` |" in files["README.md"].decode()

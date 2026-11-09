@@ -76,7 +76,7 @@ test("security headers and the health envelope", async ({ request }) => {
   expect(body.id).toBe("network-assessment");
   expect(body.edition).toBe("lab");
   expect(body.azureConnectivity).toBe("disabled-by-design");
-  expect(body.rules.version).toBe("2026.11.0");
+  expect(body.rules.version).toBe("2026.11.1");
   // The model marker is the engine wheel's; tests/unit/test_engine.py pins it per release, so here it only has to
   // agree with what GET /api/rules reports.
   const rules = await (await request.get("/api/rules")).json();
