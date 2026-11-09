@@ -9,7 +9,7 @@ dependencies = [
   "fastapi==0.162.0",
   "uvicorn==0.54.0",
   "pydantic==2.14.1",
-  "network-assessment-azure-engine @ https://github.com/saulpatinojr/HCW-NetworkEyes_App/releases/download/engine-v0.1.4/network_assessment_azure_engine-0.1.4-py3-none-any.whl",  # ENGINE_REF 0.1.4
+  "network-assessment-azure-engine @ https://github.com/saulpatinojr/HCW-NetworkEyes_App/releases/download/engine-v0.1.5/network_assessment_azure_engine-0.1.5-py3-none-any.whl",  # ENGINE_REF 0.1.5
 ]
 
 [dependency-groups]

@@ -26,8 +26,8 @@ from network_assessment.ingestion import parse_csv, parse_json
 from ..conftest import EXPECTED_MODEL_VERSION, MODEL_VERSIONS, ROOT, SAMPLE_CSV, SAMPLE_JSON, SAMPLE_PORTAL_CSV
 
 # The digest of every rule's id|version|severity|applies_to, in id order; it moves only with RULES_VERSION.
-REGISTRY_DIGEST = "dd1d1f26a4e80db1fb786ea4bd71374a449522e4fb13999855477d8a994c4add"
-EXPECTED_RULES_VERSION = "2026.11.0"
+REGISTRY_DIGEST = "715d1fddb5359262da368da57518a4c51ddb6057aeb86029ebadb1b1aaaffed1"
+EXPECTED_RULES_VERSION = "2026.11.1"
 LIVE_ONLY = {
     "AZ-NET-008",
     "AZ-NET-009",
