@@ -268,7 +268,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "fastapi", specifier = "==0.162.0" },
-    { name = "network-assessment-azure-engine", url = "https://github.com/saulpatinojr/HCW-NetworkEyes_App/releases/download/engine-v0.1.4/network_assessment_azure_engine-0.1.4-py3-none-any.whl" },
+    { name = "network-assessment-azure-engine", url = "https://github.com/saulpatinojr/HCW-NetworkEyes_App/releases/download/engine-v0.1.5/network_assessment_azure_engine-0.1.5-py3-none-any.whl" },
     { name = "pydantic", specifier = "==2.14.1" },
     { name = "uvicorn", specifier = "==0.54.0" },
 ]
@@ -394,13 +394,13 @@ wheels = [
 
 [[package]]
 name = "network-assessment-azure-engine"
-version = "0.1.4"
-source = { url = "https://github.com/saulpatinojr/HCW-NetworkEyes_App/releases/download/engine-v0.1.4/network_assessment_azure_engine-0.1.4-py3-none-any.whl" }
+version = "0.1.5"
+source = { url = "https://github.com/saulpatinojr/HCW-NetworkEyes_App/releases/download/engine-v0.1.5/network_assessment_azure_engine-0.1.5-py3-none-any.whl" }
 dependencies = [
     { name = "pydantic" },
 ]
 wheels = [
-    { url = "https://github.com/saulpatinojr/HCW-NetworkEyes_App/releases/download/engine-v0.1.4/network_assessment_azure_engine-0.1.4-py3-none-any.whl", hash = "sha256:cc11aa7e8d05b126cccc5667ab019d4440096b448481e4d85b450e906bc97823" },
+    { url = "https://github.com/saulpatinojr/HCW-NetworkEyes_App/releases/download/engine-v0.1.5/network_assessment_azure_engine-0.1.5-py3-none-any.whl", hash = "sha256:689d15be41006ea48710f96cc7ca93e039dffde9c5a54d5f03b4db5f2824fdbc" },
 ]
 
 [package.metadata]
