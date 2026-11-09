@@ -40,6 +40,21 @@ on 2026-10-26 to the website's newer digest `sha256:fbecd461...`).
 | `core-update.yml` against a Core release | **yes**, CI | ran for real since this table was first written: it opened the bump pull requests that adopted `engine-v0.1.1` ([#78](https://github.com/saulpatinojr/HCW-NetworkEyes_AddOn/pull/78)) and `engine-v0.1.2` ([#87](https://github.com/saulpatinojr/HCW-NetworkEyes_AddOn/pull/87)); `pyproject.toml` carries `# ENGINE_REF 0.1.2` (row updated 2026-11-08) |
 | CodeQL, gitleaks, dependency-review | **no**, CI only | `security.yml` |
 
+## Run 2026-11-09 (release 0.1.3 prepared)
+
+This run prepares the version bump only and publishes nothing. The release exists so that the public lab runs engine
+0.1.5 (adopted on `main` by [pull request 97](https://github.com/saulpatinojr/HCW-NetworkEyes_AddOn/pull/97)). Toolchain:
+the scratch environment of the runs below (CPython **3.15.0b4**, filled from `uv export --frozen` plus the `engine-v0.1.5`
+wheel, sha256 `689d15be…fdbc`, equal to `uv.lock`); tests run with `PYTHONPATH=src`.
+
+| Check | Executed here | Result |
+| --- | --- | --- |
+| The version in every place that says it: `pyproject.toml`, `uv.lock` (the `hcw-addon-network-assessment` entry), `__version__`, `repository.manifest.json`, the sample output in `docs/operations/runbook.md` | yes | all say `0.1.3`. `uv lock` could not run here (no 3.15.1 interpreter), so the lock's one project-version line was changed to match what 0.1.2's re-lock changed; `ci.yml`'s `uv lock --check` verifies it. The runbook's sample health output also had stale rule and model versions (`2026.10.0`, `lab-1.0.0`) and now shows `2026.11.1` and `1.5.0` |
+| `ruff check .`, `ruff format --check .`, `python scripts/rules-doc.py --check` | yes | clean (72 files); `docs/rules/catalog.md` in sync (422 lines) |
+| `pytest -q --cov=src` | yes | 415 passed; coverage 97.07%. Includes `test_manifest_version_matches_pyproject` (the three version strings agree) |
+| Publish dry run on the merged commit (`publish-images.yml` by hand; its header says a manual run builds, checks the boundary and scans, and never pushes) | **no**, after the merge | run once this merges, on the merge commit the `v0.1.3` tag will point at |
+| Trivy scan, push, provenance, SBOM, attestation, digest | **no**, CI on a `v*` tag only | the `v0.1.3` tag is the owner's call |
+
 ## Run 2026-11-08 (the image states MIT AND Apache-2.0 and carries both licence texts)
 
 Toolchain: the same scratch environment as the run below (CPython **3.15.0b4**, filled from `uv export --frozen` plus

@@ -4,6 +4,16 @@ All notable changes to this repository are recorded here. The format follows Kee
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-11-09
+
+This release exists so that the public lab runs engine 0.1.5 (`network-assessment-azure-engine`, rule set `2026.11.1`).
+Since 0.1.2 the lab adopted engines 0.1.3, 0.1.4 and 0.1.5 on `main`, but the lab host only ever runs a published image,
+and only a `v*` tag publishes one. The change visitors will notice: an upload whose resource names contain a word such as
+"may" (for example `app-may-gw`) no longer fails with a server error (engine 0.1.4). Rules `AZ-NET-009` and `AZ-NET-019` are
+at version 2 with reworded notes (engine 0.1.5). The image also states its licences as `MIT AND Apache-2.0` and carries both
+licence texts. This release changes nothing in the lab application but the version string; the entries below landed on
+`main` before it.
+
 ### Fixed
 
 - **The notes say where the HCW Main Admin App is installed today.** `VALIDATION.md` and the comments in `.github/workflows/core-update.yml` said the App "is being added" to HCW-CloudCrawler_App and HCW-CloudAssessor_App, or would be there "once the owner adds it"; it has been installed there since 2026-11-05. The proof run is tracked on [HCW-CloudCrawler_App#70](https://github.com/saulpatinojr/HCW-CloudCrawler_App/issues/70). Wording only.
