@@ -45,16 +45,19 @@ on 2026-10-26 to the website's newer digest `sha256:fbecd461...`).
 Four jobs ran Python or Node.js on the runner's own versions (Python 3.14 and Node.js 24 on the `ubuntu-26.04` image),
 below the program's floors of 3.15 and 26
 ([HCW-HybridCloudWorks#1707](https://github.com/saulpatinojr/HCW-HybridCloudWorks/issues/1707)): `base-update.yml`
-`plan` and `open-pr`, and `core-update.yml` `bump` (npm) and `pull-request` (the verify step's `python3 -I -`). Each now
-installs its version with the pinned `actions/setup-python` (from `.python-version`) or `actions/setup-node` (26), with
-no cache. Toolchain: Linux cloud session, uv-managed CPython 3.15.2.
+`plan` and `open-pr`, and `core-update.yml` `bump` (npm) and `pull-request` (the verify step's `python3 -I -`). The
+first three now install their version with the pinned `actions/setup-python` (from `.python-version`) or
+`actions/setup-node` (26), with no cache. The `pull-request` job keeps the runner's own `python3` on purpose: its check
+uses only the standard library (`tomllib`), and the job holds the App key, so it installs nothing; a comment above the
+call says so, and the new check lists it as its one exception. Toolchain: Linux cloud session, uv-managed CPython 3.15.2.
 
 | Check | Executed here | Result |
 | --- | --- | --- |
-| Every job in `.github/workflows` that calls `node`, `npm`, `npx`, `python`, `python3` or `pip` as a command, and whether a setup step chose the version first | yes, by a script over the parsed YAML | only the four jobs above used the runner's own version; every other call follows a setup step |
-| `ruff check .`, `ruff format --check .`, `uv lock --check`, `python scripts/rules-doc.py --check` | yes | clean (72 files); lock current; `docs/rules/catalog.md` in sync (422 lines) |
-| `pytest -q --cov=src` | yes | 418 passed (three new tests: each `base-update` job installs Python before the script; the `pull-request` job installs only an interpreter, after the lock; the browser suite runs on Node.js 26); coverage 97.07% |
-| actionlint 1.7.12 (with shellcheck 0.11.0) and zizmor 1.31.1 `--offline` with `.github/zizmor.yml`, the versions `ci.yml` pins | yes | actionlint no findings; zizmor `No findings to report` (2 ignored: the two Playwright install lines) |
+| `tests/security/test_workflow_runtime_setup.py`, the new check over every workflow | yes | 30 passed. Its workflow reader was compared with PyYAML (CPython 3.13, outside the test) on all 367 steps of the four add-ons' workflows: the same jobs, containers and step `name`, `uses` and `run` values |
+| The new check fails when a fix is undone | yes, on a scratch worktree | with the `plan` job's setup-python step removed from `base-update.yml`, 1 failed and 29 passed, naming the two `plan` steps that run `follow_website_base.py` (`Compare this repository's base image with the website's pin (writes nothing)` and `Decide whether the pull request job has anything to do …`); with the step put back, 30 passed |
+| `ruff check .`, `ruff format --check .`, `uv lock --check`, `python scripts/rules-doc.py --check` | yes | clean (73 files); lock current; `docs/rules/catalog.md` in sync (422 lines) |
+| `pytest -q --cov=src` | yes | 447 passed (2 new tests on the edited workflows, 30 in the new check); coverage 97.07% |
+| actionlint 1.7.12 (with shellcheck 0.11.0) and zizmor 1.31.1 `--offline` with `.github/zizmor.yml`, the versions `ci.yml` pins | yes | actionlint no findings; zizmor `No findings to report` (2 ignored: the two `npm install @playwright/test` lines) |
 | A real `base-update` run, and a real `core-update` bump, on the chosen versions | **no**, after the merge | `base-update` runs daily at 07:37 UTC; `core-update` only does this work when the App publishes a new engine release |
 
 ## Run 2026-11-09 (release 0.1.3 prepared)
