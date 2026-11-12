@@ -170,6 +170,12 @@ jobs:
           # text), the catalog stays as it was and the drift check in the next step reports it.
           uv run python scripts/rules-doc.py --write || echo "::warning::scripts/rules-doc.py --write refused engine ${LATEST}; see the next step"
           git --no-pager diff --stat
+      # The browser suite in the compatibility check runs on Node.js 26, the program's floor, not on the runner's own
+      # older Node.js (saulpatinojr/HCW-HybridCloudWorks#1707). No cache (files kept from earlier runs), so nothing
+      # from another run reaches a job that hands its result to the job holding the key.
+      - if: steps.refs.outputs.changed == 'true' && !inputs.probe
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with: { node-version: 26, package-manager-cache: false }
       - if: steps.refs.outputs.changed == 'true' && !inputs.probe
         id: compat
         name: Compatibility check (lint, tests, rule catalog drift, browser e2e)
@@ -326,6 +332,9 @@ jobs:
           # from the default branch. Run from RUNNER_TEMP in isolated mode (-I), so nothing from the checkout or the
           # environment is imported.
           cd "${RUNNER_TEMP}"
+          # Runs on the runner's own python3 on purpose (saulpatinojr/HCW-HybridCloudWorks#1707, item 8): standard
+          # library only (tomllib, in every Python since 3.11), and this job holds the App key, so it installs nothing,
+          # not even an interpreter.
           python3 -I - "${GITHUB_WORKSPACE}/uv.lock" "${RUNNER_TEMP}/main-uv.lock" "$DIST" "$URL" <<'PY'
           import re, sys, tomllib
 

@@ -117,7 +117,9 @@ def test_the_pull_request_job_runs_no_project_code():
     assert uv_calls == ['"$base" /uv lock --no-build --upgrade-package "$DIST"'], uv_calls
     # Its one interpreter call on the runner is this file's own inline script, isolated from the checkout and the
     # environment. (`.python-version`, `python:<tag>` image references and `BASE_PYTHON_VERSION` are not calls.)
-    calls = re.findall(r"(?<![\w.:/-])python3?\b(?![:.-])[^\n]*", JOBS["pull-request"])
+    # Comment lines are left out: the one above that call says why it uses the runner's own interpreter.
+    code = "\n".join(line for line in JOBS["pull-request"].splitlines() if not line.lstrip().startswith("#"))
+    calls = re.findall(r"(?<![\w.:/-])python3?\b(?![:.-])[^\n]*", code)
     assert calls and all(c.startswith("python3 -I - ") for c in calls), calls
 
 
@@ -174,6 +176,18 @@ def test_the_lock_is_regenerated_inside_the_digest_pinned_base_image_with_its_ow
     ceiling = tuple(int(part) for part in requires.group(2).split("."))
     assert lowest <= version < ceiling, f"BASE_PYTHON_VERSION {base_python} is outside {requires.group(0)}"
     assert f"FROM {_versions_env('BASE_IMAGE')}@{_versions_env('BASE_DIGEST')} " in DOCKERFILE
+
+
+def test_the_browser_suite_runs_on_the_node_it_chose():
+    """The runner's own Node.js is older than the program's floor (saulpatinojr/HCW-HybridCloudWorks#1707), so the
+    bump job installs Node.js 26 before the compatibility step runs npm, with no cache (files kept from earlier runs),
+    and under the same condition as that step. The pull-request job has no Node.js step."""
+    setup = _only(BUMP, "actions/setup-node")
+    compat = _by_id(BUMP, "compat")
+    assert not _uses(PR, "actions/setup-node")
+    assert re.search(r"(?m)^ {8}with: \{ node-version: 26, package-manager-cache: false \}\s*$", setup), setup
+    assert _field(setup, "if") == _field(compat, "if")
+    assert BUMP.index(setup) < BUMP.index(compat)
 
 
 def test_the_bump_job_hands_over_exactly_one_artifact_and_the_other_job_downloads_it():

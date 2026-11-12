@@ -40,6 +40,26 @@ on 2026-10-26 to the website's newer digest `sha256:fbecd461...`).
 | `core-update.yml` against a Core release | **yes**, CI | ran for real since this table was first written: it opened the bump pull requests that adopted `engine-v0.1.1` ([#78](https://github.com/saulpatinojr/HCW-NetworkEyes_AddOn/pull/78)) and `engine-v0.1.2` ([#87](https://github.com/saulpatinojr/HCW-NetworkEyes_AddOn/pull/87)); `pyproject.toml` carries `# ENGINE_REF 0.1.2` (row updated 2026-11-08) |
 | CodeQL, gitleaks, dependency-review | **no**, CI only | `security.yml` |
 
+## Run 2026-11-12 (workflow jobs choose their Python and Node.js; HCW-HybridCloudWorks#1707)
+
+Four jobs ran Python or Node.js on the runner's own versions (Python 3.14 and Node.js 24 on the `ubuntu-26.04` image),
+below the program's floors of 3.15 and 26
+([HCW-HybridCloudWorks#1707](https://github.com/saulpatinojr/HCW-HybridCloudWorks/issues/1707)): `base-update.yml`
+`plan` and `open-pr`, and `core-update.yml` `bump` (npm) and `pull-request` (the verify step's `python3 -I -`). The
+first three now install their version with the pinned `actions/setup-python` (from `.python-version`) or
+`actions/setup-node` (26), with no cache. The `pull-request` job keeps the runner's own `python3` on purpose: its check
+uses only the standard library (`tomllib`), and the job holds the App key, so it installs nothing; a comment above the
+call says so, and the new check lists it as its one exception. Toolchain: Linux cloud session, uv-managed CPython 3.15.2.
+
+| Check | Executed here | Result |
+| --- | --- | --- |
+| `tests/security/test_workflow_runtime_setup.py`, the new check over every workflow | yes | 30 passed. Its workflow reader was compared with PyYAML (CPython 3.13, outside the test) on all 367 steps of the four add-ons' workflows: the same jobs, containers and step `name`, `uses` and `run` values |
+| The new check fails when a fix is undone | yes, on a scratch worktree | with the `plan` job's setup-python step removed from `base-update.yml`, 1 failed and 29 passed, naming the two `plan` steps that run `follow_website_base.py` (`Compare this repository's base image with the website's pin (writes nothing)` and `Decide whether the pull request job has anything to do …`); with the step put back, 30 passed |
+| `ruff check .`, `ruff format --check .`, `uv lock --check`, `python scripts/rules-doc.py --check` | yes | clean (73 files); lock current; `docs/rules/catalog.md` in sync (422 lines) |
+| `pytest -q --cov=src` | yes | 447 passed (2 new tests on the edited workflows, 30 in the new check); coverage 97.07% |
+| actionlint 1.7.12 (with shellcheck 0.11.0) and zizmor 1.31.1 `--offline` with `.github/zizmor.yml`, the versions `ci.yml` pins | yes | actionlint no findings; zizmor `No findings to report` (2 ignored: the two `npm install @playwright/test` lines) |
+| A real `base-update` run, and a real `core-update` bump, on the chosen versions | **no**, after the merge | `base-update` runs daily at 07:37 UTC; `core-update` only does this work when the App publishes a new engine release |
+
 ## Run 2026-11-09 (release 0.1.3 prepared)
 
 This run prepares the version bump only and publishes nothing. The release exists so that the public lab runs engine
