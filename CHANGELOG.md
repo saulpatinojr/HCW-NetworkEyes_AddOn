@@ -4,6 +4,10 @@ All notable changes to this repository are recorded here. The format follows Kee
 
 ## [Unreleased]
 
+### Changed
+
+- **Every workflow job that runs Python or Node.js on the runner now chooses the version itself** ([HCW-HybridCloudWorks#1707](https://github.com/saulpatinojr/HCW-HybridCloudWorks/issues/1707)). The GitHub-hosted runner (the machine GitHub lends each job) comes with its own Python 3.14 and Node.js 24, older than the program's floors of Python 3.15 and Node.js 26, and four jobs used them. Both jobs of `base-update.yml` (`plan` and `open-pr`) now install the Python that `.python-version` names with `actions/setup-python` before they run `scripts/follow_website_base.py`; the `bump` job of `core-update.yml` installs Node.js 26 with `actions/setup-node` before its browser suite runs `npm`; and its `pull-request` job installs the Python that `.python-version` names, after the lock step and before the verify step's standard-library lock check (`python3 -I -`). None of them keeps a cache (files saved from earlier runs), because each job holds a token or the App key, or hands its result to the job that does. The action pins are the ones the other workflows already use. `tests/security/test_base_update_workflow.py` and `tests/security/test_core_update_app_token.py` check the new steps; the latter's rule that the `pull-request` job never uses `setup-python` now allows exactly this one step (an interpreter only, no cache, after the lock), and the `adhoc-packages` ignore in `.github/zizmor.yml` follows the Playwright install line from line 189 to 195 of `core-update.yml`.
+
 ## [0.1.3] - 2026-11-09
 
 This release exists so that the public lab runs engine 0.1.5 (`network-assessment-azure-engine`, rule set `2026.11.1`).

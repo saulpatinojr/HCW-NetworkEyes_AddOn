@@ -90,10 +90,12 @@ def test_no_step_that_runs_project_code_is_given_a_token():
 
 
 # The pull-request job may run uv for one thing only: `lock --no-build`, with the binary taken from the image the
-# Dockerfile pins by digest. Anything else that installs, builds or runs code is refused, as in PROJECT_CODE.
+# Dockerfile pins by digest. Anything else that installs, builds or runs code is refused, as in PROJECT_CODE. The one
+# exception is a bare setup-python (an interpreter, no cache, no package) for the verify step's standard-library check,
+# which test_the_pull_request_job_installs_only_an_interpreter_after_the_lock pins.
 PR_FORBIDDEN = re.compile(
     r"\buv\s+(?:run|sync|pip|tool|build|export|add|venv)\b|\buvx\b|uv==|\bpip\s|pytest|\bnpm\b|\bnpx\b|playwright"
-    r"|\bmake\b|ruff|scripts/|python -m|setup-python"
+    r"|\bmake\b|ruff|scripts/|python -m"
 )
 
 
@@ -123,10 +125,11 @@ def test_the_pull_request_job_runs_no_project_code():
 
 def test_the_lock_is_regenerated_inside_the_digest_pinned_base_image_with_its_own_interpreter():
     """`uv lock` needs an interpreter that satisfies `.python-version` and `requires-python`, and the job forbids uv to
-    download one (UV_PYTHON_DOWNLOADS=never). The job installs no interpreter either, so every scheduled run failed at
-    this step with `No interpreter found for Python 3.15` (runs 41944123703 and 41961781195, 2026-11-05). The lock now
-    runs inside the base image every FROM of the Dockerfile pins by digest: the CPython the add-on ships with, verified
-    by Docker like the uv binary, so what the runner image happens to carry no longer matters."""
+    download one (UV_PYTHON_DOWNLOADS=never). The job installed no interpreter before this step either, so every
+    scheduled run failed at this step with `No interpreter found for Python 3.15` (runs 41944123703 and 41961781195,
+    2026-11-05). The lock now runs inside the base image every FROM of the Dockerfile pins by digest: the CPython the
+    add-on ships with, verified by Docker like the uv binary, so what the runner image happens to carry no longer
+    matters."""
     regen = _by_id(PR, "regen")
     # The image is read from versions.env, checked for shape and checked against the Dockerfile before it is run.
     assert "sed -n 's/^BASE_IMAGE=//p' infrastructure/docker/versions.env" in regen
@@ -136,7 +139,8 @@ def test_the_lock_is_regenerated_inside_the_digest_pinned_base_image_with_its_ow
     assert 'docker pull --quiet "$base"' in regen
     # One container, in the regen step only, as the runner's user, with no capabilities, a read-only root filesystem,
     # the checkout and /tmp as the only writable paths, the uv binary mounted read-only, and uv told to lock and
-    # nothing else. No interpreter comes from the runner: nothing installs one and uv may not download one.
+    # nothing else. No interpreter comes from the runner: nothing installs one before this step (the setup-python step
+    # comes after it, see the next test) and uv may not download one.
     assert [s for s in PR if "docker run" in s] == [regen]
     commands = _docker_run_lines(regen)
     assert len(commands) == 1, commands
@@ -174,6 +178,29 @@ def test_the_lock_is_regenerated_inside_the_digest_pinned_base_image_with_its_ow
     ceiling = tuple(int(part) for part in requires.group(2).split("."))
     assert lowest <= version < ceiling, f"BASE_PYTHON_VERSION {base_python} is outside {requires.group(0)}"
     assert f"FROM {_versions_env('BASE_IMAGE')}@{_versions_env('BASE_DIGEST')} " in DOCKERFILE
+
+
+def test_the_pull_request_job_installs_only_an_interpreter_after_the_lock():
+    """The verify step's inline lock check (`python3 -I -`, standard library only) runs on the Python line
+    `.python-version` names, not on the runner's own older Python (saulpatinojr/HCW-HybridCloudWorks#1707). The job
+    holds the App key, so the step installs the interpreter and nothing else: no cache (files kept from earlier runs),
+    no package. It comes after the lock step, so the lock still runs only on the base image's CPython."""
+    setup = _only(PR, "actions/setup-python")
+    assert re.search(r"(?m)^ {8}with: \{ python-version-file: \.python-version \}\s*$", setup), setup
+    assert "cache" not in setup.split("with:", 1)[1], "no cache in the job that holds the key"
+    assert "!inputs.probe" in _field(setup, "if"), "a probe run installs nothing"
+    assert PR.index(_by_id(PR, "regen")) < PR.index(setup) < PR.index(_by_id(PR, "verify"))
+
+
+def test_the_browser_suite_runs_on_the_node_it_chose():
+    """The runner's own Node.js is older than the program's floor (saulpatinojr/HCW-HybridCloudWorks#1707), so the
+    bump job installs Node.js 26 before the compatibility step runs npm, with no cache. The pull-request job has no
+    Node.js step."""
+    setup = _only(BUMP, "actions/setup-node")
+    assert not _uses(PR, "actions/setup-node")
+    assert re.search(r"(?m)^ {8}with: \{ node-version: 26, package-manager-cache: false \}\s*$", setup), setup
+    assert "!inputs.probe" in _field(setup, "if")
+    assert BUMP.index(setup) < BUMP.index(_by_id(BUMP, "compat"))
 
 
 def test_the_bump_job_hands_over_exactly_one_artifact_and_the_other_job_downloads_it():

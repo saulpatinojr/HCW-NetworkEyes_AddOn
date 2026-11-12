@@ -170,6 +170,12 @@ jobs:
           # text), the catalog stays as it was and the drift check in the next step reports it.
           uv run python scripts/rules-doc.py --write || echo "::warning::scripts/rules-doc.py --write refused engine ${LATEST}; see the next step"
           git --no-pager diff --stat
+      # The browser suite in the compatibility check runs on Node.js 26, the program's floor, not on the runner's own
+      # older Node.js (saulpatinojr/HCW-HybridCloudWorks#1707). No cache (files kept from earlier runs), so nothing
+      # from another run reaches a job that hands its result to the job holding the key.
+      - if: steps.refs.outputs.changed == 'true' && !inputs.probe
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with: { node-version: 26, package-manager-cache: false }
       - if: steps.refs.outputs.changed == 'true' && !inputs.probe
         id: compat
         name: Compatibility check (lint, tests, rule catalog drift, browser e2e)
@@ -267,8 +273,9 @@ jobs:
           docker pull --quiet "$image" > /dev/null
           cid="$(docker create "$image")"; docker cp "${cid}:/uv" "${RUNNER_TEMP}/uv-bin"; docker rm "$cid" > /dev/null
           # `uv lock` needs an interpreter that satisfies .python-version and requires-python, and UV_PYTHON_DOWNLOADS=never
-          # keeps it from fetching one. This job installs none (by design: it runs nothing but this file's own shell
-          # and the pinned actions), and the runner image carries whichever patches it carries, so every scheduled
+          # keeps it from fetching one. This job installed none then (by design: it runs nothing but this file's own
+          # shell and the pinned actions; the setup-python step below serves only the verify step's inline check, and
+          # comes after this step), and the runner image carries whichever patches it carries, so every scheduled
           # run failed with "No interpreter found" (runs 41944123703 and 41961781195). The lock
           # therefore runs inside the base image every FROM of the Dockerfile pins by digest (versions.env; ci.yml
           # checks the two agree): the same CPython the add-on ships with, verified by Docker like the uv binary.
@@ -292,6 +299,12 @@ jobs:
         with:
           name: ${{ env.ARTIFACT }}
           path: ${{ runner.temp }}/bump
+      # The verify step's inline lock check (standard library only) runs on the Python line in .python-version, not on
+      # the runner's own older Python (saulpatinojr/HCW-HybridCloudWorks#1707). Only the interpreter is installed: no
+      # cache (files kept from earlier runs) in the job that holds the key, and no package.
+      - if: ${{ !inputs.probe }}
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
+        with: { python-version-file: .python-version }
       - if: ${{ !inputs.probe }}
         id: verify
         name: Verify the artifact matches what this job regenerated, and accept the catalog only as plain text
