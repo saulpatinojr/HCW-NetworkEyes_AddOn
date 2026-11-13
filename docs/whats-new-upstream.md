@@ -32,6 +32,20 @@ Every engine change from here on is made in the App, released, and arrives throu
 
 ## Entries, newest first
 
+### 2026-11-13: the workflow runtime check moves to round two here and in the App
+
+- The check that every workflow step running Python or Node.js sets its version up first has a second round of rules.
+  Its canonical copy is the Python one in HCW-NetworkEyes_App
+  ([HCW-NetworkEyes_App#395](https://github.com/saulpatinojr/HCW-NetworkEyes_App/pull/395)); the website's JavaScript
+  twin merged in [HCW-HybridCloudWorks#1719](https://github.com/saulpatinojr/HCW-HybridCloudWorks/pull/1719). This
+  repository's `tests/security/test_workflow_runtime_setup.py` is refreshed from the canonical copy in the same pull
+  request as this entry; only its own lists stay its own.
+- **Reaches this edition? Only as this test.** No engine, catalog, rule, wheel or release change comes with it, so
+  `core-update.yml` has nothing to adopt. The App (HCW-NetworkEyes_App) already has it: its copy is the canonical one,
+  changed in [HCW-NetworkEyes_App#395](https://github.com/saulpatinojr/HCW-NetworkEyes_App/pull/395), which was waiting
+  for the owner's merge when this was written.
+- What the test now reads is in this repository's `CHANGELOG.md` entry of the same date.
+
 ### 2026-11-09: engine 0.1.5 adopted; rule notes are checked for hedge words
 
 - **Released.** `engine-v0.1.5` was published on 2026-11-09
