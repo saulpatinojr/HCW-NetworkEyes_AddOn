@@ -36,9 +36,8 @@ Every engine change from here on is made in the App, released, and arrives throu
 
 - The App's `320-release-engine.yml` (the workflow that builds and publishes the engine wheel this repository installs)
   and its `300-test-codebase.yml` now install uv 0.13.8 instead of 0.13.7, to match the App's Dockerfiles, which
-  Dependabot had already moved to 0.13.8. The App's change is on its branch `claude/uv-0138-1707`
-  ([commit f9f98d4](https://github.com/saulpatinojr/HCW-NetworkEyes_App/commit/f9f98d4acaa81b9a94dea0c3f2ff3aa46590ac5a)),
-  not yet merged when this was written. It also adds a test there that fails when a workflow's uv differs from the
+  Dependabot had already moved to 0.13.8. The App's change is
+  [pull request 398](https://github.com/saulpatinojr/HCW-NetworkEyes_App/pull/398). It also adds a test there that fails when a workflow's uv differs from the
   Dockerfiles' uv. ([HCW-HybridCloudWorks#1707](https://github.com/saulpatinojr/HCW-HybridCloudWorks/issues/1707))
 - **Does the engine wheel change?** No. The engine `0.1.5` source was built with uv 0.13.7 and with uv 0.13.8 (the
   same setuptools 84.2.1 and wheel 0.48.0 backend both times). With the same `SOURCE_DATE_EPOCH` (a fixed build date)
