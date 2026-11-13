@@ -384,6 +384,15 @@ TAMPERING = {
     ),
     # The engine's static metadata is gone.
     "metadata-removed": lambda t: re.sub(r"\[\[manifest\.dependency-metadata\]\]\n(?:.+\n)+\n", "", t, count=1),
+    # The engine's own [[package]] entry kept the old version while its URL and static metadata moved: the lock would
+    # name the new wheel under the old version number.
+    "package-version-not-moved": lambda t: re.sub(
+        rf'(\[\[package\]\]\nname = "{re.escape(ENGINE)}"\nversion = )"[^"]+"', rf'\1"{_pin()["ver"]}"', t
+    ),
+    # The engine's own [[package]] entry moved to another version than the release.
+    "package-other-version": lambda t: re.sub(
+        rf'(\[\[package\]\]\nname = "{re.escape(ENGINE)}"\nversion = )"[^"]+"', r'\1"98.0.0"', t
+    ),
 }
 
 
