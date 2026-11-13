@@ -296,8 +296,12 @@ compatibility check in the workflow run goes red and the pull request carries th
    one, so a different range there would break the lock of its pull requests. The test
    `test_wheel_accepts_every_python_the_project_allows` checks the engine's `Requires-Python` instead.
    If the release is published under the engine's other name (`cna-azure-network-engine` instead of
-   `network-assessment-azure-engine`), the workflow stops at this entry and writes nothing: change the entry's `name`
-   along with the pin by hand in the same pull request.
+   `network-assessment-azure-engine`), the engine-update run stops at this entry before it opens any pull request, and
+   writes nothing, so steps 3 to 5 have no branch to work on. Make the change by hand instead, on a new branch from
+   `main`: in `pyproject.toml`, change the engine line marked `# ENGINE_REF` to the new release's wheel address and
+   version, and in the `[[tool.uv.dependency-metadata]]` entry change `name` to the new name, the version on the
+   `# ENGINE_METADATA` line, and `requires-dist` and `provides-extra` as step 4 says; then run step 5 and open a pull
+   request from that branch. Once it is merged, the next scheduled run finds nothing to do.
 5. Rebuild the lock with the uv version `ci.yml` names in `UV_VERSION` (0.13.7 today; use the number that file
    shows), commit `pyproject.toml` and `uv.lock`, and push. Success: it prints `Resolved` and a package count, and the
    pull request's checks go green. Do this soon after the pull request opens and merge it once green: while it is open,
