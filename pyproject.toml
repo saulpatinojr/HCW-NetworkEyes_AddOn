@@ -16,7 +16,7 @@ dependencies = [
 dev = [
   "pytest==9.1.1",
   "pytest-cov==7.1.0",
-  "ruff==0.17.3",
+  "ruff==0.17.4",
   "httpx==0.28.1",
   "pip-audit==2.10.1",
 ]
@@ -37,6 +37,32 @@ allow-direct-references = true
 # One project, no workspace member: the engine is the wheel pinned on the marked dependency line (ADR-0006), and
 # src/network_assessment/engine.py refuses to start without it.
 package = true
+
+# What the engine (the wheel pinned on the ENGINE_REF line) depends on, copied from the METADATA file inside the wheel,
+# its optional `azure` extra included (this edition never installs that extra; listing it keeps the lock the same as
+# when uv read the wheel itself). Why it is here: whenever uv re-resolves the lock (`uv lock`, `uv lock --check`, and
+# Dependabot's uv job for every update it tries), uv 0.13 and later first send a HEAD (a request for the file's headers
+# only) to the wheel's address. GitHub answers with a redirect to a signed download link that answered that HEAD with
+# 401 (not authorised) from a cloud session on 2026-11-13, so the lock failed. With this entry uv does not ask the
+# address at all; the wheel's URL and sha256 in uv.lock are unchanged. The Cloud Crawler add-on has the same entry for
+# the same reason. The name must be the pinned distribution and the version the pinned wheel's: core-update.yml moves
+# the version with the pin (the ENGINE_METADATA marker), and tests/security/test_engine_static_metadata.py compares the
+# entry with the installed wheel. Do not add requires-python here: Dependabot rewrites every requires-python in the
+# lock to the project's. Runbook: "Keeping uv away from the engine's address".
+[[tool.uv.dependency-metadata]]
+name = "network-assessment-azure-engine"
+version = "0.1.5"  # ENGINE_METADATA
+requires-dist = [
+  "pydantic<3,>=2.13",
+  'azure-identity>=1.26.0; extra == "azure"',
+  'azure-mgmt-resourcegraph<9,>=8.0.0; extra == "azure"',
+  'azure-mgmt-network>=33.1.0; extra == "azure"',
+  'azure-mgmt-monitor<8,>=7.0.0; extra == "azure"',
+  'azure-monitor-query<3,>=2.0.0; extra == "azure"',
+  'azure-mgmt-costmanagement<6,>=5.0.0; extra == "azure"',
+  'azure-mgmt-loganalytics<15,>=14.0.0; extra == "azure"',
+]
+provides-extra = ["azure"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

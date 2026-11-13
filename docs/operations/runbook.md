@@ -231,3 +231,83 @@ step 3: `git -C $wt fetch origin; git -C $wt reset --hard origin/proof/base-upda
     ```
 
 Record the run links, the pull request link and what steps 7 to 11 showed in `VALIDATION.md`.
+
+## Keeping uv away from the engine's address (the engine's static metadata)
+
+**What this is about.** The engine (`network-assessment-azure-engine`, the rules library written in the App repository) is pinned in `pyproject.toml` by the address of its release file on
+GitHub, a wheel (the Python package file, ending `.whl`). Whenever uv (the tool that installs this project's Python
+packages) has to re-resolve `uv.lock` (the file that records the exact version and checksum of every package), it needs
+the engine's metadata: its name, version and what it depends on. That happens on `uv lock`, on CI's `uv lock --check`,
+in the engine-update workflow, and in Dependabot's uv job, once for every package Dependabot tries to update.
+
+**What goes wrong without the fix.** uv 0.13 and later (CI uses 0.13.7) ask the wheel's address with a HEAD first (a
+request for the file's headers, not the file). GitHub answers with a redirect to a short-lived signed download link on
+`objects.githubusercontent.com`, and from a cloud session on 2026-11-13 that link answered the HEAD with `401` (HTTP's
+"not authorised"), so `uv lock` and `uv lock --check` failed. A normal download (a GET) of the same address worked. uv
+0.11.32, which CI used before, never sends that HEAD, which is why this did not show earlier. The Cloud Crawler add-on met
+the same failure in its Dependabot runs on 2026-10-27, where Dependabot reported it as a "private source" problem although
+nothing is private; its runbook has the full story.
+
+**The fix.** `pyproject.toml` holds the engine's dependency list itself, in the entry `[[tool.uv.dependency-metadata]]`
+([uv's description](https://docs.astral.sh/uv/concepts/resolution/)), copied from the wheel's own `METADATA` file (the
+description file inside the wheel). With it, uv has nothing to ask the address: on 2026-11-13 a `uv lock` with uv 0.13.7
+from an empty cache made 100 requests, all to PyPI and none to GitHub, and `uv lock --check` made none. `uv.lock` records
+the entry in its `[manifest]` block. The wheel's address and its sha256 in the lock are unchanged, so the image build
+still checks the engine's checksum, and the image build's `uv export` output is byte-identical.
+
+**What you do when the engine moves.** Normally nothing. When the App publishes a new engine release, `core-update.yml`
+opens a pull request ([open ones](https://github.com/saulpatinojr/HCW-NetworkEyes_AddOn/pulls?q=is%3Apr+is%3Aopen+label%3Acore-update)) and moves the pin and the entry's `version` line (the one that ends in
+`# ENGINE_METADATA`) together, by replacing those two marked lines whole in both of its jobs; its pull-request job then lets only that version, and nothing else, change in the lock's `[manifest]` block. The entry's `requires-dist` list (what the engine depends on) and its `provides-extra` list (the optional extras the engine offers; today one, `azure`, which this edition never installs) is a copy, so
+the test `test_static_metadata_matches_the_installed_wheel` (in `tests/security/test_engine_static_metadata.py`) compares
+it with the wheel that really got installed. If the new release changed its dependencies, that test fails, the
+compatibility check in the workflow run goes red and the pull request carries the label `needs-adaptation`. Then:
+
+1. Print the new wheel's metadata. These are two PowerShell commands, run one after the other in the same window from any
+   folder; the first downloads the newest `engine-v` release's wheel into a new temporary folder, the second reads it. Check that the
+   `Version:` line equals the version in the pull request's title. Success: the second prints lines starting `Name:`,
+   `Version:`, `Requires-Python:` and `Requires-Dist:` (one per dependency), and `Provides-Extra:` lines if the engine
+   has extras.
+
+   ```powershell
+   $rel = (gh api "repos/saulpatinojr/HCW-NetworkEyes_App/releases?per_page=50" | Out-String | ConvertFrom-Json); $tag = ($rel | Where-Object { -not $_.draft -and -not $_.prerelease -and $_.tag_name -like "engine-v*" } | Select-Object -First 1).tag_name; $dir = Join-Path $env:TEMP ("engine-wheel-" + (Get-Date -Format "yyyyMMdd-HHmmss")); gh release download $tag -R saulpatinojr/HCW-NetworkEyes_App --pattern "*.whl" --dir $dir
+   ```
+
+   ```powershell
+   Add-Type -AssemblyName System.IO.Compression.FileSystem; $zip = [IO.Compression.ZipFile]::OpenRead((Get-ChildItem "$dir\*.whl").FullName); $entry = $zip.Entries | Where-Object { $_.FullName -like "*.dist-info/METADATA" }; (New-Object IO.StreamReader($entry.Open())).ReadToEnd() -split "`n" | Select-String "^(Name|Version|Requires-Python|Requires-Dist|Provides-Extra):"; $zip.Dispose()
+   ```
+
+2. A dependency that was not there before is new code in the image and needs a person's decision before the pull request
+   is merged: check it against the "Never weaken" rules in [`CLAUDE.md`](../../CLAUDE.md) (above all, no cloud SDK and no
+   way to build a cloud credential, proved by `tests/security/test_edition_boundary.py`), its licence, and whether it is
+   maintained. If it is not acceptable, do not merge; tell the owner.
+3. Switch to the pull request's branch before editing anything. This PowerShell line, run in your clone of this repository, finds the
+   `core-update/...` branch on GitHub (normally there is only one; if several, the last one listed) and switches to it.
+   Success: git prints `Switched to branch 'core-update/...'`.
+
+   ```powershell
+   $b = (git ls-remote --heads origin 'core-update/*' | Select-Object -Last 1).Split("`t")[1].Replace('refs/heads/', ''); git fetch origin $b; git switch $b
+   ```
+
+4. On that branch, edit the entry `[[tool.uv.dependency-metadata]]` in `pyproject.toml` so that its
+   `requires-dist` list says what step 1 printed on the `Requires-Dist:` lines (all of them, including any that end in
+   `; extra == "..."`), and its `provides-extra` list names exactly the `Provides-Extra:` lines (remove the field if
+   there are none). The order inside a range does not matter (`pydantic<3,>=2.14` and `pydantic>=2.14,<3` are the same).
+   Leave `requires-python` out of the entry: Dependabot copies the first `requires-python` in `uv.lock` over every other
+   one, so a different range there would break the lock of its pull requests. The test
+   `test_wheel_accepts_every_python_the_project_allows` checks the engine's `Requires-Python` instead.
+   If the release is published under the engine's other name (`cna-azure-network-engine` instead of
+   `network-assessment-azure-engine`), the engine-update run stops at this entry before it opens any pull request, and
+   writes nothing, so steps 3 to 5 have no branch to work on. Make the change by hand instead, on a new branch from
+   `main`: in `pyproject.toml`, change the engine line marked `# ENGINE_REF` to the new release's wheel address and
+   version, and in the `[[tool.uv.dependency-metadata]]` entry change `name` to the new name, the version on the
+   `# ENGINE_METADATA` line, and `requires-dist` and `provides-extra` as step 4 says; then run step 5 and open a pull
+   request from that branch. Once it is merged, the next scheduled run finds nothing to do.
+5. Rebuild the lock with the uv version `ci.yml` names in `UV_VERSION` (0.13.7 today; use the number that file
+   shows), commit `pyproject.toml` and `uv.lock`, and push. Success: it prints `Resolved` and a package count, and the
+   pull request's checks go green. Do this soon after the pull request opens and merge it once green: while it is open,
+   the scheduled engine-update run (every six hours) rebuilds the same branch from `main`, which is expected to replace
+   a hand-made change (read from the pull-request action's documentation, not tested here).
+
+   ```powershell
+   uvx uv@0.13.7 lock
+   ```

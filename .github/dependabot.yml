@@ -4,6 +4,12 @@ updates:
   # uv.lock, so every one of its pull requests failed CI. uv updates pyproject.toml and uv.lock together, and the image
   # build exports uv.lock itself (infrastructure/docker/Dockerfile), so nothing else has to move. pydantic-core is not a
   # direct dependency: it moves with pydantic.
+  # The engine is pinned by the address of its release file. uv rebuilds the whole lock for every package Dependabot
+  # updates, and uv 0.13 and later first send that address a HEAD, which GitHub answered with 401 on 2026-11-13 (the
+  # Cloud Crawler add-on's Dependabot runs failed the same way, as "private source"). The fix is in pyproject.toml: the
+  # engine's metadata is given to uv in [[tool.uv.dependency-metadata]], so uv does not ask the address. Do not add a
+  # `registries` entry (the repository is public) or an `ignore` entry for the engine (it does not stop the failure).
+  # Runbook: "Keeping uv away from the engine's address" in docs/operations/runbook.md.
   - package-ecosystem: uv
     directory: /
     schedule: { interval: weekly }

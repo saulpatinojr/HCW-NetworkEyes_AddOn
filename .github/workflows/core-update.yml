@@ -14,6 +14,14 @@
 # regenerates docs/rules/catalog.md, which is generated from the engine's rule texts. The interim ported copy of the
 # engine was deleted after the first green bumps (ADR-0006), so the wheel is the only engine and engine.py refuses to
 # start without it. Without an ENGINE_REF line the workflow finds nothing to do and exits cleanly.
+# pyproject.toml also holds the engine's static metadata (the [[tool.uv.dependency-metadata]] entry; its version line
+# carries the marker ENGINE_METADATA). It exists so that uv never asks the wheel's address for the wheel's metadata:
+# uv 0.13's first request there is a HEAD, which GitHub's signed download link answered with 401 on 2026-11-13. Both
+# jobs replace its version line with the pin, before `uv lock`, and the pull-request job's lock check lets that version,
+# and nothing else in the lock's manifest, change. Its requires-dist list is a copy of the wheel's own:
+# tests/security/test_engine_static_metadata.py compares it with the installed wheel, so a release that changes the
+# engine's dependencies makes the compatibility check fail and the pull request carries needs-adaptation; someone then
+# copies the new list in by hand (docs/operations/runbook.md).
 #
 # Two jobs, because the bump runs upstream code (the new wheel, through this edition's tests and scripts) and the pull
 # request needs a credential that reaches four repositories. Code that runs in a step can reach later steps of the same
@@ -31,8 +39,9 @@
 #                 uv image it pins the same way, so the interpreter is the one the add-on ships with and nothing is
 #                 installed on the runner; resolving the wheel reads its metadata and never imports it), checks
 #                 that the new lock differs from the default branch's only in
-#                 the engine's own entry (pinned URL, one wheel with a sha256, dependencies already locked) and the
-#                 project's reference to it, and refuses the artifact unless its two copies are byte-identical to the
+#                 the engine's own entry (pinned URL, one wheel with a sha256, dependencies already locked), the
+#                 version of the engine's static metadata (below) and the project's reference to it, and refuses the
+#                 artifact unless its two copies are byte-identical to the
 #                 regenerated ones. The catalog needs the engine to generate, so it is the one file taken from the
 #                 artifact, and only as bounded plain Markdown with no HTML; the pull request's own drift check proves
 #                 it. `outcome` must be exactly `success` or `failure`. Only then does it mint the App token and open
@@ -149,7 +158,7 @@ jobs:
         uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
         with: { python-version: "3.15" }
       - if: steps.refs.outputs.changed == 'true' && !inputs.probe
-        run: python -m pip install "uv==0.11.32"
+        run: python -m pip install "uv==0.13.7"
       # From here on the job runs project and upstream code; no step below is given a token.
       - if: steps.refs.outputs.changed == 'true' && !inputs.probe
         name: Pin the wheel on the ENGINE_REF line, re-lock and regenerate the rule catalog
@@ -165,6 +174,15 @@ jobs:
           awk -v line="$line" '/#[[:space:]]*ENGINE_REF[[:space:]]/ { print line; next } { print }' pyproject.toml > pyproject.toml.new
           mv pyproject.toml.new pyproject.toml
           grep -qF -- "$line" pyproject.toml
+          # The engine's static metadata (pyproject.toml's [[tool.uv.dependency-metadata]] entry) moves with the pin, before
+          # `uv lock`: its version line carries the marker ENGINE_METADATA and is replaced whole, the same way. Without the
+          # move uv ignores the entry and asks the wheel's address again (a HEAD that GitHub answered with 401).
+          meta="version = \"${LATEST}\"  # ENGINE_METADATA"
+          grep -qxF -- "name = \"${DIST}\"" pyproject.toml
+          test "$(grep -cE '^version = "[^"]*"[[:space:]]*#[[:space:]]*ENGINE_METADATA[[:space:]]*$' pyproject.toml)" = 1
+          awk -v line="$meta" '/^version = "[^"]*"[[:space:]]*#[[:space:]]*ENGINE_METADATA[[:space:]]*$/ { print line; next } { print }' pyproject.toml > pyproject.toml.new
+          mv pyproject.toml.new pyproject.toml
+          grep -qxF -- "$meta" pyproject.toml
           uv lock --upgrade-package "$DIST"
           # The catalog is generated from the engine's rule texts. When the generator refuses them (an empty or hedged
           # text), the catalog stays as it was and the drift check in the next step reports it.
@@ -288,6 +306,15 @@ jobs:
           test "$(grep -cE '#[[:space:]]*ENGINE_REF[[:space:]]' pyproject.toml)" = 1
           awk -v line="$line" '/#[[:space:]]*ENGINE_REF[[:space:]]/ { print line; next } { print }' pyproject.toml > "${RUNNER_TEMP}/pyproject.toml"
           cp "${RUNNER_TEMP}/pyproject.toml" pyproject.toml
+          # The engine's static metadata (pyproject.toml's [[tool.uv.dependency-metadata]] entry) moves with the pin, before
+          # `uv lock`: its version line carries the marker ENGINE_METADATA and is replaced whole, the same way. Without the
+          # move uv ignores the entry and asks the wheel's address again (a HEAD that GitHub answered with 401).
+          meta="version = \"${LATEST}\"  # ENGINE_METADATA"
+          grep -qxF -- "name = \"${DIST}\"" pyproject.toml
+          test "$(grep -cE '^version = "[^"]*"[[:space:]]*#[[:space:]]*ENGINE_METADATA[[:space:]]*$' pyproject.toml)" = 1
+          awk -v line="$meta" '/^version = "[^"]*"[[:space:]]*#[[:space:]]*ENGINE_METADATA[[:space:]]*$/ { print line; next } { print }' pyproject.toml > "${RUNNER_TEMP}/pyproject.toml"
+          cp "${RUNNER_TEMP}/pyproject.toml" pyproject.toml
+          grep -qxF -- "$meta" pyproject.toml
           docker run --rm --user "$(id -u):$(id -g)" --cap-drop=ALL --security-opt=no-new-privileges --read-only \
             --tmpfs /tmp:rw,nosuid,nodev,noexec,size=1g -e HOME=/tmp -e UV_CACHE_DIR=/tmp/uv-cache -e UV_PYTHON_DOWNLOADS=never \
             -v "${RUNNER_TEMP}/uv-bin:/uv:ro" -v "${GITHUB_WORKSPACE}:/work" -w /work \
@@ -335,10 +362,10 @@ jobs:
           # Runs on the runner's own python3 on purpose (saulpatinojr/HCW-HybridCloudWorks#1707, item 8): standard
           # library only (tomllib, in every Python since 3.11), and this job holds the App key, so it installs nothing,
           # not even an interpreter.
-          python3 -I - "${GITHUB_WORKSPACE}/uv.lock" "${RUNNER_TEMP}/main-uv.lock" "$DIST" "$URL" <<'PY'
+          python3 -I - "${GITHUB_WORKSPACE}/uv.lock" "${RUNNER_TEMP}/main-uv.lock" "$DIST" "$URL" "$LATEST" <<'PY'
           import re, sys, tomllib
 
-          new_path, old_path, dist, url = sys.argv[1:5]
+          new_path, old_path, dist, url, latest = sys.argv[1:6]
           ENGINES = {"network-assessment-azure-engine", "cna-azure-network-engine"}
           PROJECT = "hcw-addon-network-assessment"
 
@@ -351,9 +378,30 @@ jobs:
           new, old = (tomllib.load(open(p, "rb")) for p in (new_path, old_path))
           # `revision` is the lock format's own revision: the locking tool pinned in the bump job may write another one than
           # the one that last locked the default branch. It carries no dependency, so it may differ; nothing else may.
-          header = lambda lock: {k: v for k, v in lock.items() if k not in ("package", "revision")}  # noqa: E731
+          header = lambda lock: {k: v for k, v in lock.items() if k not in ("package", "revision", "manifest")}  # noqa: E731
           if header(new) != header(old) or not isinstance(new.get("revision"), int):
               fail("its header changed")
+          # The manifest records pyproject.toml's [[tool.uv.dependency-metadata]] entries. The engine's moves with the pin
+          # (its ENGINE_METADATA version line): only its version may change, and only to the new release; nothing else in
+          # the manifest may change.
+          manifest = lambda lock: {k: v for k, v in lock.get("manifest", {}).items() if k != "dependency-metadata"}  # noqa: E731
+          if manifest(new) != manifest(old):
+              fail("its manifest changed")
+
+
+          def static_metadata(lock):
+              entries = lock.get("manifest", {}).get("dependency-metadata", [])
+              return [e for e in entries if e.get("name") in ENGINES], [e for e in entries if e.get("name") not in ENGINES]
+
+
+          (new_meta, new_other), (old_meta, old_other) = static_metadata(new), static_metadata(old)
+          if new_other != old_other or len(new_meta) != 1 or len(old_meta) != 1:
+              fail("the static metadata of a package other than the engine changed")
+          if new_meta[0].get("name") != dist or new_meta[0].get("version") != latest:
+              fail("the engine's static metadata is not the pinned distribution at the new version")
+          rest = lambda entry: {k: v for k, v in entry.items() if k not in ("name", "version")}  # noqa: E731
+          if rest(new_meta[0]) != rest(old_meta[0]):
+              fail("the engine's static metadata changed beyond its version")
 
 
           def by_name(lock):
@@ -452,7 +500,7 @@ jobs:
             Compatibility check reported by the bump job (lint, unit, contract, security, rule catalog drift, Playwright e2e): **${{ steps.verify.outputs.outcome }}**. That job ran the new engine, so its report is a signal, not proof; this pull request's own checks are the gate.
             Logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
-            The pull-request job checked, without running any project code, that only the `ENGINE_REF` line of `pyproject.toml`, the engine's entry in `uv.lock` and `docs/rules/catalog.md` change.
+            The pull-request job checked, without running any project code, that only the `ENGINE_REF` and `ENGINE_METADATA` lines of `pyproject.toml`, the engine's entries in `uv.lock` and `docs/rules/catalog.md` change.
 
             - compatible: merge.
             - needs adaptation: fix this edition on this branch (`RULES_VERSION` digest, sample expectations, the OpenAPI spec), then merge. A difference in the engine itself is fixed upstream and arrives as the next release; it is never patched here.
