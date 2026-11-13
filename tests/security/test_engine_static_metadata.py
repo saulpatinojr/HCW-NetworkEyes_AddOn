@@ -384,6 +384,23 @@ TAMPERING = {
     ),
     # The engine's static metadata is gone.
     "metadata-removed": lambda t: re.sub(r"\[\[manifest\.dependency-metadata\]\]\n(?:.+\n)+\n", "", t, count=1),
+    # The engine's own [[package]] entry kept the old version while its URL and static metadata moved: the lock would
+    # name the new wheel under the old version number.
+    "package-version-not-moved": lambda t: re.sub(
+        rf'(\[\[package\]\]\nname = "{re.escape(ENGINE)}"\nversion = )"[^"]+"', rf'\1"{_pin()["ver"]}"', t
+    ),
+    # The engine's own [[package]] entry moved to another version than the release.
+    "package-other-version": lambda t: re.sub(
+        rf'(\[\[package\]\]\nname = "{re.escape(ENGINE)}"\nversion = )"[^"]+"', r'\1"98.0.0"', t
+    ),
+}
+
+
+# The cases that only the check of the engine's own version catches: each must be refused by that check, by name, so
+# that a later reorder of the checks cannot hide it behind another refusal.
+REFUSED_BY = {
+    "package-version-not-moved": lambda: f"uv.lock: the locked engine is version {_pin()['ver']!r}, expected {NEW!r}",
+    "package-other-version": lambda: f"uv.lock: the locked engine is version '98.0.0', expected {NEW!r}",
 }
 
 
@@ -393,3 +410,5 @@ def test_the_lock_check_refuses_every_other_change_to_the_manifest(tmp_path, tam
     assert tampered != _bumped_lock(), "the tampering must change the lock"
     proc = _verify(tmp_path, tampered)
     assert proc.returncode == 1 and "::error::the bump artifact is refused" in proc.stdout, proc.stdout + proc.stderr
+    if tamper in REFUSED_BY:
+        assert REFUSED_BY[tamper]() in proc.stdout, proc.stdout + proc.stderr

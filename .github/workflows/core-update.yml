@@ -39,7 +39,7 @@
 #                 uv image it pins the same way, so the interpreter is the one the add-on ships with and nothing is
 #                 installed on the runner; resolving the wheel reads its metadata and never imports it), checks
 #                 that the new lock differs from the default branch's only in
-#                 the engine's own entry (pinned URL, one wheel with a sha256, dependencies already locked), the
+#                 the engine's own entry (the new version, pinned URL, one wheel with a sha256, dependencies already locked), the
 #                 version of the engine's static metadata (below) and the project's reference to it, and refuses the
 #                 artifact unless its two copies are byte-identical to the
 #                 regenerated ones. The catalog needs the engine to generate, so it is the one file taken from the
@@ -420,6 +420,9 @@ jobs:
           if sorted(ENGINES & set(n)) != [dist]:
               fail(f"the locked engine is {sorted(ENGINES & set(n))}, expected [{dist}]")
           engine = n[dist]
+          # The engine's own entry names the release by its version too, not only by its URL and static metadata.
+          if engine.get("version") != latest:
+              fail(f"the locked engine is version {engine.get('version')!r}, expected {latest!r}")
           wheels = engine.get("wheels", [])
           if engine.get("source") != {"url": url} or "sdist" in engine or len(wheels) != 1:
               fail("the engine is not exactly one wheel from the pinned URL")
