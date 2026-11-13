@@ -23,7 +23,7 @@ jobs:
         # install below runs then too and makes zizmor's environment with python3.
         if: ${{ !cancelled() }}
         with: { python-version: "${{ env.PYTHON_VERSION }}" }
-      - run: python -m pip install "uv==${{ env.UV_VERSION }}"
+      - run: python -m pip install "uv==${UV_VERSION}"
       - run: uv sync --frozen
       - run: uv run ruff check .
       - run: uv run ruff format --check .
@@ -177,7 +177,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
         with: { python-version: "${{ env.PYTHON_VERSION }}" }
-      - run: python -m pip install "uv==${{ env.UV_VERSION }}"
+      - run: python -m pip install "uv==${UV_VERSION}"
       - run: uv sync --frozen
       - name: Unit, contract, security and manifest tests with the 85 percent coverage gate
         run: uv run pytest -q --cov=src --cov-report=term-missing --cov-report=xml --cov-fail-under=85
@@ -198,7 +198,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
         with: { python-version: "${{ env.PYTHON_VERSION }}" }
-      - run: python -m pip install "uv==${{ env.UV_VERSION }}"
+      - run: python -m pip install "uv==${UV_VERSION}"
       - run: uv sync --frozen
       - name: docs/rules/catalog.md is generated from the registry (drift check; registry texts hedge-free)
         run: uv run python scripts/rules-doc.py --check
@@ -210,7 +210,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
         with: { python-version: "${{ env.PYTHON_VERSION }}" }
-      - run: python -m pip install "uv==${{ env.UV_VERSION }}"
+      - run: python -m pip install "uv==${UV_VERSION}"
       - run: uv sync --frozen
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with: { node-version: 26 }
