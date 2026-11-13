@@ -287,9 +287,22 @@ compatibility check in the workflow run goes red and the pull request carries th
    Leave `requires-python` out of the entry: Dependabot copies the first `requires-python` in `uv.lock` over every other
    one, so a different range there would break the lock of its pull requests. The test
    `test_wheel_accepts_every_python_the_project_allows` checks the engine's `Requires-Python` instead.
-4. Rebuild the lock with the uv version `ci.yml` names in `UV_VERSION` (0.13.7 today; use the number that file shows), in
-   the folder of the pull request's branch, then push. Success: it prints `Resolved` and a package count, and the pull
-   request's checks go green.
+   If the release is published under the engine's other name (`cna-azure-network-engine` instead of
+   `network-assessment-azure-engine`), the workflow stops at this entry and writes nothing: change the entry's `name`
+   along with the pin by hand in the same pull request.
+4. Switch to the pull request's branch. This PowerShell line, run in your clone of this repository, finds the
+   `core-update/...` branch on GitHub (normally there is only one; if several, the last one listed) and switches to it.
+   Success: git prints `Switched to branch 'core-update/...'`.
+
+   ```powershell
+   $b = (git ls-remote --heads origin 'core-update/*' | Select-Object -Last 1).Split("`t")[1].Replace('refs/heads/', ''); git fetch origin $b; git switch $b
+   ```
+
+   Then rebuild the lock with the uv version `ci.yml` names in `UV_VERSION` (0.13.7 today; use the number that file
+   shows), commit `pyproject.toml` and `uv.lock`, and push. Success: it prints `Resolved` and a package count, and the
+   pull request's checks go green. Do this soon after the pull request opens and merge it once green: while it is open,
+   the scheduled engine-update run (every six hours) rebuilds the same branch from `main`, which is expected to replace
+   a hand-made change (read from the pull-request action's documentation, not tested here).
 
    ```powershell
    uvx uv@0.13.7 lock
