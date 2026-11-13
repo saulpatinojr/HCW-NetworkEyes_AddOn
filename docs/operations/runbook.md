@@ -280,7 +280,15 @@ compatibility check in the workflow run goes red and the pull request carries th
    is merged: check it against the "Never weaken" rules in [`CLAUDE.md`](../../CLAUDE.md) (above all, no cloud SDK and no
    way to build a cloud credential, proved by `tests/security/test_edition_boundary.py`), its licence, and whether it is
    maintained. If it is not acceptable, do not merge; tell the owner.
-3. On the pull request's branch, edit the entry `[[tool.uv.dependency-metadata]]` in `pyproject.toml` so that its
+3. Switch to the pull request's branch before editing anything. This PowerShell line, run in your clone of this repository, finds the
+   `core-update/...` branch on GitHub (normally there is only one; if several, the last one listed) and switches to it.
+   Success: git prints `Switched to branch 'core-update/...'`.
+
+   ```powershell
+   $b = (git ls-remote --heads origin 'core-update/*' | Select-Object -Last 1).Split("`t")[1].Replace('refs/heads/', ''); git fetch origin $b; git switch $b
+   ```
+
+4. On that branch, edit the entry `[[tool.uv.dependency-metadata]]` in `pyproject.toml` so that its
    `requires-dist` list says what step 1 printed on the `Requires-Dist:` lines (all of them, including any that end in
    `; extra == "..."`), and its `provides-extra` list names exactly the `Provides-Extra:` lines (remove the field if
    there are none). The order inside a range does not matter (`pydantic<3,>=2.14` and `pydantic>=2.14,<3` are the same).
@@ -290,15 +298,7 @@ compatibility check in the workflow run goes red and the pull request carries th
    If the release is published under the engine's other name (`cna-azure-network-engine` instead of
    `network-assessment-azure-engine`), the workflow stops at this entry and writes nothing: change the entry's `name`
    along with the pin by hand in the same pull request.
-4. Switch to the pull request's branch. This PowerShell line, run in your clone of this repository, finds the
-   `core-update/...` branch on GitHub (normally there is only one; if several, the last one listed) and switches to it.
-   Success: git prints `Switched to branch 'core-update/...'`.
-
-   ```powershell
-   $b = (git ls-remote --heads origin 'core-update/*' | Select-Object -Last 1).Split("`t")[1].Replace('refs/heads/', ''); git fetch origin $b; git switch $b
-   ```
-
-   Then rebuild the lock with the uv version `ci.yml` names in `UV_VERSION` (0.13.7 today; use the number that file
+5. Rebuild the lock with the uv version `ci.yml` names in `UV_VERSION` (0.13.7 today; use the number that file
    shows), commit `pyproject.toml` and `uv.lock`, and push. Success: it prints `Resolved` and a package count, and the
    pull request's checks go green. Do this soon after the pull request opens and merge it once green: while it is open,
    the scheduled engine-update run (every six hours) rebuilds the same branch from `main`, which is expected to replace
