@@ -3,6 +3,26 @@
 What was executed for this edition and what was not, per run. "Here" is the authoring container (no Docker daemon, PyPI
 and the Playwright CDN reachable through a proxy). Dates are the run date.
 
+## Run 2026-11-13, fifth part (uv 0.13.8; HCW-HybridCloudWorks#1707)
+
+uv moves from 0.13.7 to 0.13.8 in `ci.yml` (`UV_VERSION`), `security.yml`, the `bump` job of `core-update.yml` and the Dockerfile's uv image, and the runbook's live lock instructions follow ([HCW-HybridCloudWorks#1707](https://github.com/saulpatinojr/HCW-HybridCloudWorks/issues/1707)). The App (HCW-NetworkEyes_App) makes the same move in its workflows, whose Dockerfiles Dependabot had already moved to 0.13.8. Run from `main` at `38aac8e`. Toolchain: Linux cloud session, CPython 3.15.2, uv 0.13.8 installed with `pip --require-hashes` (wheel sha256 `e18a57b8…8984`) into a throwaway virtual environment outside the repository, and uv 0.13.7 for the comparisons.
+
+| Check | Executed here | Result |
+| --- | --- | --- |
+| The uv image digest: an anonymous `HEAD` of `https://ghcr.io/v2/astral-sh/uv/manifests/0.13.8` asking for an image index | yes | `Docker-Content-Digest: sha256:5cc1805e2426484abca4ad46ea783bab281fdb225fd82d8ce6d66a81254bac85`, content type `application/vnd.oci.image.index.v1+json`; the same digest HCW-NetworkEyes_App's Dockerfiles pin for 0.13.8 |
+| `ci.yml`'s uv check replayed (the `grep -Fq` lines, with the digest above in place of `docker buildx`) | yes | the Dockerfile line and the `"uv==0.13.8"` lines in `security.yml` and `core-update.yml` all match. As a control, the same check against `main`'s Dockerfile (still 0.13.7) fails with `the uv image is not ghcr.io/astral-sh/uv:0.13.8@…` |
+| `uv sync` (0.13.8) | yes | `Resolved 52 packages`, `Checked 51 packages`, nothing to change |
+| `uv lock --check -v` (0.13.8) with an empty cache | yes | exit 0, `Resolved 52 packages`; no request to `github.com` or `githubusercontent.com` (the static metadata entry of the second part still keeps uv away from the engine's address), so the `401` of the first part does not come back |
+| `uv lock` (0.13.8) with an empty cache, on a scratch copy | yes | exit 0, `uv.lock` byte for byte the same as the committed one |
+| The runbook's `uvx uv@0.13.8 lock`, run in bash on the same scratch copy (the runbook gives it for PowerShell; the command is the same) | yes | `Resolved 52 packages`, `uv.lock` unchanged |
+| The image's `uv export` (the Dockerfile's flags) and `security.yml`'s export, under uv 0.13.7 and 0.13.8 | yes | byte-identical in both cases (sha256 `c56eb00a…e5b1` and `142323e5…094a`) |
+| `ruff check .`, `ruff format --check .`, `python scripts/rules-doc.py --check` | yes | `All checks passed!`; 74 files already formatted; `docs/rules/catalog.md is in sync (422 lines)` |
+| `pytest -q --cov=src` | yes | 1162 passed; coverage 97.07% |
+| actionlint 1.7.12 (without shellcheck, not installed here) and zizmor 1.31.1 `--offline` with `.github/zizmor.yml`, over every workflow as `ci.yml` runs them | yes | actionlint no findings; zizmor `No findings to report` (2 ignored, 35 suppressed) |
+| hadolint | **no** | not installed here; the Dockerfile changed only in the uv image's version and digest |
+| Docker image build, and CI itself on uv 0.13.8 | **no** | no Docker daemon here; the pull request's CI is the real test |
+| `make e2e` | **no** | this change touches neither the pane nor the API |
+
 ## Run 2026-11-13, fourth part (round two of the workflow runtime check; HCW-HybridCloudWorks#1707)
 
 `tests/security/test_workflow_runtime_setup.py` is replaced by round two of the check, from the canonical Python copy in HCW-NetworkEyes_App (commit `8ac3118`, with the fourth review round's fixes, [HCW-NetworkEyes_App#395](https://github.com/saulpatinojr/HCW-NetworkEyes_App/pull/395)), which is kept the same as the website's `scripts/workflow-runtime-setup.test.mjs` (merged as `9e2e0dd`, [HCW-HybridCloudWorks#1719](https://github.com/saulpatinojr/HCW-HybridCloudWorks/pull/1719); issue [HCW-HybridCloudWorks#1707](https://github.com/saulpatinojr/HCW-HybridCloudWorks/issues/1707)). Only this repository's own lists differ, and the wording of the docstring and comment lines that ran past this repository's 120 columns (the one long pattern, `ASSIGNMENT`, is written as two adjacent strings, which Python joins into the same value). Run from `main` at `5e74d1b`. Toolchain: Linux cloud session, CPython 3.15.2, uv 0.13.7 from a throwaway virtual environment outside the repository.
