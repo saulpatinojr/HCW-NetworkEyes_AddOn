@@ -3,6 +3,21 @@
 What was executed for this edition and what was not, per run. "Here" is the authoring container (no Docker daemon, PyPI
 and the Playwright CDN reachable through a proxy). Dates are the run date.
 
+## Run 2026-11-14, third part (round four of the workflow runtime check; HCW-HybridCloudWorks#1707)
+
+`tests/security/test_workflow_runtime_setup.py` takes round four of the check from the canonical Python copy in HCW-NetworkEyes_App (`0b28c39` on its branch `claude/runtime-round4-1707`, [HCW-NetworkEyes_App#403](https://github.com/saulpatinojr/HCW-NetworkEyes_App/pull/403)), which is kept the same as the website's copy (merged as `95b2aac5`, [HCW-HybridCloudWorks#1725](https://github.com/saulpatinojr/HCW-HybridCloudWorks/pull/1725); issue [HCW-HybridCloudWorks#1707](https://github.com/saulpatinojr/HCW-HybridCloudWorks/issues/1707)). Only this repository's own lists differ, and the wrapping of the lines that ran past this repository's 120 columns: the new made-up workflows are written as adjacent strings, which Python joins into the same value, and one docstring line is wrapped one word earlier. Run from `main` at `5866d02`. Toolchain: Linux cloud session, CPython 3.15.2, uv 0.13.8.
+
+| Check | Executed here | Result |
+| --- | --- | --- |
+| The port's code against HCW-NetworkEyes_App's copy at `0b28c39` | yes | identical syntax trees once the docstrings and the four lists (`RUNNER_DEFAULT_ALLOWED`, `INDIRECT_RUNTIME`, `PIPX_ALLOWED`, `BELOW_FLOOR_ALLOWED`) are set aside, as on `main` against the canonical copy before round four; the same 109 test functions in the same order; the module docstring has the same words, except the paragraph saying this file is a copy |
+| `uv sync`, `ruff check .`, `ruff format --check .`, `python scripts/rules-doc.py --check` | yes | `Checked 51 packages`; `All checks passed!`; 74 files already formatted; `docs/rules/catalog.md is in sync` |
+| `pytest -q --cov=src` | yes | 1592 passed; coverage 97.07%. `tests/security/test_workflow_runtime_setup.py` alone: 1129 passed (1049 before) |
+| The same answers as the canonical copy | yes | the 60,632 generated cases of round four and its review rounds (command reading, `sudo` reading, `pipx`, the floor, `shell:` words, and made-up workflows read for unset steps, `pipx` problems and floor problems): 0 disagreements with HCW-NetworkEyes_App's copy at `0b28c39`, and none between the three add-ons' copies |
+| The check over the workflows of every HCW clone in this session (23 folders, these round-four copies included) | yes | the same findings as the canonical copy's, folder by folder, and the same as the canonical copy before round four; here, only the `core-update.yml` step that `RUNNER_DEFAULT_ALLOWED` names |
+| gitleaks (the secret scan `security.yml` runs) | **no** | not installed here; `tests/security/test_no_secrets.py` ran in the suite above |
+| actionlint, zizmor, and CI on GitHub | **no** | no workflow changed; CI runs when the pull request is opened |
+| `make e2e` | **no** | this change touches neither the pane nor the API |
+
 ## Run 2026-11-14, second part (Copilot's second round on the round-3 copies of the workflow runtime check; HCW-HybridCloudWorks#1707)
 
 `tests/security/test_workflow_runtime_setup.py` takes Copilot's second round on the round-3 copies from the canonical Python copy in HCW-NetworkEyes_App (`55e94dd`, and `85fe01c`, which makes a one-line mapping's closing bracket match its opening one), which is kept the same as the website's copy (merged in [HCW-HybridCloudWorks#1723](https://github.com/saulpatinojr/HCW-HybridCloudWorks/pull/1723); issue [HCW-HybridCloudWorks#1707](https://github.com/saulpatinojr/HCW-HybridCloudWorks/issues/1707)). Only this repository's own lists differ, and the wrapping of the lines that ran past this repository's 120 columns: the new made-up workflows and refused texts are written as adjacent strings, which Python joins into the same value. Run from `main` at `699bbd6`. Toolchain: Linux cloud session, CPython 3.15.2.
