@@ -75,7 +75,7 @@ Terraform state.
 
 ## Quick start
 
-Requires Python 3.15.2 or newer and [`uv`](https://docs.astral.sh/uv/) 0.13.7 or newer.
+Requires Python 3.15.2 or a later 3.15 release and [`uv`](https://docs.astral.sh/uv/) 0.13.7 or newer.
 
 ```bash
 uv python pin --no-project 3.15 && uv sync
