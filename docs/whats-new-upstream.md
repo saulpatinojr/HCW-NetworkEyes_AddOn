@@ -32,6 +32,19 @@ Every engine change from here on is made in the App, released, and arrives throu
 
 ## Entries, newest first
 
+### 2026-11-14: the workflow runtime check takes Copilot's second round on the round-3 copies (website [#1723](https://github.com/saulpatinojr/HCW-HybridCloudWorks/pull/1723), NetworkEyes_App `85fe01c`)
+
+- Copilot's second review round on the round-3 copies of the check (the test that every workflow step running Python or
+  Node.js sets its version up first) found six more ways past it. They were fixed first in the canonical Python copy in
+  HCW-NetworkEyes_App (commits `55e94dd` and `85fe01c` on its branch `claude/runtime-copilot-r2-1707`) and in the
+  website's copy, merged in [HCW-HybridCloudWorks#1723](https://github.com/saulpatinojr/HCW-HybridCloudWorks/pull/1723).
+  This repository's `tests/security/test_workflow_runtime_setup.py` takes them in the same pull request as this entry;
+  only its own lists stay its own.
+- **Reaches this edition? Only as this test.** No engine, catalog, rule, wheel or release change comes with it, so
+  `core-update.yml` has nothing to adopt. The App (HCW-NetworkEyes_App) holds the canonical copy, so it already has the
+  change.
+- What the test now reads is in this repository's `CHANGELOG.md` entry of the same date.
+
 ### 2026-11-14: the App and this repository both require Python 3.15.2 (owner decision)
 
 - The owner decided on 2026-11-14 that every Hybrid Cloud Works Python repository requires the latest stable release
