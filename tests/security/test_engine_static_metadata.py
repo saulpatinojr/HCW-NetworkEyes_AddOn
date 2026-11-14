@@ -209,15 +209,15 @@ def test_wheel_accepts_every_python_the_project_allows():
 
 @pytest.mark.parametrize(
     ("engine_range", "first_missing"),
-    [(">=3.15.3", "3.15.1"), ("<3.15.9", "3.15.9"), ("!=3.15.3", "3.15.3"), (">=3.16", "3.15.1")],
+    [(">=3.15.3", "3.15.2"), ("<3.15.9", "3.15.9"), ("!=3.15.3", "3.15.3"), (">=3.16", "3.15.2")],
 )
 def test_python_range_check_notices_a_narrower_engine(engine_range, first_missing):
-    assert _python_versions_missing(engine_range, ">=3.15.1,<3.16")[0] == first_missing
+    assert _python_versions_missing(engine_range, ">=3.15.2,<3.16")[0] == first_missing
 
 
 @pytest.mark.parametrize("engine_range", [">=3.14", ">=3.15.1,<3.17", "", None])
 def test_python_range_check_accepts_the_same_or_a_wider_engine(engine_range):
-    assert _python_versions_missing(engine_range, ">=3.15.1,<3.16") == []
+    assert _python_versions_missing(engine_range, ">=3.15.2,<3.16") == []
 
 
 @pytest.mark.parametrize(

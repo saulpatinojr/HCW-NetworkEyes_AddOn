@@ -32,6 +32,22 @@ Every engine change from here on is made in the App, released, and arrives throu
 
 ## Entries, newest first
 
+### 2026-11-14: the App and this repository both require Python 3.15.2 (owner decision)
+
+- The owner decided on 2026-11-14 that every Hybrid Cloud Works Python repository requires the latest stable release
+  of Python 3.15, which is 3.15.2 (released 2026-10-25). The App, on its branch `claude/python-3.15.2` (its pull
+  request was not open when this was written), moves `requires-python` from `>=3.14` to `>=3.15.2,<3.16` in both of
+  its `pyproject.toml` files, including the engine `network-assessment-azure-engine`; its unit tests stop running on
+  Python 3.14 (TODO.md T-743 item 4 there), ruff targets `py315`, and `uv.lock` is re-locked with uv 0.13.8 (no
+  package version moved). Its wheel test now expects `Requires-Python: <3.16,>=3.15.2`. This repository makes the same
+  move in its own pull request: `requires-python` `>=3.15.2,<3.16`, re-locked.
+- **What reaches this repository:** the engine's `Requires-Python`, at the next `engine-v*` release. That wheel will
+  not install on Python 3.14, 3.15.0 or 3.15.1, and for the first time it names a ceiling (`<3.16`). This repository
+  then requires the same range and runs 3.15.2 (`infrastructure/docker/versions.env`), so `core-update.yml` adopts it
+  as usual and `tests/security/test_engine_static_metadata.py` (the wheel accepts every Python the project allows)
+  stays green. The `engine-v0.1.5` pin (`Requires-Python: >=3.14`) is unaffected.
+- Not checked: the App's next engine release, which is not tagged yet.
+
 ### 2026-11-13: the App builds the engine with uv 0.13.8
 
 - The App's `320-release-engine.yml` (the workflow that builds and publishes the engine wheel this repository installs)

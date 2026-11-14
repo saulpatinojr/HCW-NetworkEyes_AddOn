@@ -4,7 +4,7 @@ version = "0.1.3"
 description = "Hybrid Cloud Works Network Assessment, lab edition: evaluate an Azure Resource Graph export of microsoft.network/* resources against typed network rules, in memory, with no cloud connectivity by design."
 readme = "README.md"
 license = "MIT"
-requires-python = ">=3.15.1,<3.16"
+requires-python = ">=3.15.2,<3.16"
 dependencies = [
   "fastapi==0.162.0",
   "uvicorn==0.54.0",
