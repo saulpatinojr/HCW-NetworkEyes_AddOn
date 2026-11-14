@@ -44,6 +44,10 @@ Every engine change from here on is made in the App, released, and arrives throu
 - **Reaches this edition? Only as this test.** No engine, catalog, rule, wheel or release change comes with it, so
   `core-update.yml` has nothing to adopt. The App (HCW-NetworkEyes_App) already has it: its copy is the canonical one,
   merged in [HCW-NetworkEyes_App#399](https://github.com/saulpatinojr/HCW-NetworkEyes_App/pull/399).
+- Copilot's review of these pull requests found six more ways past the check (a `sudo` inside a script `sudo`
+  runs, a PATH replaced for one command, the runner's interpreter named directly, one-line `case` clauses,
+  `${{ matrix.* }}` in the workflow-level `env:`, and pipx under a step's `shell:`); they were fixed in the canonical
+  copies first and are in this repository's copy in the same pull request, still with nothing to adopt.
 - What the test now reads is in this repository's `CHANGELOG.md` entry of the same date.
 
 ### 2026-11-13: the App builds the engine with uv 0.13.8
