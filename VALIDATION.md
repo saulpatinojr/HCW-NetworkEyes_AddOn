@@ -3,6 +3,20 @@
 What was executed for this edition and what was not, per run. "Here" is the authoring container (no Docker daemon, PyPI
 and the Playwright CDN reachable through a proxy). Dates are the run date.
 
+## Run 2026-11-14, second part (Copilot's second round on the round-3 copies of the workflow runtime check; HCW-HybridCloudWorks#1707)
+
+`tests/security/test_workflow_runtime_setup.py` takes Copilot's second round on the round-3 copies from the canonical Python copy in HCW-NetworkEyes_App (`55e94dd`, and `85fe01c`, which makes a one-line mapping's closing bracket match its opening one), which is kept the same as the website's copy (merged in [HCW-HybridCloudWorks#1723](https://github.com/saulpatinojr/HCW-HybridCloudWorks/pull/1723); issue [HCW-HybridCloudWorks#1707](https://github.com/saulpatinojr/HCW-HybridCloudWorks/issues/1707)). Only this repository's own lists differ, and the wrapping of the lines that ran past this repository's 120 columns: the new made-up workflows and refused texts are written as adjacent strings, which Python joins into the same value. Run from `main` at `699bbd6`. Toolchain: Linux cloud session, CPython 3.15.2.
+
+| Check | Executed here | Result |
+| --- | --- | --- |
+| The port's code against HCW-NetworkEyes_App's copy at `85fe01c` | yes | identical syntax trees once the docstrings and the four lists are set aside, as on `main` against `c4a4ed9` |
+| `ruff check .`, `ruff format --check .`, `pytest -q --cov=src` | yes | `All checks passed!`; 74 files already formatted; 1512 passed; coverage 97.07%. `tests/security/test_workflow_runtime_setup.py` alone: 1049 passed (1017 before) |
+| The new tests on the code before them (`main`) | yes | the 32 new tests and three changed cases added to the file on `main`: 19 of its 1049 tests fail |
+| The same answers as the canonical copy | yes | the 49,200 generated cases of the round-three port fixes, the 4,844 nested-sudo cases and the 348 inputs of the round-three review: 0 disagreements with HCW-NetworkEyes_App's copy at `85fe01c`, and none between the three add-ons' copies; of the 348, one answer changes back with this round (`pipx run --python python3.15t x` is reported again, as before the pre-PR review) |
+| The check over the workflows of all nine HCW repositories | yes | the same findings before and after the change, and the same as the canonical copy's; here, only the `core-update.yml` step that `RUNNER_DEFAULT_ALLOWED` names |
+| actionlint, zizmor, and CI on GitHub | **no** | no workflow changed; CI runs when a pull request is opened |
+| `make e2e` | **no** | this change touches neither the pane nor the API |
+
 ## Run 2026-11-14 (round three of the workflow runtime check; HCW-HybridCloudWorks#1707)
 
 `tests/security/test_workflow_runtime_setup.py` is replaced by round three of the check, from the canonical Python copy in HCW-NetworkEyes_App (merged as `9b96396`, [HCW-NetworkEyes_App#399](https://github.com/saulpatinojr/HCW-NetworkEyes_App/pull/399)), which is kept the same as the website's `scripts/workflow-runtime-setup.test.mjs` (merged as `4be949f`, [HCW-HybridCloudWorks#1722](https://github.com/saulpatinojr/HCW-HybridCloudWorks/pull/1722); issue [HCW-HybridCloudWorks#1707](https://github.com/saulpatinojr/HCW-HybridCloudWorks/issues/1707)). Only this repository's own lists differ, and the wrapping of the docstring and comment lines that ran past this repository's 120 columns; the 17 one-line YAML texts the new tests feed the reader, which ran past 120 columns too, are written as adjacent strings, which Python joins into the same value. Run from `main` at `7be90b7`. Toolchain: Linux cloud session, CPython 3.15.2, the session's uv 0.11.32.
