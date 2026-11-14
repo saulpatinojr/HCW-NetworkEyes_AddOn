@@ -32,6 +32,22 @@ Every engine change from here on is made in the App, released, and arrives throu
 
 ## Entries, newest first
 
+### 2026-11-13: the App builds the engine with uv 0.13.8
+
+- The App's `320-release-engine.yml` (the workflow that builds and publishes the engine wheel this repository installs)
+  and its `300-test-codebase.yml` now install uv 0.13.8 instead of 0.13.7, to match the App's Dockerfiles, which
+  Dependabot had already moved to 0.13.8. The App's change is
+  [pull request 398](https://github.com/saulpatinojr/HCW-NetworkEyes_App/pull/398). It also adds a test there that fails when a workflow's uv differs from the
+  Dockerfiles' uv. ([HCW-HybridCloudWorks#1707](https://github.com/saulpatinojr/HCW-HybridCloudWorks/issues/1707))
+- **Does the engine wheel change?** No. The engine `0.1.5` source was built with uv 0.13.7 and with uv 0.13.8 (the
+  same setuptools 84.2.1 and wheel 0.48.0 backend both times). With the same `SOURCE_DATE_EPOCH` (a fixed build date)
+  the two wheels are byte-identical; without it they hold the same 31 files with the same contents and differ only in
+  the build-time dates inside the zip, which also differ between any two builds with the same uv. The sdists hold the
+  same files and contents and differ only in those dates.
+- **Reaches this edition? Not by itself.** No engine release comes with it, so `core-update.yml` has nothing to adopt.
+  The next `engine-v*` release is built with uv 0.13.8 and arrives through `core-update.yml` as usual. This repository
+  moves its own uv to 0.13.8 in the same change set as this entry (see `CHANGELOG.md` and `VALIDATION.md`).
+
 ### 2026-11-13: the workflow runtime check moves to round two here and in the App
 
 - The check that every workflow step running Python or Node.js sets its version up first has a second round of rules.
