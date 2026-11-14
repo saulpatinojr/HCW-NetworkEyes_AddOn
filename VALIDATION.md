@@ -3,6 +3,23 @@
 What was executed for this edition and what was not, per run. "Here" is the authoring container (no Docker daemon, PyPI
 and the Playwright CDN reachable through a proxy). Dates are the run date.
 
+## Run 2026-11-14 (round three of the workflow runtime check; HCW-HybridCloudWorks#1707)
+
+`tests/security/test_workflow_runtime_setup.py` is replaced by round three of the check, from the canonical Python copy in HCW-NetworkEyes_App (merged as `9b96396`, [HCW-NetworkEyes_App#399](https://github.com/saulpatinojr/HCW-NetworkEyes_App/pull/399)), which is kept the same as the website's `scripts/workflow-runtime-setup.test.mjs` (merged as `4be949f`, [HCW-HybridCloudWorks#1722](https://github.com/saulpatinojr/HCW-HybridCloudWorks/pull/1722); issue [HCW-HybridCloudWorks#1707](https://github.com/saulpatinojr/HCW-HybridCloudWorks/issues/1707)). Only this repository's own lists differ, and the wording of the docstring and comment lines that ran past this repository's 120 columns; the 17 one-line YAML texts the new tests feed the reader, which ran past 120 columns too, are written as adjacent strings, which Python joins into the same value. Run from `main` at `7be90b7`. Toolchain: Linux cloud session, CPython 3.15.2, the session's uv 0.11.32.
+
+| Check | Executed here | Result |
+| --- | --- | --- |
+| The port's code against HCW-NetworkEyes_App's copy at `9b96396` | yes | the two files' syntax trees are identical once the docstrings and the four lists (`RUNNER_DEFAULT_ALLOWED`, `INDIRECT_RUNTIME`, `PIPX_ALLOWED`, `BELOW_FLOOR_ALLOWED`) are set aside; the four lists are the same as on `main`; the docstrings have the same words, except the module docstring's paragraph saying this file is a copy |
+| `uv sync`, `ruff check .`, `ruff format --check .`, `python scripts/rules-doc.py --check` | yes | `Checked 51 packages`; `All checks passed!`; 74 files already formatted; `docs/rules/catalog.md is in sync` |
+| `pytest -q --cov=src` | yes | 1364 passed; coverage 97.07%. `tests/security/test_workflow_runtime_setup.py` alone: 901 passed (699 before) |
+| The check over this repository's workflows, old copy (`main`) against new | yes | the same findings as the copy on `main`, file by file (8 workflows, no composite action): only the `core-update.yml` step that `RUNNER_DEFAULT_ALLOWED` names, no `pipx` problem, no set-up step below 3.15 or 26 |
+| The same answers as the canonical copy | yes | the 12,975 cases of the round-three harness, the 348 inputs of the round-three review, the 66,583 cases of round two and the 199 cases of the round-three case files (command reading with its two shell texts and the `sudo` reading, the `pipx` check, the condition rules, and made-up workflows read for unset steps, `pipx` problems and floor problems): 0 disagreements with HCW-NetworkEyes_App's copy at `9b96396`, and none between the three add-ons' copies |
+| The name `UNSET`, which round three gives to a marker for an unset variable and which the end of the file reuses for the list of reported steps | yes | the same as the canonical copy, kept as it is there. Every use of the marker compares by identity, and on the 49,652 `pipx` and workflow cases above the canonical copy gives the same answers with the marker as a fresh object, as an empty list and as the list it ends up as |
+| The website's JavaScript copy driven over the same cases | **no** | the canonical copy's own run reports the two agree on these case sets |
+| gitleaks (the secret scan `security.yml` runs) | **no** | not installed here; `tests/security/test_no_secrets.py` ran in the suite above |
+| actionlint, zizmor, and CI on GitHub | **no** | no workflow changed; CI runs when a pull request is opened |
+| `make e2e` | **no** | this change touches neither the pane nor the API |
+
 ## Run 2026-11-13, fifth part (uv 0.13.8; HCW-HybridCloudWorks#1707)
 
 uv moves from 0.13.7 to 0.13.8 in `ci.yml` (`UV_VERSION`), `security.yml`, the `bump` job of `core-update.yml` and the Dockerfile's uv image, and the runbook's live lock instructions follow ([HCW-HybridCloudWorks#1707](https://github.com/saulpatinojr/HCW-HybridCloudWorks/issues/1707)). The App (HCW-NetworkEyes_App) makes the same move in its workflows, whose Dockerfiles Dependabot had already moved to 0.13.8. Run from `main` at `38aac8e`. Toolchain: Linux cloud session, CPython 3.15.2, uv 0.13.8 installed with `pip --require-hashes` (wheel sha256 `e18a57b8…8984`) into a throwaway virtual environment outside the repository, and uv 0.13.7 for the comparisons.
