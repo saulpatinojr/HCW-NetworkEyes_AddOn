@@ -35,8 +35,8 @@ Every engine change from here on is made in the App, released, and arrives throu
 ### 2026-11-14: the App and this repository both require Python 3.15.2 (owner decision)
 
 - The owner decided on 2026-11-14 that every Hybrid Cloud Works Python repository requires the latest stable release
-  of Python 3.15, which is 3.15.2 (released 2026-10-25). The App, on its branch `claude/python-3.15.2` (its pull
-  request was not open when this was written), moves `requires-python` from `>=3.14` to `>=3.15.2,<3.16` in both of
+  of Python 3.15, which is 3.15.2 (released 2026-10-25). The App, in [HCW-NetworkEyes_App#401](https://github.com/saulpatinojr/HCW-NetworkEyes_App/pull/401),
+  moves `requires-python` from `>=3.14` to `>=3.15.2,<3.16` in both of
   its `pyproject.toml` files, including the engine `network-assessment-azure-engine`; its unit tests stop running on
   Python 3.14 (TODO.md T-743 item 4 there), ruff targets `py315`, and `uv.lock` is re-locked with uv 0.13.8 (no
   package version moved). Its wheel test now expects `Requires-Python: <3.16,>=3.15.2`. This repository makes the same
@@ -47,6 +47,25 @@ Every engine change from here on is made in the App, released, and arrives throu
   as usual and `tests/security/test_engine_static_metadata.py` (the wheel accepts every Python the project allows)
   stays green. The `engine-v0.1.5` pin (`Requires-Python: >=3.14`) is unaffected.
 - Not checked: the App's next engine release, which is not tagged yet.
+
+### 2026-11-14: the workflow runtime check moves to round three here and in the App (website [#1722](https://github.com/saulpatinojr/HCW-HybridCloudWorks/pull/1722), NetworkEyes_App [#399](https://github.com/saulpatinojr/HCW-NetworkEyes_App/pull/399))
+
+- The check that every workflow step running Python or Node.js sets its version up first has a third round of rules
+  (the list on [HCW-HybridCloudWorks#1707](https://github.com/saulpatinojr/HCW-HybridCloudWorks/issues/1707), plus the fixes
+  from its review). Its canonical copy is the Python one in HCW-NetworkEyes_App
+  ([HCW-NetworkEyes_App#399](https://github.com/saulpatinojr/HCW-NetworkEyes_App/pull/399), merged); the website's
+  JavaScript twin merged in [HCW-HybridCloudWorks#1722](https://github.com/saulpatinojr/HCW-HybridCloudWorks/pull/1722).
+  This repository's `tests/security/test_workflow_runtime_setup.py` is refreshed from the canonical copy in the same
+  pull request as this entry; only its own lists stay its own.
+- **Reaches this edition? Only as this test.** No engine, catalog, rule, wheel or release change comes with it, so
+  `core-update.yml` has nothing to adopt. The App (HCW-NetworkEyes_App) already has it: its copy is the canonical one,
+  merged in [HCW-NetworkEyes_App#399](https://github.com/saulpatinojr/HCW-NetworkEyes_App/pull/399).
+- Copilot's review of these pull requests found six more ways past the check, and a review of those fixes one more
+  (a `sudo` inside a script `sudo` runs, a PATH replaced or removed for one command, the runner's interpreter named
+  directly, one-line `case` clauses, `${{ matrix.* }}` in the workflow-level `env:`, pipx under a step's `shell:`,
+  and free-threaded Python names such as `python3.14t`); they were fixed in the canonical copies first and are in
+  this repository's copy in the same pull request, still with nothing to adopt.
+- What the test now reads is in this repository's `CHANGELOG.md` entry of the same date.
 
 ### 2026-11-13: the App builds the engine with uv 0.13.8
 
