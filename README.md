@@ -119,7 +119,7 @@ answer `503 turnstile_not_configured` (fail closed). Browser suite: `make e2e` (
 A `v*` tag builds the image, proves the edition boundary inside it, scans it (Trivy, HIGH/CRITICAL, fixed only), pushes
 `docker.io/hybridcloudworks/img-ne-lab-addon:v<version>` with provenance and SBOM, attests it, and prints the
 digest in the run summary. The website pins that digest in its lab-host `group_vars`; the digest is the only coupling.
-Pushing needs the repository variables `DOCKERHUB_ENABLED` and `DOCKERHUB_CONNECTION` (`docs/deployment/lab-host.md`); both are set, and `v0.1.0`, `v0.1.1-rc.1`, `v0.1.1` (published 2026-10-27) and `v0.1.2` (published 2026-11-05) were pushed that way.
+Pushing needs the repository variables `DOCKERHUB_ENABLED` and `DOCKERHUB_CONNECTION` (`docs/deployment/lab-host.md`); both are set, and `v0.1.0`, `v0.1.1-rc.1`, `v0.1.1` (published 2026-10-27) `v0.1.2` (published 2026-11-05) and `v0.1.3` (published 2026-11-09) were pushed that way. Release `0.1.4` is a rebuild with no change to the lab application, so that the image carries Debian's fixed glibc and clears CVE-2026-19499 and CVE-2026-5435, which Docker Scout found in `v0.1.3` ([website run 45092780931](https://github.com/saulpatinojr/HCW-HybridCloudWorks/actions/runs/45092780931)); it is published by the tag `v0.1.4`, which is the owner's call and is not made by the pull request that prepares it.
 
 ## What the export cannot show
 

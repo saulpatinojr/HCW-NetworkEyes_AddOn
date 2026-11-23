@@ -3,6 +3,35 @@
 What was executed for this edition and what was not, per run. "Here" is the authoring container (no Docker daemon, PyPI
 and the Playwright CDN reachable through a proxy). Dates are the run date.
 
+## Run 2026-11-23 (release 0.1.4 prepared)
+
+This run prepares the version bump only. The reason for the release is a rebuild of the image so it carries Debian's
+fixed glibc, `libc6` and `libc-bin` `2.41-12+deb13u5`, for CVE-2026-19499 and CVE-2026-5435, which Docker Scout found
+in the published `v0.1.3` image
+([website run 45092780931](https://github.com/saulpatinojr/HCW-HybridCloudWorks/actions/runs/45092780931), job "Scout
+network-assessment"). Nothing in `src/` (apart from `__version__`), `web/`, `samples/`, `third_party/` or `docs/api/`
+changed since `v0.1.3` (`git diff v0.1.3 origin/main` on those paths is empty). No image was built here.
+
+Toolchain: the authoring container (Linux, the Docker command but no Docker daemon). Its only Python 3.15 is `3.15.0b4`,
+which the project's `requires-python = ">=3.15.2,<3.16"` refuses, and uv had no 3.15.2 to download, so `uv sync` and
+`uv lock --check` could not run here. The checks ran in a scratch virtual environment on `3.15.0b4` instead: the
+third-party set from `uv export --frozen --no-hashes --all-groups --all-extras --no-emit-project` (uv 0.11.32, the
+container's; CI uses 0.13.8), engine wheel included, and the lab application on `PYTHONPATH=src`.
+
+| Check | Executed here | Result |
+| --- | --- | --- |
+| `ruff check .`, `ruff format --check .`, `python scripts/rules-doc.py --check` | yes | `All checks passed!`; 74 files already formatted; `docs/rules/catalog.md is in sync (422 lines)` |
+| `pytest -q --cov=src` | yes | 1597 passed; coverage 97.07% |
+| The `uv.lock` diff | yes | one line, the `hcw-addon-network-assessment` entry's version, edited by hand (uv refuses this Python) |
+| Debian's fix is in the archive | yes, read-only | the [Debian security tracker](https://security-tracker.debian.org/tracker/CVE-2026-19499) lists both CVEs as fixed for trixie in `glibc 2.41-12+deb13u5`; the main `trixie` `Packages` index on deb.debian.org for amd64 and arm64 carries `libc6` and `libc-bin` at that version, and its `Release` file says Debian 13.8, dated 2026-11-21 |
+| The base image has no newer build | yes, read-only | Docker Hub's tag record and mirror.gcr.io both give `sha256:65a65fc7b30b…` for `python:3.15.2-slim-trixie`, the digest pinned here and in the website's `lab-image/versions.env`; its linux/amd64 image was pushed on 2026-11-05, before Debian 13.8. Docker Hub's registry itself answered the anonymous manifest request with HTTP 429 (too many requests), so its `Docker-Content-Digest` header was not read |
+| The Dockerfile's update step | yes, read | the `lab` stage runs `apt-get -o Acquire::Retries=0 update --error-on=any`, `apt-get -o Acquire::Retries=0 upgrade -y --no-install-recommends` and then a simulated upgrade that must report nothing left, in the `RUN` that names `PUBLISH_CACHE_BUST`, which `publish-images.yml` sets per run, so a publish run cannot reuse an older upgrade layer or ship an image behind the index it fetched |
+| `uv sync --all-packages`, `uv lock --check` | **no** | no Python 3.15.2 here; CI runs them when the pull request is opened |
+| An image build, and `dpkg -s libc6` inside it | **no** | no Docker daemon here. CI's `image` job builds the image on the pull request (its log shows what the update step upgraded). The `publish-images.yml` dry run (a manual run, which builds and scans with Trivy and pushes nothing) is the check, on the merge commit before it is tagged |
+| Docker Scout | **no** | it needs the owner's Docker sign-in; the website's `addon-image-scout.yml` runs it once the new digest is pinned there |
+| gitleaks, actionlint, zizmor, hadolint | **no** | not installed here; no workflow or Dockerfile changed, and CI runs them |
+| `make e2e` | **no** | this change touches neither the pane nor the API |
+
 ## Run 2026-11-14 (round five of the workflow runtime check, the last planned round; HCW-HybridCloudWorks#1707)
 
 `tests/security/test_workflow_runtime_setup.py` takes round five of the check from the canonical Python copy in HCW-NetworkEyes_App (merged as `6e7f5c0`, [HCW-NetworkEyes_App#405](https://github.com/saulpatinojr/HCW-NetworkEyes_App/pull/405)), which is kept the same as the website's copy (merged as `5a7e7f4a`, [HCW-HybridCloudWorks#1726](https://github.com/saulpatinojr/HCW-HybridCloudWorks/pull/1726); issue [HCW-HybridCloudWorks#1707](https://github.com/saulpatinojr/HCW-HybridCloudWorks/issues/1707)). Only this repository's own lists differ, and one new test's one-line workflow, written as adjacent strings (which Python joins into the same value) to fit 120 columns. Run from `main` at `755f7b7`. Toolchain: Linux cloud session, CPython 3.15.2, uv 0.13.8.
