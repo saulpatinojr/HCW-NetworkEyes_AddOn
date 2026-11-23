@@ -4,6 +4,38 @@ All notable changes to this repository are recorded here. The format follows Kee
 
 ## [Unreleased]
 
+## [0.1.4] - 2026-11-23
+
+This release exists to rebuild the published image so that it carries Debian's fixed glibc (the GNU C Library, the
+basic system library every program in the image uses). On 2026-11-23 Docker Scout (the scanner behind the website's
+gate, which refuses a lab image with a known, fixable vulnerability) found two HIGH glibc vulnerabilities in the
+published `img-ne-lab-addon:v0.1.3`, in the packages `libc6` and `libc-bin` at `2.41-12+deb13u4`
+([website run 45092780931](https://github.com/saulpatinojr/HCW-HybridCloudWorks/actions/runs/45092780931), tracked in [HCW-HybridCloudWorks#1779](https://github.com/saulpatinojr/HCW-HybridCloudWorks/issues/1779)):
+[CVE-2026-19499](https://security-tracker.debian.org/tracker/CVE-2026-19499), a write past the end of a buffer in
+`strfmon`, and [CVE-2026-5435](https://security-tracker.debian.org/tracker/CVE-2026-5435), a write past the end of a
+buffer in three old DNS debugging functions. Debian fixed both in `glibc 2.41-12+deb13u5`, which arrived with
+Debian 13.8 on 2026-11-21. The base image this repository follows, the website's pin of `python:3.15.2-slim-trixie`
+(`sha256:65a65fc7b30b…`), was built on 2026-11-05 and Docker Hub still serves that same digest for the tag, so there is
+no newer base to move to yet. Nothing in this repository has to change to fix the findings: the image's last stage
+already applies Debian's updates on every publish run, with a per-run cache bust so an older upgrade result is never
+reused, and fails the build if anything is left to upgrade (the Security entry of `0.1.2` below). An image that is
+already published does not change, though, so the fix reaches the lab host only through a new build, and a new build
+is published only by a new tag. The image is published by the tag `v0.1.4`, which is the owner's call and is not made
+by the pull request that prepares this version.
+
+The lab application's own code did not change since `v0.1.3`: `src/` (apart from the version string), the pane
+(`web/`), the samples and the bundled licence texts are identical, and the engine stays
+`network-assessment-azure-engine 0.1.5` (rule set `2026.11.1`). What landed on `main` since `v0.1.3` is listed under
+"Added", "Changed" and "Fixed" below, plus changes that are not listed separately: the base image moved to the
+website's current digest of `python:3.15.2-slim-trixie` (from `sha256:e97b88e416c3…` to `sha256:65a65fc7b30b…`), and
+Dependabot's dependency updates, of which two reach the image (fastapi 0.162.0 to 0.163.2 and pydantic 2.14.1 to
+2.14.3, with the packages they pull in).
+
+The version moves from `0.1.3` to `0.1.4` in `pyproject.toml`, in `uv.lock` (the `hcw-addon-network-assessment` entry
+only), in `__version__` (`src/network_assessment/__init__.py`), in `repository.manifest.json` and in the two sample
+lines of `docs/operations/runbook.md`, so `/api/health` and the `X-Addon-Version` header say `0.1.4`. The README's
+list of published tags now names `v0.1.3` (published 2026-11-09), which it had missed.
+
 ### Added
 
 - **An `@claude` mention now starts Claude Code** (owner request 2026-11-14). A new workflow, `.github/workflows/claude.yml`, runs the Claude Code action when the owner, a member or a collaborator writes `@claude` in an issue, a pull request comment or a review; before this, such a comment did nothing. It signs in with the `CLAUDE_CODE_OAUTH_TOKEN` repository secret (the owner's Claude subscription, not an API key) and needs the [Claude GitHub App](https://github.com/apps/claude) installed on the repository. It follows the [official example](https://github.com/anthropics/claude-code-action/blob/main/examples/claude.yml), with both actions pinned to a commit, the `ubuntu-26.04` runner, a 60-minute limit, a read-only job token (the action writes with the app's own token) and a check on who wrote the comment, because the repository is public. It works only once the file is on `main`, the secret is saved and the app is installed.

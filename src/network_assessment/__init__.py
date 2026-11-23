@@ -1,4 +1,4 @@
 """Network Assessment lab edition: the upload-only web front for the ported CNA Azure network engine."""
 
-__version__ = "0.1.3"
+__version__ = "0.1.4"
 ADDON_ID = "network-assessment"
