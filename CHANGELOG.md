@@ -4,6 +4,13 @@ All notable changes to this repository are recorded here. The format follows Kee
 
 ## [Unreleased]
 
+### Changed
+
+- **`docs/whats-new-upstream.md` notes that engine releases gain a provenance file**
+  ([HCW-NetworkEyes_App#423](https://github.com/saulpatinojr/HCW-NetworkEyes_App/pull/423)). Each `engine-v*` release will
+  carry `network_assessment_azure_engine-<version>.intoto.jsonl`, the wheel's build provenance. Nothing here changes:
+  the engine is still pinned by URL and by sha256 in `uv.lock`.
+
 ## [0.1.4] - 2026-11-23
 
 This release exists to rebuild the published image so that it carries Debian's fixed glibc (the GNU C Library, the

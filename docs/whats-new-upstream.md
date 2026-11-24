@@ -32,6 +32,13 @@ Every engine change from here on is made in the App, released, and arrives throu
 
 ## Entries, newest first
 
+### 2026-11-24: engine releases gain a provenance file (NetworkEyes_App [#423](https://github.com/saulpatinojr/HCW-NetworkEyes_App/pull/423), merged 2026-11-24)
+
+- From the first `engine-v*` release after `engine-v0.1.5`, the release page holds a third file beside the wheel and the sdist: `network_assessment_azure_engine-<version>.intoto.jsonl`. It is build provenance: a signed statement, made by the App's `320-release-engine.yml`, that names both files by sha256 and says which workflow run built them. It is keyless (no stored key).
+- **Nothing here has to change.** The wheel's name, address and contents are the same, so the URL on the `# ENGINE_REF` line and the sha256 in `uv.lock` keep working, and `core-update.yml` needs no edit.
+- **Optional, and worth doing:** `core-update.yml` can check the new wheel before it opens the bump pull request. After it downloads the wheel and the `.intoto.jsonl` file of the new release: `gh attestation verify <wheel> --repo saulpatinojr/HCW-NetworkEyes_App --bundle <file>.intoto.jsonl --signer-workflow saulpatinojr/HCW-NetworkEyes_App/.github/workflows/320-release-engine.yml --source-ref refs/tags/engine-v<version>`. Exit code 0 means the wheel is the one that workflow built for that tag. Releases up to `engine-v0.1.5` have no such file, so the step must apply only to newer ones. Not adopted here yet, and not run yet: no release carries the file until the next engine release.
+- The App's README, "Verifying the engine wheel", has the commands for a person.
+
 ### 2026-11-14: the workflow runtime check moves to round five, the last planned round (website [#1726](https://github.com/saulpatinojr/HCW-HybridCloudWorks/pull/1726), NetworkEyes_App [#405](https://github.com/saulpatinojr/HCW-NetworkEyes_App/pull/405))
 
 - The check that every workflow step running Python or Node.js sets its version up first has a fifth round: a step whose
